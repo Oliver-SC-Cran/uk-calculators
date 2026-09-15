@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import Home from './pages/Home'
 import SalaryCalculator from './pages/SalaryCalculator'
 import RedundancyCalculator from './pages/RedundancyCalculator'
+import ISACalculator from './pages/ISACalculator'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
 
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/salary-calculator" element={<SalaryCalculator />} />
           <Route path="/redundancy-calculator" element={<RedundancyCalculator />} />
+          <Route path="/isa-calculator" element={<ISACalculator />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
         </Route>

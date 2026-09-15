@@ -12,6 +12,7 @@ export default function Layout() {
           <div className="site-nav__links">
             <Link to="/salary-calculator">Salary</Link>
             <Link to="/redundancy-calculator">Redundancy</Link>
+            <Link to="/isa-calculator">ISA</Link>
             <Link to="/about">About</Link>
           </div>
         </div>

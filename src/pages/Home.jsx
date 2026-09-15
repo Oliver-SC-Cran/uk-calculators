@@ -29,6 +29,15 @@ export default function Home() {
             </span>
           </Link>
         </li>
+        <li>
+          <Link to="/isa-calculator">
+          <span className="calc-list__title">ISA & LISA allowance calculator</span>
+          <span className="calc-list__desc">
+          Check your remaining ISA allowance and Lifetime ISA government bonus for this tax
+          year.
+          </span>
+          </Link>
+        </li>
       </ul>
     </>
   )

@@ -98,6 +98,43 @@ export function calculateTakeHome(grossAnnual) {
   }
 }
 
+export const ISA = {
+  overallAllowance: 20000, // combined limit across Cash, Stocks & Shares and LISA
+  lisaLimit: 4000, // counts within the overall allowance, not on top of it
+  lisaBonusRate: 0.25,
+  lisaMinOpenAge: 18,
+  lisaMaxOpenAge: 40, // must open a LISA before your 40th birthday
+  lisaMaxContributionAge: 50, // existing LISA holders can keep contributing until 50
+}
+
+/**
+ * ISA & LISA allowance check for the current tax year.
+ * NOTE: from April 2027, the Cash ISA allowance is due to reduce to £12,000 for
+ * under-65s (Stocks & Shares stays at £20,000) — this calculator covers the
+ * current, unchanged 2026/27 rules. Revisit before April 2027.
+ */
+export function calculateISAAllowance({ cashISA, stocksISA, lisa, age }) {
+  const { overallAllowance, lisaLimit, lisaBonusRate, lisaMinOpenAge, lisaMaxOpenAge } = ISA
+
+  const lisaCapped = Math.min(lisa, lisaLimit)
+  const lisaOverLimit = lisa > lisaLimit
+  const totalContributions = cashISA + stocksISA + lisaCapped
+  const overallOverLimit = totalContributions > overallAllowance
+  const remainingAllowance = Math.max(0, overallAllowance - totalContributions)
+  const lisaBonus = lisaCapped * lisaBonusRate
+  const lisaEligibleToOpen = age >= lisaMinOpenAge && age < lisaMaxOpenAge
+
+  return {
+    totalContributions,
+    remainingAllowance,
+    overallOverLimit,
+    lisaCapped,
+    lisaOverLimit,
+    lisaBonus,
+    lisaEligibleToOpen,
+  }
+}
+
 /**
  * Statutory redundancy pay. This is the standard age-banded method:
  * counts backward from the current age for each year of service, so a
