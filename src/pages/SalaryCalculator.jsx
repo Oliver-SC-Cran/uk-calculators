@@ -78,7 +78,7 @@ export default function SalaryCalculator() {
           gone at £125,140). Income above the allowance is taxed at 20% up to £50,270, 40% up to
           £125,140, then 45% above that. Employee National Insurance is 8% on earnings between
           £12,570 and £50,270, then 2% above. Figures are published by HMRC for the {TAX_YEAR} tax
-          year — see{' '}
+          year. See{' '}
           <a href="https://www.gov.uk/income-tax-rates" target="_blank" rel="noreferrer">
             gov.uk/income-tax-rates
           </a>

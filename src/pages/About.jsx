@@ -3,7 +3,7 @@ export default function About() {
     <>
       <h1>About this site</h1>
       <p>
-        UK Calculators is a small, independently run set of tools for common UK money questions —
+        UK Calculators is a small, independently run set of tools for common UK money questions,
         starting with take-home pay and statutory redundancy pay, with more calculators planned.
       </p>
       <p>

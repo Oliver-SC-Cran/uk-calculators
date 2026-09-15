@@ -135,6 +135,147 @@ export function calculateISAAllowance({ cashISA, stocksISA, lisa, age }) {
   }
 }
 
+export const MINIMUM_WAGE = {
+  // Rates from 1 April 2026 (£/hour)
+  nationalLivingWage: 12.71, // age 21+
+  age18to20: 10.85,
+  under18: 8.0,
+  apprentice: 8.0,
+}
+
+/**
+ * Works out which statutory minimum wage band applies and whether the
+ * hourly rate entered meets it.
+ */
+export function checkMinimumWage({ age, hourlyRate, isApprentice }) {
+  const { nationalLivingWage, age18to20, under18, apprentice } = MINIMUM_WAGE
+
+  let applicableRate
+  let bandLabel
+  if (isApprentice) {
+    applicableRate = apprentice
+    bandLabel = 'Apprentice rate'
+  } else if (age >= 21) {
+    applicableRate = nationalLivingWage
+    bandLabel = 'National Living Wage (21+)'
+  } else if (age >= 18) {
+    applicableRate = age18to20
+    bandLabel = '18 to 20 rate'
+  } else {
+    applicableRate = under18
+    bandLabel = 'Under 18 rate'
+  }
+
+  const shortfall = Math.max(0, applicableRate - hourlyRate)
+  const isUnderpaid = shortfall > 0
+
+  return {
+    applicableRate,
+    bandLabel,
+    shortfall,
+    isUnderpaid,
+    weeklyAtMinimum: applicableRate * 37.5,
+    annualAtMinimum: applicableRate * 37.5 * 52,
+  }
+}
+
+export const STUDENT_LOAN = {
+  // Annual thresholds for 2026/27
+  plan1: { threshold: 26900, rate: 0.09, label: 'Plan 1' },
+  plan2: { threshold: 29385, rate: 0.09, label: 'Plan 2' },
+  plan4: { threshold: 33795, rate: 0.09, label: 'Plan 4 (Scotland)' },
+  plan5: { threshold: 25000, rate: 0.09, label: 'Plan 5' },
+  postgraduate: { threshold: 21000, rate: 0.06, label: 'Postgraduate Loan' },
+}
+
+/**
+ * Student loan repayments for the 2026/27 tax year. A person can have an
+ * undergraduate plan (1, 2, 4 or 5) and a Postgraduate Loan at the same
+ * time, and both are repaid together, so this returns each separately
+ * plus the combined total.
+ */
+export function calculateStudentLoanRepayment({ grossAnnual, plan, hasPostgraduateLoan }) {
+  const undergradPlan = plan && plan !== 'none' ? STUDENT_LOAN[plan] : null
+
+  const undergradRepayment = undergradPlan
+    ? Math.max(0, grossAnnual - undergradPlan.threshold) * undergradPlan.rate
+    : 0
+
+  const postgradRepayment = hasPostgraduateLoan
+    ? Math.max(0, grossAnnual - STUDENT_LOAN.postgraduate.threshold) * STUDENT_LOAN.postgraduate.rate
+    : 0
+
+  const totalAnnual = undergradRepayment + postgradRepayment
+
+  return {
+    undergradRepayment,
+    postgradRepayment,
+    totalAnnual,
+    totalMonthly: totalAnnual / 12,
+  }
+}
+
+/**
+ * Mortgage overpayment comparison. Uses the standard amortising-loan
+ * formula for the normal monthly payment, then simulates month by month
+ * with the extra overpayment added to see how much sooner it's paid off
+ * and how much interest that saves.
+ */
+export function calculateMortgageOverpayment({
+  balance,
+  annualRatePercent,
+  remainingYears,
+  monthlyOverpayment,
+}) {
+  const monthlyRate = annualRatePercent / 100 / 12
+  const totalMonths = Math.round(remainingYears * 12)
+
+  if (balance <= 0 || totalMonths <= 0) {
+    return null
+  }
+
+  const standardPayment =
+    monthlyRate === 0
+      ? balance / totalMonths
+      : (balance * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) /
+        (Math.pow(1 + monthlyRate, totalMonths) - 1)
+
+  const standardTotalInterest = standardPayment * totalMonths - balance
+
+  // Simulate with the overpayment added on top of the standard payment.
+  let remaining = balance
+  let month = 0
+  let interestPaid = 0
+  const payment = standardPayment + monthlyOverpayment
+  const safetyCapMonths = totalMonths * 2 + 24
+
+  while (remaining > 0.01 && month < safetyCapMonths) {
+    const interest = remaining * monthlyRate
+    let principal = payment - interest
+    if (principal <= 0) {
+      break
+    }
+    if (principal > remaining) principal = remaining
+    remaining -= principal
+    interestPaid += interest
+    month += 1
+  }
+
+  const monthsSaved = Math.max(0, totalMonths - month)
+  const interestSaved = Math.max(0, standardTotalInterest - interestPaid)
+
+  return {
+    standardPayment,
+    standardTotalInterest,
+    newPayment: payment,
+    newTotalInterest: interestPaid,
+    newTermMonths: month,
+    originalTermMonths: totalMonths,
+    monthsSaved,
+    interestSaved,
+  }
+}
+
 /**
  * Statutory redundancy pay. This is the standard age-banded method:
  * counts backward from the current age for each year of service, so a

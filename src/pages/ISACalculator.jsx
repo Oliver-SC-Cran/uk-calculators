@@ -113,31 +113,31 @@ export default function ISACalculator() {
 
       {result.lisaOverLimit && (
         <div className="notice">
-          The Lifetime ISA has its own separate limit of {formatGBP(ISA.lisaLimit)} per tax year,
-          even if you have allowance left overall — the calculation above has capped it
-          accordingly.
+            The Lifetime ISA has its own separate limit of {formatGBP(ISA.lisaLimit)} per tax year,
+            even if you have allowance left overall. The calculation above has capped it
+            accordingly.
         </div>
-      )}
+    )}
 
-      {Number(lisa) > 0 && !result.lisaEligibleToOpen && (
+    {Number(lisa) > 0 && !result.lisaEligibleToOpen && (
         <div className="notice">
-          You can only open a new Lifetime ISA between ages 18 and 39. If you already hold one,
-          you can keep contributing until age 50 — this just affects opening a new one.
+            You can only open a new Lifetime ISA between ages 18 and 39. If you already hold one,
+            you can keep contributing until age 50. This just affects opening a new one.
         </div>
-      )}
+    )}
 
-      <div className="notice">
+    <div className="notice">
         From April 2027, the Cash ISA allowance is due to reduce to £12,000 a year for people
         under 65 (the Stocks & Shares ISA allowance stays at £20,000). This calculator reflects
-        the current {TAX_YEAR} rules — check back nearer April 2027 if you're planning ahead.
-      </div>
+        the current {TAX_YEAR} rules. Check back nearer April 2027 if you're planning ahead.
+    </div>
 
       <div className="methodology">
         <h2>How this is calculated</h2>
         <p>
           You can put up to £20,000 total across a Cash ISA, Stocks & Shares ISA and Lifetime ISA
-          combined in {TAX_YEAR}. The Lifetime ISA has its own £4,000 sub-limit inside that £20,000
-          — it isn't an extra £4,000 on top. The government adds a 25% bonus on what you pay into
+          combined in {TAX_YEAR}. The Lifetime ISA has its own £4,000 sub-limit inside that £20,000.
+          It isn't an extra £4,000 on top. The government adds a 25% bonus on what you pay into
           a LISA, up to £1,000 a year on the full £4,000. See{' '}
           <a href="https://www.gov.uk/individual-savings-accounts" target="_blank" rel="noreferrer">
             gov.uk/individual-savings-accounts

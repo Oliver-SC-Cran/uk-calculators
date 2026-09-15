@@ -10,9 +10,7 @@ export default function Layout() {
             UK Calculators
           </Link>
           <div className="site-nav__links">
-            <Link to="/salary-calculator">Salary</Link>
-            <Link to="/redundancy-calculator">Redundancy</Link>
-            <Link to="/isa-calculator">ISA</Link>
+            <Link to="/">Calculators</Link>
             <Link to="/about">About</Link>
           </div>
         </div>
@@ -23,7 +21,7 @@ export default function Layout() {
       </main>
 
       <footer className="site-footer">
-        <p style={{ margin: 0 }}>
+        <p>
           General information only, not financial or legal advice. Figures are for the{' '}
           {TAX_YEAR} tax year unless stated otherwise. <Link to="/privacy">Privacy</Link>
         </p>

@@ -30,7 +30,7 @@ export default function RedundancyCalculator() {
       <h1>Statutory redundancy pay calculator</h1>
       <p className="lede">
         Works out the legal minimum redundancy payment for the {TAX_YEAR} tax year. This is the
-        statutory minimum only — your actual package may be higher if your employer offers
+        statutory minimum only. Your actual package may be higher if your employer offers
         enhanced redundancy terms.
       </p>
 
@@ -116,10 +116,10 @@ export default function RedundancyCalculator() {
         <h2>How this is calculated</h2>
         <p>
           For each full year of service, you get 0.5 week's pay if you were under 22 that year, 1
-          week's pay if you were 22–40, or 1.5 weeks' pay if you were 41 or over — counted back
-          from your current age, up to a maximum of 20 years' service. Weekly pay is capped at
+          week's pay if you were 22 to 40, or 1.5 weeks' pay if you were 41 or over. This counts
+          back from your current age, up to a maximum of 20 years' service. Weekly pay is capped at
           £751 (England, Scotland and Wales) or £783 (Northern Ireland) for {TAX_YEAR}, even if
-          you earn more. The first £30,000 is tax-free. This is a standard approximation — for an
+          you earn more. The first £30,000 is tax-free. This is a standard approximation. For an
           actual dismissal, especially close to an age-band birthday, check the exact figure
           against the official calculator at{' '}
           <a href="https://www.gov.uk/calculate-your-redundancy-pay" target="_blank" rel="noreferrer">
