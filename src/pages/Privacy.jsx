@@ -2,7 +2,7 @@ export default function Privacy() {
   return (
     <>
       <h1>Privacy policy</h1>
-      <p>Last updated: 16.09.2026</p>
+      <p>Last updated: Accurate for 26/27 tax year.</p>
 
       <h2>What this site does with your data</h2>
       <p>
