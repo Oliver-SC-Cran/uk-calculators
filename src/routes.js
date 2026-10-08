@@ -11,7 +11,7 @@ const pounds = (value) => `£${value.toLocaleString('en-GB')}`
 export const routes = [
   {
     path: '/',
-    title: `UK Money Calculators: free tax, pay and savings calculators for ${TAX_YEAR}`,
+    title: `UK Money Calculators: tax, pay and savings ${TAX_YEAR}`,
     description: `Free calculators for take-home pay, redundancy pay, ISA allowance, mortgage overpayments, minimum wage and student loans. Updated for the ${TAX_YEAR} tax year.`,
   },
   {
