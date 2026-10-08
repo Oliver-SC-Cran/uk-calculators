@@ -1,4 +1,4 @@
-# UK Calculators (ukmoneycalculators.co.uk)
+# UK Money Calculators (ukmoneycalculators.co.uk)
 
 UK financial calculators. React 19 + Vite, react-router-dom, plain CSS, deployed on Vercel as a client-side SPA.
 

@@ -11,7 +11,7 @@ const pounds = (value) => `£${value.toLocaleString('en-GB')}`
 export const routes = [
   {
     path: '/',
-    title: `Free UK money calculators for ${TAX_YEAR} | UK Calculators`,
+    title: `UK Money Calculators: free tax, pay and savings calculators for ${TAX_YEAR}`,
     description: `Free calculators for take-home pay, redundancy pay, ISA allowance, mortgage overpayments, minimum wage and student loans. Updated for the ${TAX_YEAR} tax year.`,
   },
   {
@@ -47,22 +47,22 @@ export const routes = [
   },
   {
     path: '/about',
-    title: 'About UK Calculators',
+    title: 'About UK Money Calculators',
     description:
-      'Who runs UK Calculators, where the figures come from and how often they are updated.',
+      'Who runs UK Money Calculators, where the figures come from and how often they are updated.',
   },
   {
     path: '/privacy',
-    title: 'Privacy policy | UK Calculators',
+    title: 'Privacy policy | UK Money Calculators',
     description:
-      'How UK Calculators handles your data. Numbers you type into the calculators stay in your browser and are not sent to us.',
+      'How UK Money Calculators handles your data. Numbers you type into the calculators stay in your browser and are not sent to us.',
   },
 ]
 
 // Shown for any URL not in the list above. Never indexed, so no canonical URL.
 export const notFoundRoute = {
   path: '/404',
-  title: 'Page not found | UK Calculators',
+  title: 'Page not found | UK Money Calculators',
   description: 'That page does not exist. Go back to the homepage to find a calculator.',
 }
 

@@ -28,7 +28,7 @@ export default function Layout() {
       <nav className="site-nav">
         <div className="site-nav__inner">
           <Link to="/" className="site-nav__brand">
-            UK Calculators
+            UK Money Calculators
           </Link>
           <div className="site-nav__links">
             <Link to="/">Calculators</Link>

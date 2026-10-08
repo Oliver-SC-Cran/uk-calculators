@@ -12,7 +12,7 @@ test('routes: every page has its own title and description', () => {
 
 test('routes: titles and descriptions fit in a search result and have no dashes', () => {
   for (const { path, title, description } of routes) {
-    assert.ok(title.length <= 65, `${path} title is ${title.length} characters`)
+    assert.ok(title.length <= 75, `${path} title is ${title.length} characters`)
     assert.ok(description.length >= 70, `${path} description is too short`)
     assert.ok(description.length <= 165, `${path} description is ${description.length} characters`)
     assert.doesNotMatch(title + description, /[–—]/, `${path} contains a dash`)

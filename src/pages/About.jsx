@@ -3,8 +3,9 @@ export default function About() {
     <>
       <h1>About this site</h1>
       <p>
-        UK Calculators is a small, independently run set of tools for common UK money questions,
-        starting with take-home pay and statutory redundancy pay, with more calculators planned.
+        UK Money Calculators is a small, independently run set of tools for common UK money
+        questions, starting with take-home pay and statutory redundancy pay, with more calculators
+        planned.
       </p>
       <p>
         Every calculator is built directly from published HMRC and gov.uk figures for the current

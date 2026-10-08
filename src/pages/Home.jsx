@@ -4,7 +4,7 @@ import { TAX_YEAR } from '../lib/calculations'
 export default function Home() {
   return (
     <>
-      <h1>UK Calculators</h1>
+      <h1>UK Money Calculators</h1>
         <p className="lede">
           Quick, accurate calculators for common UK money questions, updated for the {TAX_YEAR}{' '}
           tax year.
