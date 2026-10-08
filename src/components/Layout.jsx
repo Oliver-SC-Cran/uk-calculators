@@ -9,6 +9,12 @@ const setHeadAttribute = (selector, attribute, value) =>
 export default function Layout() {
   const { pathname } = useLocation()
 
+  // Start each page at the top. Without this, following a link from the
+  // bottom of one page opens the next page at the bottom too.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
   // Each built page already has the right tags in its HTML. This keeps them
   // right when moving between pages without a full page load.
   useEffect(() => {

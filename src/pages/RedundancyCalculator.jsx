@@ -1,3 +1,5 @@
+import RedundancyGuide from '../guides/RedundancyGuide'
+import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import { calculateRedundancyPay, TAX_YEAR } from '../lib/calculations'
 
@@ -118,23 +120,9 @@ export default function RedundancyCalculator() {
         </div>
       )}
 
-      <div className="methodology">
-        <h2>How this is calculated</h2>
-        <p>
-          For each full year of service, you get 0.5 week's pay if you were under 22 that year, 1
-          week's pay if you were 22 to 40, or 1.5 weeks' pay if you were 41 or over. This counts
-          back from your current age, up to a maximum of 20 years' service. Weekly pay is capped at
-          £751 (England, Scotland and Wales) or £783 (Northern Ireland) for {TAX_YEAR}, even if
-          you earn more. The result is rounded down to the whole pound, as on the official
-          calculator. The first £30,000 is tax-free. This is a standard approximation. For an
-          actual dismissal, especially close to an age-band birthday, check the exact figure
-          against the official calculator at{' '}
-          <a href="https://www.gov.uk/calculate-your-redundancy-pay" target="_blank" rel="noreferrer">
-            gov.uk/calculate-your-redundancy-pay
-          </a>
-          .
-        </p>
-      </div>
+      <RedundancyGuide />
+
+      <RelatedCalculators paths={['/salary-calculator', '/minimum-wage-calculator']} />
     </>
   )
 }

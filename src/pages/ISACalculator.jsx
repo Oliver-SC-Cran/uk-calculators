@@ -1,3 +1,5 @@
+import ISAGuide from '../guides/ISAGuide'
+import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import { calculateISAAllowance, ISA, TAX_YEAR } from '../lib/calculations'
 
@@ -147,19 +149,9 @@ export default function ISACalculator() {
         the current {TAX_YEAR} rules. Check back nearer April 2027 if you're planning ahead.
     </div>
 
-      <div className="methodology">
-        <h2>How this is calculated</h2>
-        <p>
-          You can put up to £20,000 total across a Cash ISA, Stocks & Shares ISA and Lifetime ISA
-          combined in {TAX_YEAR}. The Lifetime ISA has its own £4,000 sub-limit inside that £20,000.
-          It isn't an extra £4,000 on top. The government adds a 25% bonus on what you pay into
-          a LISA, up to £1,000 a year on the full £4,000. See{' '}
-          <a href="https://www.gov.uk/individual-savings-accounts" target="_blank" rel="noreferrer">
-            gov.uk/individual-savings-accounts
-          </a>
-          .
-        </p>
-      </div>
+      <ISAGuide />
+
+      <RelatedCalculators paths={['/mortgage-overpayment-calculator', '/salary-calculator']} />
     </>
   )
 }

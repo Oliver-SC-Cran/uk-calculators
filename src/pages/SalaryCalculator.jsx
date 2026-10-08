@@ -1,3 +1,4 @@
+import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import TakeHomePayGuide from '../guides/TakeHomePayGuide'
 import { calculateTakeHome, TAX_YEAR } from '../lib/calculations'
@@ -73,6 +74,8 @@ export default function SalaryCalculator() {
       </div>
 
       <TakeHomePayGuide />
+
+      <RelatedCalculators paths={['/student-loan-calculator', '/minimum-wage-calculator', '/redundancy-calculator']} />
     </>
   )
 }

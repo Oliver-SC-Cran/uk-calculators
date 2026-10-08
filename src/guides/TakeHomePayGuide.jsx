@@ -7,19 +7,12 @@ import {
   TAX_YEAR_END,
   TAX_YEAR_START,
 } from '../lib/calculations'
+import { gbp, percent } from './format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '8 October 2026'
 const LAST_UPDATED_ISO = '2026-10-08'
 
-const gbp = (value) =>
-  new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    maximumFractionDigits: 0,
-  }).format(value)
-
-const percent = (rate) => `${Math.round(rate * 100)}%`
 
 export default function TakeHomePayGuide() {
   const {

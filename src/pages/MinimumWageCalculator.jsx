@@ -1,3 +1,5 @@
+import MinimumWageGuide from '../guides/MinimumWageGuide'
+import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import { checkMinimumWage } from '../lib/calculations'
 
@@ -103,18 +105,9 @@ export default function MinimumWageCalculator() {
         </div>
       )}
 
-      <div className="methodology">
-        <h2>How this is calculated</h2>
-        <p>
-          Rates from 1 April 2026: £12.71 an hour for workers aged 21 and over (the National
-          Living Wage), £10.85 for ages 18 to 20, and £8.00 for under 18s and apprentices. These
-          rates change every April, usually announced in the preceding Autumn Budget. See{' '}
-          <a href="https://www.gov.uk/national-minimum-wage-rates" target="_blank" rel="noreferrer">
-            gov.uk/national-minimum-wage-rates
-          </a>
-          .
-        </p>
-      </div>
+      <MinimumWageGuide />
+
+      <RelatedCalculators paths={['/salary-calculator', '/redundancy-calculator', '/student-loan-calculator']} />
     </>
   )
 }

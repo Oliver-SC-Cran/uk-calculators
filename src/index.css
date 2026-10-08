@@ -321,3 +321,17 @@ main {
   font-size: 0.92rem;
   color: var(--ink-soft);
 }
+
+.related {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.related .calc-list {
+  margin-top: 1rem;
+}
+
+.related .calc-list__title {
+  margin-bottom: 0;
+}

@@ -1,3 +1,5 @@
+import StudentLoanGuide from '../guides/StudentLoanGuide'
+import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import { calculateStudentLoanRepayment, TAX_YEAR } from '../lib/calculations'
 
@@ -88,32 +90,9 @@ export default function StudentLoanCalculator() {
         </table>
       </div>
 
-      <div className="methodology">
-        <h2>Which plan am I on?</h2>
-        <p>
-          Plan 1 covers English and Welsh students who started before September 2012, and
-          Northern Irish students of any year. Plan 2 covers English students who started between
-          September 2012 and July 2023, and Welsh students who started from September 2012
-          onwards. Plan 5 covers English students only, starting from August 2023 onwards. Welsh
-          students who started after that date are still on Plan 2. Plan 4 covers Scottish
-          students funded through SAAS.
-          A Postgraduate Loan is separate and can run alongside any of these.
-        </p>
-        <h2>How this is calculated</h2>
-        <p>
-          You repay 9% of income above your plan's threshold (6% for a Postgraduate Loan), and
-          the two are calculated and repaid independently, then added together. This assumes you
-          are an employee paid the same amount each month. As on gov.uk, each repayment is worked
-          out on your monthly pay and rounded down to the whole pound. Thresholds for{' '}
-          {TAX_YEAR}: Plan 1 £26,900, Plan 2 £29,385, Plan 4 £33,795, Plan 5 £25,000, Postgraduate
-          Loan £21,000. Several of these thresholds are frozen for a few years rather than rising
-          every April, so check{' '}
-          <a href="https://www.gov.uk/repaying-your-student-loan" target="_blank" rel="noreferrer">
-            gov.uk/repaying-your-student-loan
-          </a>{' '}
-          for the current figures.
-        </p>
-      </div>
+      <StudentLoanGuide />
+
+      <RelatedCalculators paths={['/salary-calculator', '/minimum-wage-calculator']} />
     </>
   )
 }

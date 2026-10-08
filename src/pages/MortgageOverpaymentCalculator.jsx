@@ -1,3 +1,5 @@
+import MortgageOverpaymentGuide from '../guides/MortgageOverpaymentGuide'
+import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import { calculateMortgageOverpayment } from '../lib/calculations'
 
@@ -129,15 +131,9 @@ export default function MortgageOverpaymentCalculator() {
         </>
       )}
 
-      <div className="methodology">
-        <h2>How this is calculated</h2>
-        <p>
-          This uses the standard repayment mortgage formula to work out your normal monthly
-          payment, then adds your overpayment on top and works out month by month how much faster
-          the balance clears and how much less interest builds up along the way, compared with
-          paying only the standard amount for the full original term.
-        </p>
-      </div>
+      <MortgageOverpaymentGuide />
+
+      <RelatedCalculators paths={['/isa-calculator', '/salary-calculator']} />
     </>
   )
 }

@@ -31,6 +31,7 @@ export const REDUNDANCY = {
   minYearsToQualify: 2,
   earliestServiceAge: 15, // the gov.uk calculator rejects service that started before this age
   taxFreeThreshold: 30000,
+  claimWithinMonths: 6, // time limit to apply, from the date the job ends
 }
 
 // Inputs come straight from form fields, so treat anything that is not a
@@ -118,6 +119,14 @@ export const ISA = {
   lisaMinOpenAge: 18,
   lisaMaxOpenAge: 40, // must open a LISA before your 40th birthday
   lisaMaxContributionAge: 50, // existing LISA holders can keep contributing until 50
+  lisaAccessAge: 60, // withdrawals are free of the charge from this age
+  lisaWithdrawalChargeRate: 0.25, // on withdrawals that are not for a first home or after 60
+  lisaPropertyCap: 450000, // most a first home can cost
+  lisaMonthsBeforePurchase: 12, // months between first payment in and buying
+  // Announced change: regulations laid before Parliament on 14 September 2026.
+  cashLimitChangeDate: '6 April 2027',
+  cashLimitUnder65AfterChange: 12000,
+  cashLimitFullAllowanceAge: 65,
 }
 
 /**
@@ -213,11 +222,11 @@ export function checkMinimumWage({ age, hourlyRate, isApprentice }) {
 
 export const STUDENT_LOAN = {
   // Annual thresholds for 2026/27
-  plan1: { threshold: 26900, rate: 0.09, label: 'Plan 1' },
-  plan2: { threshold: 29385, rate: 0.09, label: 'Plan 2' },
-  plan4: { threshold: 33795, rate: 0.09, label: 'Plan 4 (Scotland)' },
-  plan5: { threshold: 25000, rate: 0.09, label: 'Plan 5' },
-  postgraduate: { threshold: 21000, rate: 0.06, label: 'Postgraduate Loan' },
+  plan1: { threshold: 26900, rate: 0.09, label: 'Plan 1', writeOffYears: 25 },
+  plan2: { threshold: 29385, rate: 0.09, label: 'Plan 2', writeOffYears: 30 },
+  plan4: { threshold: 33795, rate: 0.09, label: 'Plan 4 (Scotland)', writeOffYears: 30 },
+  plan5: { threshold: 25000, rate: 0.09, label: 'Plan 5', writeOffYears: 40 },
+  postgraduate: { threshold: 21000, rate: 0.06, label: 'Postgraduate Loan', writeOffYears: 30 },
 }
 
 /**
@@ -226,6 +235,8 @@ export const STUDENT_LOAN = {
  * rounded down to the pound (£26,900 becomes £2,241), and the repayment is
  * rounded down to the pound too.
  */
+export const monthlyLoanThreshold = ({ threshold }) => Math.floor(threshold / 12)
+
 function monthlyLoanRepayment(grossAnnual, { threshold, rate }) {
   const monthlyThreshold = Math.floor(threshold / 12)
   // Whole pence and a whole-number percentage keep the rounding exact.
@@ -256,6 +267,12 @@ export function calculateStudentLoanRepayment({ grossAnnual, plan, hasPostgradua
     totalMonthly,
     totalAnnual: totalMonthly * 12,
   }
+}
+
+export const MORTGAGE = {
+  // Many lenders allow this much of the balance to be overpaid each year
+  // without a charge (source: MoneyHelper). It is typical, not a rule.
+  typicalOverpaymentLimit: 0.1,
 }
 
 /**

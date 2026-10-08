@@ -139,6 +139,8 @@ test('redundancy [gov.uk] matches the official calculator', () => {
     [50, 20, 800, 24.5, 18399, null], // £18,399.50 rounded down
     [55, 30, 450.5, 27, 12163, null], // only the last 20 years count
     [45, 30, 400, 22, 8800, 8800],
+    [30, 5, 500, 5, 2500, 2500], // guide example
+    [58, 25, 900, 28.5, 21403, null], // guide example: capped pay, last 20 years only
     [61, 20, 600, 30, 18000, 18000], // the most weeks you can get
     [64, 25, 1000, 30, 22530, 23490], // the maximum payment
     [70, 45, 900, 30, 22530, 23490],
@@ -359,6 +361,7 @@ test('student loan [own working] thresholds, rounding and odd inputs', () => {
   assert.equal(loan(29500, 'plan2').totalMonthly, 0) // 9% of £10.33 is 93p
   assert.equal(loan(29520, 'plan2').totalMonthly, 1) // 9% of £12 is £1.08
   assert.equal(loan(25000, 'plan5').totalMonthly, 0)
+  assert.equal(loan(40000, 'plan5').totalMonthly, 112) // guide example: 9% of £1,250.33 is £112.53
   assert.equal(loan(21200, 'none', true).totalMonthly, 1) // 6% of £16.67 is £1.00
   // Below every threshold.
   assert.equal(loan(18000, 'plan1', true).totalMonthly, 0)
@@ -456,4 +459,16 @@ test('mortgage [own working] odd inputs', () => {
   assert.ok(Number.isFinite(large.interestSaved) && large.interestSaved > 0)
   // A nonsense rate gives no result, not "NaN".
   assert.equal(mortgage(200000, 1e9, 25, 0), null)
+})
+
+test('mortgage [own working] the worked examples shown in the guide', () => {
+  const summary = (...inputs) => {
+    const result = mortgage(...inputs)
+    return [result.standardPayment, result.newTermMonths, result.monthsSaved, result.interestSaved].map(
+      Math.round,
+    )
+  }
+  assert.deepEqual(summary(200000, 4.5, 25, 200), [1112, 227, 73, 36280])
+  assert.deepEqual(summary(150000, 5, 20, 100), [990, 205, 35, 14256])
+  assert.deepEqual(summary(300000, 4, 30, 500), [1432, 220, 140, 92414])
 })
