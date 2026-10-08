@@ -137,6 +137,7 @@ export function calculateISAAllowance({ cashISA, stocksISA, lisa, age }) {
 
 export const MINIMUM_WAGE = {
   // Rates from 1 April 2026 (£/hour)
+  effectiveFrom: '1 April 2026',
   nationalLivingWage: 12.71, // age 21+
   age18to20: 10.85,
   under18: 8.0,

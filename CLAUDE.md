@@ -26,14 +26,23 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 
 ## Layout
 
-- `src/App.jsx`: all routes
+- `src/routes.js`: the single list of pages, with each page's path, title and meta description. The router, the prerendered HTML, the canonical URLs and the sitemap are all built from it
+- `src/App.jsx`: maps each path in `routes.js` to its page component
 - `src/components/Layout.jsx`: nav and footer shared by every page
 - `src/pages/`: one component per page
 - `src/lib/calculations.js`: every tax figure and all calculation logic
 - `src/index.css`: the only stylesheet
-- `public/sitemap.xml`: update this whenever a route is added, renamed or removed
-- `vercel.json`: lists every route that should load the app. Update it whenever a route is added, renamed or removed, or the new page will return a 404 on the live site
-- `404.html`: second build entry. Vercel serves it with a 404 status for any unknown URL, and the app then shows the not found page
+- `scripts/prerender.js` and `src/entry-server.jsx`: build-time only. They render every route to its own HTML file
+
+## How pages are built
+
+`npm run build` renders every route to real HTML: `dist/index.html`, `dist/<route>/index.html` and `dist/404.html`, plus `dist/sitemap.xml`. The browser then hydrates that HTML, so the calculators work as before.
+
+- To add a page: add it to `src/routes.js` with a unique title and description, then map its path to a component in `src/App.jsx`. Nothing else needs editing. Do not hand-write a sitemap or add rewrites to `vercel.json`.
+- Titles and descriptions are written for someone searching in the UK: say what the page does, include the tax year where it matters, and take figures from the constants in `calculations.js`.
+- Page components must render the same HTML on the server and in the browser. Do not read `window`, `document`, the date or random values while rendering. Use an effect for those.
+- After a build, check the HTML in `dist/` for the page you changed. With `vite preview`, open routes with a trailing slash (`/isa-calculator/`), because the preview server otherwise serves the homepage file. Vercel does not have this problem.
+- Unknown URLs get `dist/404.html` with a 404 status from Vercel.
 
 ## Writing rules
 

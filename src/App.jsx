@@ -10,24 +10,39 @@ import StudentLoanCalculator from './pages/StudentLoanCalculator'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
 import NotFound from './pages/NotFound'
+import { routes } from './routes'
+
+// Every path in src/routes.js needs a component here.
+const pages = {
+  '/': Home,
+  '/salary-calculator': SalaryCalculator,
+  '/redundancy-calculator': RedundancyCalculator,
+  '/isa-calculator': ISACalculator,
+  '/mortgage-overpayment-calculator': MortgageOverpaymentCalculator,
+  '/minimum-wage-calculator': MinimumWageCalculator,
+  '/student-loan-calculator': StudentLoanCalculator,
+  '/about': About,
+  '/privacy': Privacy,
+}
+
+export function AppRoutes() {
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        {routes.map(({ path }) => {
+          const Page = pages[path] ?? NotFound
+          return <Route key={path} path={path} element={<Page />} />
+        })}
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
+  )
+}
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/salary-calculator" element={<SalaryCalculator />} />
-          <Route path="/redundancy-calculator" element={<RedundancyCalculator />} />
-          <Route path="/isa-calculator" element={<ISACalculator />} />
-          <Route path="/mortgage-overpayment-calculator" element={<MortgageOverpaymentCalculator />} />
-          <Route path="/minimum-wage-calculator" element={<MinimumWageCalculator />} />
-          <Route path="/student-loan-calculator" element={<StudentLoanCalculator />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
+      <AppRoutes />
     </BrowserRouter>
   )
 }
