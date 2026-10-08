@@ -3,6 +3,8 @@
 // year's figures are confirmed, and update the THRESHOLDS objects below.
 
 export const TAX_YEAR = '2026/27'
+export const TAX_YEAR_START = '6 April 2026'
+export const TAX_YEAR_END = '5 April 2027'
 
 export const INCOME_TAX = {
   personalAllowance: 12570,
@@ -10,6 +12,9 @@ export const INCOME_TAX = {
   higherRateLimit: 125140, // income up to this is taxed at 40%; above it, 45%
   taperStart: 100000, // personal allowance starts reducing above this income
   taperFullyGoneAt: 125140,
+  basicRate: 0.2,
+  higherRate: 0.4,
+  additionalRate: 0.45,
 }
 
 export const NATIONAL_INSURANCE = {
@@ -40,25 +45,24 @@ export function taperedPersonalAllowance(grossAnnual) {
 
 /**
  * Income tax on UK (non-Scottish) rates: 20% / 40% / 45% bands.
- * The £50,270 and £125,140 thresholds are fixed income points —
- * the personal-allowance taper just shrinks the 0% band inside them.
+ * The bands are measured on taxable income (income minus the personal
+ * allowance). The basic rate band is a fixed width, £37,700 in 2026/27, so
+ * when the taper shrinks the allowance, the lost allowance is taxed at the
+ * higher rate, not the basic rate.
  */
 export function calculateIncomeTax(grossAnnual) {
   const pa = taperedPersonalAllowance(grossAnnual)
-  const { basicRateLimit, higherRateLimit } = INCOME_TAX
-  let tax = 0
+  const { personalAllowance, basicRateLimit, higherRateLimit } = INCOME_TAX
+  const { basicRate, higherRate, additionalRate } = INCOME_TAX
 
-  if (grossAnnual > pa) {
-    const basicBandTop = Math.min(grossAnnual, basicRateLimit)
-    tax += (basicBandTop - pa) * 0.2
-  }
-  if (grossAnnual > basicRateLimit) {
-    const higherBandTop = Math.min(grossAnnual, higherRateLimit)
-    tax += (higherBandTop - basicRateLimit) * 0.4
-  }
-  if (grossAnnual > higherRateLimit) {
-    tax += (grossAnnual - higherRateLimit) * 0.45
-  }
+  const taxable = Math.max(0, grossAnnual - pa)
+  const basicBand = basicRateLimit - personalAllowance
+  const inBasicBand = Math.min(taxable, basicBand)
+  const inHigherBand = Math.max(0, Math.min(taxable, higherRateLimit) - basicBand)
+  const inAdditionalBand = Math.max(0, taxable - higherRateLimit)
+
+  const tax =
+    inBasicBand * basicRate + inHigherBand * higherRate + inAdditionalBand * additionalRate
   return { tax, personalAllowanceUsed: pa }
 }
 

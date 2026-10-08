@@ -30,6 +30,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - `src/App.jsx`: maps each path in `routes.js` to its page component
 - `src/components/Layout.jsx`: nav and footer shared by every page
 - `src/pages/`: one component per page
+- `src/guides/`: the written guide shown below a calculator, one component per guide. Every figure comes from the constants and functions in `calculations.js`, and each guide has a "Last updated" date to change by hand when its wording or figures change
 - `src/lib/calculations.js`: every tax figure and all calculation logic
 - `src/index.css`: the only stylesheet
 - `scripts/prerender.js` and `src/entry-server.jsx`: build-time only. They render every route to its own HTML file

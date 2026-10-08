@@ -1,7 +1,12 @@
 // Worked examples for the 2026/27 figures. Run with: npm test
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { calculateRedundancyPay, calculateStudentLoanRepayment } from './calculations.js'
+import {
+  calculateRedundancyPay,
+  calculateStudentLoanRepayment,
+  calculateTakeHome,
+  taperedPersonalAllowance,
+} from './calculations.js'
 
 const weeks = (age, yearsOfService) =>
   calculateRedundancyPay({ age, yearsOfService, weeklyPay: 600 }).totalWeeks
@@ -38,4 +43,40 @@ test('student loan: a Welsh student who started in 2024 is on Plan 2, not Plan 5
 test('redundancy: the 2026/27 maximum is 30 weeks at the £751 cap, £22,530', () => {
   const result = calculateRedundancyPay({ age: 64, yearsOfService: 25, weeklyPay: 1000 })
   assert.equal(result.pay, 22530)
+})
+
+// These are the worked examples shown in the take-home pay guide.
+test('take-home pay: the 2026/27 worked examples in the guide', () => {
+  const pounds = (salary) => {
+    const result = calculateTakeHome(salary)
+    return [
+      result.incomeTax,
+      result.nationalInsurance,
+      result.takeHomeAnnual,
+      result.takeHomeMonthly,
+    ].map(Math.round)
+  }
+  assert.deepEqual(pounds(25000), [2486, 994, 21520, 1793])
+  assert.deepEqual(pounds(30000), [3486, 1394, 25120, 2093])
+  assert.deepEqual(pounds(35000), [4486, 1794, 28720, 2393])
+  assert.deepEqual(pounds(60000), [11432, 3211, 45357, 3780])
+})
+
+test('take-home pay: the personal allowance tapers away above £100,000', () => {
+  assert.equal(taperedPersonalAllowance(100000), 12570)
+  assert.equal(taperedPersonalAllowance(110000), 7570)
+  assert.equal(taperedPersonalAllowance(125140), 0)
+  // £100 more at £110,000 costs £60 in income tax and £2 in NI.
+  const before = calculateTakeHome(110000)
+  const after = calculateTakeHome(110100)
+  assert.equal(Math.round(after.incomeTax - before.incomeTax), 60)
+  assert.equal(Math.round(after.takeHomeAnnual - before.takeHomeAnnual), 38)
+})
+
+test('take-home pay: income tax above £100,000 taxes the lost allowance at 40%', () => {
+  const tax = (salary) => Math.round(calculateTakeHome(salary).incomeTax)
+  assert.equal(tax(100000), 27432) // £37,700 at 20% + £49,730 at 40%
+  assert.equal(tax(110000), 33432) // £37,700 at 20% + £64,730 at 40%
+  assert.equal(tax(125140), 42516) // £37,700 at 20% + £87,440 at 40%
+  assert.equal(tax(150000), 53703) // as above + £24,860 at 45%
 })
