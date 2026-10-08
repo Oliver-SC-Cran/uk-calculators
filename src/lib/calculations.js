@@ -1,6 +1,6 @@
-// All figures below are for the 2026/27 UK tax year (6 April 2026 – 5 April 2027).
+// All figures below are for the 2026/27 UK tax year (6 April 2026 to 5 April 2027).
 // Sources: gov.uk / HMRC published rates. Re-check every April when the new tax
-// year's figures are confirmed, and update the THRESHOLDS objects below.
+// year's figures are confirmed, and update the constants below.
 
 export const TAX_YEAR = '2026/27'
 export const TAX_YEAR_START = '6 April 2026'
@@ -29,8 +29,13 @@ export const REDUNDANCY = {
   weeklyPayCapNI: 783, // Northern Ireland
   maxYearsCounted: 20,
   minYearsToQualify: 2,
+  earliestServiceAge: 15, // the gov.uk calculator rejects service that started before this age
   taxFreeThreshold: 30000,
 }
+
+// Inputs come straight from form fields, so treat anything that is not a
+// positive number (blank, negative, not a number) as zero.
+const atLeastZero = (value) => (Number.isFinite(value) ? Math.max(0, value) : 0)
 
 /**
  * Reduces the £12,570 personal allowance by £1 for every £2 of income
@@ -51,11 +56,12 @@ export function taperedPersonalAllowance(grossAnnual) {
  * higher rate, not the basic rate.
  */
 export function calculateIncomeTax(grossAnnual) {
-  const pa = taperedPersonalAllowance(grossAnnual)
+  const gross = atLeastZero(grossAnnual)
+  const pa = taperedPersonalAllowance(gross)
   const { personalAllowance, basicRateLimit, higherRateLimit } = INCOME_TAX
   const { basicRate, higherRate, additionalRate } = INCOME_TAX
 
-  const taxable = Math.max(0, grossAnnual - pa)
+  const taxable = Math.max(0, gross - pa)
   const basicBand = basicRateLimit - personalAllowance
   const inBasicBand = Math.min(taxable, basicBand)
   const inHigherBand = Math.max(0, Math.min(taxable, higherRateLimit) - basicBand)
@@ -68,42 +74,45 @@ export function calculateIncomeTax(grossAnnual) {
 
 /** Employee Class 1 National Insurance: 8% then 2%. */
 export function calculateNationalInsurance(grossAnnual) {
+  const gross = atLeastZero(grossAnnual)
   const { primaryThreshold, upperEarningsLimit, mainRate, upperRate } = NATIONAL_INSURANCE
   let ni = 0
-  if (grossAnnual > primaryThreshold) {
-    const mainBandTop = Math.min(grossAnnual, upperEarningsLimit)
+  if (gross > primaryThreshold) {
+    const mainBandTop = Math.min(gross, upperEarningsLimit)
     ni += (mainBandTop - primaryThreshold) * mainRate
   }
-  if (grossAnnual > upperEarningsLimit) {
-    ni += (grossAnnual - upperEarningsLimit) * upperRate
+  if (gross > upperEarningsLimit) {
+    ni += (gross - upperEarningsLimit) * upperRate
   }
   return ni
 }
 
 /**
  * Full take-home pay breakdown for England, Wales and Northern Ireland rates.
- * NOTE: Scotland has its own 6-band system (19/20/21/42/45/48%) with different
- * thresholds — deliberately not implemented here. Verify the exact 2026/27
- * Scottish band cut-offs against Revenue Scotland before adding a Scottish mode.
+ * NOTE: Scotland has its own 6-band system with different thresholds, which
+ * is deliberately not implemented here. Verify the exact 2026/27 Scottish
+ * band cut-offs against gov.scot before adding a Scottish mode.
  */
 export function calculateTakeHome(grossAnnual) {
-  const { tax, personalAllowanceUsed } = calculateIncomeTax(grossAnnual)
-  const ni = calculateNationalInsurance(grossAnnual)
-  const takeHome = grossAnnual - tax - ni
+  const gross = atLeastZero(grossAnnual)
+  const { tax, personalAllowanceUsed } = calculateIncomeTax(gross)
+  const ni = calculateNationalInsurance(gross)
+  const takeHome = gross - tax - ni
   return {
-    grossAnnual,
+    grossAnnual: gross,
     personalAllowanceUsed,
     incomeTax: tax,
     nationalInsurance: ni,
     takeHomeAnnual: takeHome,
     takeHomeMonthly: takeHome / 12,
     takeHomeWeekly: takeHome / 52,
-    effectiveRate: grossAnnual > 0 ? (tax + ni) / grossAnnual : 0,
+    effectiveRate: gross > 0 ? (tax + ni) / gross : 0,
   }
 }
 
 export const ISA = {
   overallAllowance: 20000, // combined limit across Cash, Stocks & Shares and LISA
+  minAge: 18, // you must be 18 or over to open an ISA
   lisaLimit: 4000, // counts within the overall allowance, not on top of it
   lisaBonusRate: 0.25,
   lisaMinOpenAge: 18,
@@ -114,15 +123,23 @@ export const ISA = {
 /**
  * ISA & LISA allowance check for the current tax year.
  * NOTE: from April 2027, the Cash ISA allowance is due to reduce to £12,000 for
- * under-65s (Stocks & Shares stays at £20,000) — this calculator covers the
+ * under-65s (Stocks & Shares stays at £20,000). This calculator covers the
  * current, unchanged 2026/27 rules. Revisit before April 2027.
  */
 export function calculateISAAllowance({ cashISA, stocksISA, lisa, age }) {
-  const { overallAllowance, lisaLimit, lisaBonusRate, lisaMinOpenAge, lisaMaxOpenAge } = ISA
+  const { overallAllowance, minAge, lisaLimit, lisaBonusRate } = ISA
+  const { lisaMinOpenAge, lisaMaxOpenAge, lisaMaxContributionAge } = ISA
 
-  const lisaCapped = Math.min(lisa, lisaLimit)
-  const lisaOverLimit = lisa > lisaLimit
-  const totalContributions = cashISA + stocksISA + lisaCapped
+  const cash = atLeastZero(cashISA)
+  const stocks = atLeastZero(stocksISA)
+  const lisaEntered = atLeastZero(lisa)
+
+  // Nobody under 18 or aged 50 or over can pay into a Lifetime ISA, so a LISA
+  // amount entered at those ages earns no bonus and uses no allowance.
+  const lisaAllowedAtAge = age >= lisaMinOpenAge && age < lisaMaxContributionAge
+  const lisaCapped = lisaAllowedAtAge ? Math.min(lisaEntered, lisaLimit) : 0
+  const lisaOverLimit = lisaAllowedAtAge && lisaEntered > lisaLimit
+  const totalContributions = cash + stocks + lisaCapped
   const overallOverLimit = totalContributions > overallAllowance
   const remainingAllowance = Math.max(0, overallAllowance - totalContributions)
   const lisaBonus = lisaCapped * lisaBonusRate
@@ -136,6 +153,8 @@ export function calculateISAAllowance({ cashISA, stocksISA, lisa, age }) {
     lisaOverLimit,
     lisaBonus,
     lisaEligibleToOpen,
+    lisaAllowedAtAge,
+    tooYoungForISA: age < minAge,
   }
 }
 
@@ -146,14 +165,20 @@ export const MINIMUM_WAGE = {
   age18to20: 10.85,
   under18: 8.0,
   apprentice: 8.0,
+  minAge: 16, // workers must be at least school leaving age, which is usually 16
 }
 
 /**
  * Works out which statutory minimum wage band applies and whether the
- * hourly rate entered meets it.
+ * hourly rate entered meets it. Anyone under school leaving age is not
+ * entitled to the minimum wage at all.
  */
 export function checkMinimumWage({ age, hourlyRate, isApprentice }) {
-  const { nationalLivingWage, age18to20, under18, apprentice } = MINIMUM_WAGE
+  const { nationalLivingWage, age18to20, under18, apprentice, minAge } = MINIMUM_WAGE
+
+  if (!(age >= minAge)) {
+    return { entitled: false, minAge }
+  }
 
   let applicableRate
   let bandLabel
@@ -171,14 +196,16 @@ export function checkMinimumWage({ age, hourlyRate, isApprentice }) {
     bandLabel = 'Under 18 rate'
   }
 
-  const shortfall = Math.max(0, applicableRate - hourlyRate)
-  const isUnderpaid = shortfall > 0
+  // Work in whole pence so 12.71 - 11.50 is exactly 1.21.
+  const shortfallPence = Math.round(applicableRate * 100) - Math.round(atLeastZero(hourlyRate) * 100)
+  const shortfall = Math.max(0, shortfallPence) / 100
 
   return {
+    entitled: true,
     applicableRate,
     bandLabel,
     shortfall,
-    isUnderpaid,
+    isUnderpaid: shortfall > 0,
     weeklyAtMinimum: applicableRate * 37.5,
     annualAtMinimum: applicableRate * 37.5 * 52,
   }
@@ -194,29 +221,40 @@ export const STUDENT_LOAN = {
 }
 
 /**
- * Student loan repayments for the 2026/27 tax year. A person can have an
- * undergraduate plan (1, 2, 4 or 5) and a Postgraduate Loan at the same
- * time, and both are repaid together, so this returns each separately
- * plus the combined total.
+ * One month's repayment on one loan, the way gov.uk works it out for someone
+ * paid monthly: the monthly threshold is the annual one divided by 12 and
+ * rounded down to the pound (£26,900 becomes £2,241), and the repayment is
+ * rounded down to the pound too.
+ */
+function monthlyLoanRepayment(grossAnnual, { threshold, rate }) {
+  const monthlyThreshold = Math.floor(threshold / 12)
+  // Whole pence and a whole-number percentage keep the rounding exact.
+  const excessPence = Math.round((grossAnnual / 12 - monthlyThreshold) * 100)
+  if (excessPence <= 0) return 0
+  return Math.floor((excessPence * Math.round(rate * 100)) / 10000)
+}
+
+/**
+ * Student loan repayments for the 2026/27 tax year, for an employee paid the
+ * same amount every month. A person can have an undergraduate plan (1, 2, 4
+ * or 5) and a Postgraduate Loan at the same time, and both are repaid
+ * together, so this returns each separately plus the combined total.
  */
 export function calculateStudentLoanRepayment({ grossAnnual, plan, hasPostgraduateLoan }) {
+  const gross = atLeastZero(grossAnnual)
   const undergradPlan = plan && plan !== 'none' ? STUDENT_LOAN[plan] : null
 
-  const undergradRepayment = undergradPlan
-    ? Math.max(0, grossAnnual - undergradPlan.threshold) * undergradPlan.rate
+  const undergradMonthly = undergradPlan ? monthlyLoanRepayment(gross, undergradPlan) : 0
+  const postgradMonthly = hasPostgraduateLoan
+    ? monthlyLoanRepayment(gross, STUDENT_LOAN.postgraduate)
     : 0
-
-  const postgradRepayment = hasPostgraduateLoan
-    ? Math.max(0, grossAnnual - STUDENT_LOAN.postgraduate.threshold) * STUDENT_LOAN.postgraduate.rate
-    : 0
-
-  const totalAnnual = undergradRepayment + postgradRepayment
+  const totalMonthly = undergradMonthly + postgradMonthly
 
   return {
-    undergradRepayment,
-    postgradRepayment,
-    totalAnnual,
-    totalMonthly: totalAnnual / 12,
+    undergradMonthly,
+    postgradMonthly,
+    totalMonthly,
+    totalAnnual: totalMonthly * 12,
   }
 }
 
@@ -232,10 +270,11 @@ export function calculateMortgageOverpayment({
   remainingYears,
   monthlyOverpayment,
 }) {
-  const monthlyRate = annualRatePercent / 100 / 12
-  const totalMonths = Math.round(remainingYears * 12)
+  const monthlyRate = atLeastZero(annualRatePercent) / 100 / 12
+  const totalMonths = Math.round(atLeastZero(remainingYears) * 12)
+  const overpayment = atLeastZero(monthlyOverpayment)
 
-  if (balance <= 0 || totalMonths <= 0) {
+  if (!(balance > 0) || totalMonths <= 0) {
     return null
   }
 
@@ -245,22 +284,23 @@ export function calculateMortgageOverpayment({
       : (balance * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) /
         (Math.pow(1 + monthlyRate, totalMonths) - 1)
 
+  // Absurd inputs (a rate in the millions of percent) overflow the formula.
+  if (!Number.isFinite(standardPayment)) {
+    return null
+  }
+
   const standardTotalInterest = standardPayment * totalMonths - balance
 
-  // Simulate with the overpayment added on top of the standard payment.
+  // Simulate with the overpayment added on top of the standard payment. It can
+  // never take longer than the original term, so stop there at the latest.
   let remaining = balance
   let month = 0
   let interestPaid = 0
-  const payment = standardPayment + monthlyOverpayment
-  const safetyCapMonths = totalMonths * 2 + 24
+  const payment = standardPayment + overpayment
 
-  while (remaining > 0.01 && month < safetyCapMonths) {
+  while (remaining > 0.005 && month < totalMonths) {
     const interest = remaining * monthlyRate
-    let principal = payment - interest
-    if (principal <= 0) {
-      break
-    }
-    if (principal > remaining) principal = remaining
+    const principal = Math.min(payment - interest, remaining)
     remaining -= principal
     interestPaid += interest
     month += 1
@@ -289,23 +329,29 @@ export function calculateMortgageOverpayment({
  *
  * A year only counts at the higher rate if the employee was 22 (or 41) or
  * older for the whole of it, so each year is banded by the age they were
- * when it started. This matches the gov.uk ready reckoner table.
+ * when it started. Like the gov.uk calculator, the result is rounded down
+ * to the whole pound, and service that started before age 15 is rejected.
  *
  * It works in whole years of age. For a real, live dismissal, especially
  * right on an age-band boundary, verify against the official gov.uk
  * redundancy calculator, since exact employment dates can shift the result.
  */
 export function calculateRedundancyPay({ age, yearsOfService, weeklyPay, region = 'GB' }) {
-  const { weeklyPayCapGB, weeklyPayCapNI, maxYearsCounted, minYearsToQualify, taxFreeThreshold } =
-    REDUNDANCY
+  const { weeklyPayCapGB, weeklyPayCapNI, maxYearsCounted, minYearsToQualify } = REDUNDANCY
+  const { earliestServiceAge, taxFreeThreshold } = REDUNDANCY
 
-  if (yearsOfService < minYearsToQualify) {
-    return { qualifies: false, minYearsToQualify }
+  const fullYears = Math.floor(atLeastZero(yearsOfService))
+
+  if (fullYears < minYearsToQualify) {
+    return { qualifies: false, reason: 'too-few-years', minYearsToQualify }
+  }
+  if (fullYears > age - earliestServiceAge) {
+    return { qualifies: false, reason: 'service-too-long', earliestServiceAge }
   }
 
   const cap = region === 'NI' ? weeklyPayCapNI : weeklyPayCapGB
-  const cappedWeeklyPay = Math.min(weeklyPay, cap)
-  const cappedYears = Math.min(Math.floor(yearsOfService), maxYearsCounted)
+  const cappedWeeklyPay = Math.min(atLeastZero(weeklyPay), cap)
+  const cappedYears = Math.min(fullYears, maxYearsCounted)
 
   let totalWeeks = 0
   for (let i = 0; i < cappedYears; i++) {
@@ -315,15 +361,13 @@ export function calculateRedundancyPay({ age, yearsOfService, weeklyPay, region 
     else totalWeeks += 0.5
   }
 
-  const pay = totalWeeks * cappedWeeklyPay
-  const maxPossible = cap * 1.5 * maxYearsCounted
-
   return {
     qualifies: true,
     totalWeeks,
     weeklyPayUsed: cappedWeeklyPay,
     weeklyPayWasCapped: weeklyPay > cap,
-    pay: Math.min(pay, maxPossible),
+    // Half-weeks times whole pence keeps the sum exact before rounding down.
+    pay: Math.floor((Math.round(totalWeeks * 2) * Math.round(cappedWeeklyPay * 100)) / 200),
     taxFreeThreshold,
     cap,
   }

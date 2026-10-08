@@ -119,12 +119,27 @@ export default function ISACalculator() {
         </div>
     )}
 
-    {Number(lisa) > 0 && !result.lisaEligibleToOpen && (
+      {result.tooYoungForISA && (
         <div className="notice">
-            You can only open a new Lifetime ISA between ages 18 and 39. If you already hold one,
-            you can keep contributing until age 50. This just affects opening a new one.
+          You must be {ISA.minAge} or over to open an ISA, so this allowance does not apply to you
+          yet. Under-18s can have a Junior ISA, which has its own separate limit.
         </div>
-    )}
+      )}
+
+      {Number(lisa) > 0 && !result.tooYoungForISA && !result.lisaAllowedAtAge && (
+        <div className="notice">
+          You cannot pay into a Lifetime ISA once you are {ISA.lisaMaxContributionAge}, so the
+          Lifetime ISA amount has been left out of the total and earns no bonus.
+        </div>
+      )}
+
+      {Number(lisa) > 0 && result.lisaAllowedAtAge && !result.lisaEligibleToOpen && (
+        <div className="notice">
+          You can only open a new Lifetime ISA between ages {ISA.lisaMinOpenAge} and{' '}
+          {ISA.lisaMaxOpenAge - 1}. If you already hold one, you can keep paying in until you are{' '}
+          {ISA.lisaMaxContributionAge}. The figures above assume you already have one.
+        </div>
+      )}
 
     <div className="notice">
         From April 2027, the Cash ISA allowance is due to reduce to £12,000 a year for people

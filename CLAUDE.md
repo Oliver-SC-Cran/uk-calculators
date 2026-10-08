@@ -9,7 +9,9 @@ UK financial calculators. React 19 + Vite, react-router-dom, plain CSS, deployed
 - `npm run lint` runs oxlint
 - `npm test` runs the worked examples in `src/lib/calculations.test.js`
 
-Run `npm test`, `npm run lint` and `npm run build` before finishing any task. If any of them fails, the task is not finished. When a calculation changes, add or update a worked example in the test file.
+Run `npm test`, `npm run lint` and `npm run build` before finishing any task. If any of them fails, the task is not finished.
+
+When a calculation changes, add or update tests in `src/lib/calculations.test.js`. Cover the boundaries (each threshold, zero, blank or negative input, very high values), not only a typical case. Each test name says where its expected values came from: `[gov.uk]` for a published example or official calculator result, `[own working]` for values worked out by hand. Prefer `[gov.uk]` values wherever gov.uk publishes one, and never label a value `[gov.uk]` without checking the page.
 
 ## Git workflow
 

@@ -68,23 +68,30 @@ export default function MinimumWageCalculator() {
         </label>
       </div>
 
-      <div className="result">
-        <p className="result__figure">{formatGBP(result.applicableRate)}/hr</p>
-        <p className="result__label">Your legal minimum ({result.bandLabel})</p>
+      {result.entitled ? (
+        <div className="result">
+          <p className="result__figure">{formatGBP(result.applicableRate)}/hr</p>
+          <p className="result__label">Your legal minimum ({result.bandLabel})</p>
 
-        <table className="result-table">
-          <tbody>
-            <tr>
-              <td>At 37.5 hours a week</td>
-              <td>{formatGBP(result.weeklyAtMinimum)}</td>
-            </tr>
-            <tr>
-              <td>Over a year</td>
-              <td>{formatGBP(result.annualAtMinimum)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          <table className="result-table">
+            <tbody>
+              <tr>
+                <td>At 37.5 hours a week</td>
+                <td>{formatGBP(result.weeklyAtMinimum)}</td>
+              </tr>
+              <tr>
+                <td>Over a year</td>
+                <td>{formatGBP(result.annualAtMinimum)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="notice">
+          Enter an age of {result.minAge} or over. You must be at least school leaving age
+          (usually {result.minAge}) to get the National Minimum Wage.
+        </div>
+      )}
 
       {result.isUnderpaid && (
         <div className="notice">

@@ -74,11 +74,11 @@ export default function StudentLoanCalculator() {
           <tbody>
             <tr>
               <td>Undergraduate plan repayment</td>
-              <td>{formatGBP(result.undergradRepayment / 12)}/mo</td>
+              <td>{formatGBP(result.undergradMonthly)}/mo</td>
             </tr>
             <tr>
               <td>Postgraduate Loan repayment</td>
-              <td>{formatGBP(result.postgradRepayment / 12)}/mo</td>
+              <td>{formatGBP(result.postgradMonthly)}/mo</td>
             </tr>
             <tr>
               <td>Total per year</td>
@@ -102,7 +102,9 @@ export default function StudentLoanCalculator() {
         <h2>How this is calculated</h2>
         <p>
           You repay 9% of income above your plan's threshold (6% for a Postgraduate Loan), and
-          the two are calculated and repaid independently, then added together. Thresholds for{' '}
+          the two are calculated and repaid independently, then added together. This assumes you
+          are an employee paid the same amount each month. As on gov.uk, each repayment is worked
+          out on your monthly pay and rounded down to the whole pound. Thresholds for{' '}
           {TAX_YEAR}: Plan 1 £26,900, Plan 2 £29,385, Plan 4 £33,795, Plan 5 £25,000, Postgraduate
           Loan £21,000. Several of these thresholds are frozen for a few years rather than rising
           every April, so check{' '}

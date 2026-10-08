@@ -105,6 +105,12 @@ export default function RedundancyCalculator() {
             </tbody>
           </table>
         </div>
+      ) : result.reason === 'service-too-long' ? (
+        <div className="notice">
+          Check your age and years of service. Service that started before age{' '}
+          {result.earliestServiceAge} does not count, and the official gov.uk calculator will not
+          accept it.
+        </div>
       ) : (
         <div className="notice">
           Statutory redundancy pay requires at least {result.minYearsToQualify} full years of
@@ -119,7 +125,8 @@ export default function RedundancyCalculator() {
           week's pay if you were 22 to 40, or 1.5 weeks' pay if you were 41 or over. This counts
           back from your current age, up to a maximum of 20 years' service. Weekly pay is capped at
           £751 (England, Scotland and Wales) or £783 (Northern Ireland) for {TAX_YEAR}, even if
-          you earn more. The first £30,000 is tax-free. This is a standard approximation. For an
+          you earn more. The result is rounded down to the whole pound, as on the official
+          calculator. The first £30,000 is tax-free. This is a standard approximation. For an
           actual dismissal, especially close to an age-band birthday, check the exact figure
           against the official calculator at{' '}
           <a href="https://www.gov.uk/calculate-your-redundancy-pay" target="_blank" rel="noreferrer">
