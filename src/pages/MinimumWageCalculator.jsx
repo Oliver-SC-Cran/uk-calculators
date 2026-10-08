@@ -1,14 +1,9 @@
+import ResultDisclaimer from '../components/ResultDisclaimer'
+import { formatGBPPence as formatGBP } from '../lib/format'
 import MinimumWageGuide from '../guides/MinimumWageGuide'
 import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import { checkMinimumWage } from '../lib/calculations'
-
-const formatGBP = (value) =>
-  new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    maximumFractionDigits: 2,
-  }).format(value)
 
 export default function MinimumWageCalculator() {
   const [age, setAge] = useState('22')
@@ -29,8 +24,8 @@ export default function MinimumWageCalculator() {
     <>
       <h1>Minimum wage checker</h1>
       <p className="lede">
-        Check your hourly rate against the National Living Wage and National Minimum Wage rates
-        from 1 April 2026.
+        Check your hourly rate against the National Living Wage and National Minimum Wage rates from
+        1 April 2026.
       </p>
 
       <div className="field-row">
@@ -58,56 +53,60 @@ export default function MinimumWageCalculator() {
         </div>
       </div>
 
-      <div className="field">
+      <div className="field field--checkbox">
         <label>
           <input
             type="checkbox"
             checked={isApprentice}
             onChange={(event) => setIsApprentice(event.target.checked)}
-            style={{ width: 'auto', marginRight: '0.5rem' }}
           />
           I'm an apprentice under 19, or 19+ and in my first year of an apprenticeship
         </label>
       </div>
 
-      {result.entitled ? (
-        <div className="result">
-          <p className="result__figure">{formatGBP(result.applicableRate)}/hr</p>
-          <p className="result__label">Your legal minimum ({result.bandLabel})</p>
+      <div aria-live="polite">
+        {result.entitled ? (
+          <div className="result">
+            <p className="result__figure">{formatGBP(result.applicableRate)}/hr</p>
+            <p className="result__label">Your legal minimum ({result.bandLabel})</p>
 
-          <table className="result-table">
-            <tbody>
-              <tr>
-                <td>At 37.5 hours a week</td>
-                <td>{formatGBP(result.weeklyAtMinimum)}</td>
-              </tr>
-              <tr>
-                <td>Over a year</td>
-                <td>{formatGBP(result.annualAtMinimum)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="notice">
-          Enter an age of {result.minAge} or over. You must be at least school leaving age
-          (usually {result.minAge}) to get the National Minimum Wage.
-        </div>
-      )}
+            <table className="result-table">
+              <tbody>
+                <tr>
+                  <th scope="row">At 37.5 hours a week</th>
+                  <td>{formatGBP(result.weeklyAtMinimum)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Over a year</th>
+                  <td>{formatGBP(result.annualAtMinimum)}</td>
+                </tr>
+              </tbody>
+            </table>
 
-      {result.isUnderpaid && (
-        <div className="notice">
-          Based on what you've entered, you may be paid {formatGBP(result.shortfall)} an hour
-          below the legal minimum for your age band. If this is accurate, you can report it
-          confidentially and free of charge via the Acas helpline or gov.uk. Double-check your age
-          band and employment type first, since apprenticeships and first-job exemptions can
-          affect which rate applies.
-        </div>
-      )}
+            <ResultDisclaimer />
+          </div>
+        ) : (
+          <div className="notice">
+            Enter an age of {result.minAge} or over. You must be at least school leaving age
+            (usually {result.minAge}) to get the National Minimum Wage.
+          </div>
+        )}
+
+        {result.isUnderpaid && (
+          <div className="notice notice--warning">
+            Based on what you've entered, you may be paid {formatGBP(result.shortfall)} an hour
+            below the legal minimum for your age. Check the age and apprentice options above first,
+            as they change which rate applies. If they are right, the guide below explains how to
+            report it.
+          </div>
+        )}
+      </div>
 
       <MinimumWageGuide />
 
-      <RelatedCalculators paths={['/salary-calculator', '/redundancy-calculator', '/student-loan-calculator']} />
+      <RelatedCalculators
+        paths={['/salary-calculator', '/redundancy-calculator', '/student-loan-calculator']}
+      />
     </>
   )
 }

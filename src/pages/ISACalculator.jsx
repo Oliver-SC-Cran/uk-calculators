@@ -1,14 +1,9 @@
+import ResultDisclaimer from '../components/ResultDisclaimer'
+import { formatGBP, percent } from '../lib/format'
 import ISAGuide from '../guides/ISAGuide'
 import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import { calculateISAAllowance, ISA, TAX_YEAR } from '../lib/calculations'
-
-const formatGBP = (value) =>
-  new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    maximumFractionDigits: 0,
-  }).format(value)
 
 export default function ISACalculator() {
   const [cashISA, setCashISA] = useState('5000')
@@ -83,71 +78,74 @@ export default function ISACalculator() {
         />
       </div>
 
-      <div className="result">
-        <p className="result__figure">{formatGBP(result.remainingAllowance)}</p>
-        <p className="result__label">Remaining allowance this tax year</p>
+      <div aria-live="polite">
+        <div className="result">
+          <p className="result__figure">{formatGBP(result.remainingAllowance)}</p>
+          <p className="result__label">Remaining allowance this tax year</p>
 
-        <table className="result-table">
-          <tbody>
-            <tr>
-              <td>Total contributions entered</td>
-              <td>{formatGBP(result.totalContributions)}</td>
-            </tr>
-            <tr>
-              <td>Overall allowance</td>
-              <td>{formatGBP(ISA.overallAllowance)}</td>
-            </tr>
-            <tr>
-              <td>Lifetime ISA government bonus (25%)</td>
-              <td>{formatGBP(result.lisaBonus)}</td>
-            </tr>
-          </tbody>
-        </table>
+          <table className="result-table">
+            <tbody>
+              <tr>
+                <th scope="row">Total contributions entered</th>
+                <td>{formatGBP(result.totalContributions)}</td>
+              </tr>
+              <tr>
+                <th scope="row">Overall allowance</th>
+                <td>{formatGBP(ISA.overallAllowance)}</td>
+              </tr>
+              <tr>
+                <th scope="row">Lifetime ISA government bonus ({percent(ISA.lisaBonusRate)})</th>
+                <td>{formatGBP(result.lisaBonus)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <ResultDisclaimer />
+        </div>
+
+        {result.overallOverLimit && (
+          <div className="notice notice--warning">
+            Your total of {formatGBP(result.totalContributions)} is over the{' '}
+            {formatGBP(ISA.overallAllowance)} allowance for all your ISAs this tax year. You cannot
+            pay in more than the allowance.
+          </div>
+        )}
+
+        {result.lisaOverLimit && (
+          <div className="notice notice--warning">
+            A Lifetime ISA has its own limit of {formatGBP(ISA.lisaLimit)} a tax year, even if you
+            have allowance left overall. The figures above count only {formatGBP(ISA.lisaLimit)}.
+          </div>
+        )}
+
+        {result.tooYoungForISA && (
+          <div className="notice">
+            You must be {ISA.minAge} or over to open an ISA, so this allowance does not apply to you
+            yet. Under-18s can have a Junior ISA, which has its own separate limit.
+          </div>
+        )}
+
+        {Number(lisa) > 0 && !result.tooYoungForISA && !result.lisaAllowedAtAge && (
+          <div className="notice">
+            You cannot pay into a Lifetime ISA once you are {ISA.lisaMaxContributionAge}, so the
+            Lifetime ISA amount has been left out of the total and earns no bonus.
+          </div>
+        )}
+
+        {Number(lisa) > 0 && result.lisaAllowedAtAge && !result.lisaEligibleToOpen && (
+          <div className="notice">
+            You can only open a new Lifetime ISA between ages {ISA.lisaMinOpenAge} and{' '}
+            {ISA.lisaMaxOpenAge - 1}. If you already hold one, you can keep paying in until you are{' '}
+            {ISA.lisaMaxContributionAge}. The figures above assume you already have one.
+          </div>
+        )}
       </div>
 
-      {result.overallOverLimit && (
-        <div className="notice">
-          Your total ({formatGBP(result.totalContributions)}) is over the combined{' '}
-          {formatGBP(ISA.overallAllowance)} allowance across all your ISAs this tax year.
-          Contributions beyond the allowance aren't permitted in an ISA wrapper.
-        </div>
-      )}
-
-      {result.lisaOverLimit && (
-        <div className="notice">
-            The Lifetime ISA has its own separate limit of {formatGBP(ISA.lisaLimit)} per tax year,
-            even if you have allowance left overall. The calculation above has capped it
-            accordingly.
-        </div>
-    )}
-
-      {result.tooYoungForISA && (
-        <div className="notice">
-          You must be {ISA.minAge} or over to open an ISA, so this allowance does not apply to you
-          yet. Under-18s can have a Junior ISA, which has its own separate limit.
-        </div>
-      )}
-
-      {Number(lisa) > 0 && !result.tooYoungForISA && !result.lisaAllowedAtAge && (
-        <div className="notice">
-          You cannot pay into a Lifetime ISA once you are {ISA.lisaMaxContributionAge}, so the
-          Lifetime ISA amount has been left out of the total and earns no bonus.
-        </div>
-      )}
-
-      {Number(lisa) > 0 && result.lisaAllowedAtAge && !result.lisaEligibleToOpen && (
-        <div className="notice">
-          You can only open a new Lifetime ISA between ages {ISA.lisaMinOpenAge} and{' '}
-          {ISA.lisaMaxOpenAge - 1}. If you already hold one, you can keep paying in until you are{' '}
-          {ISA.lisaMaxContributionAge}. The figures above assume you already have one.
-        </div>
-      )}
-
-    <div className="notice">
-        From April 2027, the Cash ISA allowance is due to reduce to £12,000 a year for people
-        under 65 (the Stocks & Shares ISA allowance stays at £20,000). This calculator reflects
-        the current {TAX_YEAR} rules. Check back nearer April 2027 if you're planning ahead.
-    </div>
+      <div className="notice">
+        From {ISA.cashLimitChangeDate}, people under {ISA.cashLimitFullAllowanceAge} will only be
+        able to pay {formatGBP(ISA.cashLimitUnder65AfterChange)} a year into cash ISAs. This
+        calculator uses the {TAX_YEAR} rules. The guide below explains the change.
+      </div>
 
       <ISAGuide />
 

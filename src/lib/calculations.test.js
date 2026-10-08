@@ -17,11 +17,16 @@ import {
   calculateStudentLoanRepayment,
   calculateTakeHome,
   checkMinimumWage,
+  STUDENT_LOAN,
+  studentLoanWorking,
   taperedPersonalAllowance,
 } from './calculations.js'
 
 const near = (actual, expected, message) =>
-  assert.ok(Math.abs(actual - expected) < 0.005, `${message ?? ''} got ${actual}, expected ${expected}`)
+  assert.ok(
+    Math.abs(actual - expected) < 0.005,
+    `${message ?? ''} got ${actual}, expected ${expected}`,
+  )
 
 // ---------------------------------------------------------------------------
 // Take-home pay
@@ -173,7 +178,14 @@ test('redundancy [gov.uk] under 2 full years does not qualify', () => {
 
 test('redundancy [gov.uk] service that started before age 15 is rejected', () => {
   // The official calculator returns an error for each of these.
-  for (const [age, yearsOfService] of [[16, 2], [17, 3], [18, 5], [20, 6], [20, 10], [45, 31]]) {
+  for (const [age, yearsOfService] of [
+    [16, 2],
+    [17, 3],
+    [18, 5],
+    [20, 6],
+    [20, 10],
+    [45, 31],
+  ]) {
     const result = calculateRedundancyPay({ age, yearsOfService, weeklyPay: 400 })
     assert.equal(result.qualifies, false, `age ${age}, ${yearsOfService} years`)
     assert.equal(result.reason, 'service-too-long')
@@ -190,8 +202,14 @@ test('redundancy [own working] pay cap flag and odd inputs', () => {
   assert.equal(calculateRedundancyPay({ age: 35, yearsOfService: 3, weeklyPay: -100 }).pay, 0)
   assert.equal(calculateRedundancyPay({ age: 35, yearsOfService: 3, weeklyPay: NaN }).pay, 0)
   // Blank age or years.
-  assert.equal(calculateRedundancyPay({ age: 0, yearsOfService: 0, weeklyPay: 600 }).qualifies, false)
-  assert.equal(calculateRedundancyPay({ age: 0, yearsOfService: 5, weeklyPay: 600 }).qualifies, false)
+  assert.equal(
+    calculateRedundancyPay({ age: 0, yearsOfService: 0, weeklyPay: 600 }).qualifies,
+    false,
+  )
+  assert.equal(
+    calculateRedundancyPay({ age: 0, yearsOfService: 5, weeklyPay: 600 }).qualifies,
+    false,
+  )
 })
 
 // ---------------------------------------------------------------------------
@@ -394,7 +412,11 @@ test('mortgage [own working] standard monthly payments', () => {
 })
 
 test('mortgage [own working] no overpayment changes nothing', () => {
-  for (const [balance, rate, years] of [[200000, 4.5, 25], [85000, 7.25, 12], [10000000, 3, 40]]) {
+  for (const [balance, rate, years] of [
+    [200000, 4.5, 25],
+    [85000, 7.25, 12],
+    [10000000, 3, 40],
+  ]) {
     const result = mortgage(balance, rate, years, 0)
     assert.equal(result.newTermMonths, years * 12)
     assert.equal(result.monthsSaved, 0)
@@ -464,11 +486,43 @@ test('mortgage [own working] odd inputs', () => {
 test('mortgage [own working] the worked examples shown in the guide', () => {
   const summary = (...inputs) => {
     const result = mortgage(...inputs)
-    return [result.standardPayment, result.newTermMonths, result.monthsSaved, result.interestSaved].map(
-      Math.round,
-    )
+    return [
+      result.standardPayment,
+      result.newTermMonths,
+      result.monthsSaved,
+      result.interestSaved,
+    ].map(Math.round)
   }
   assert.deepEqual(summary(200000, 4.5, 25, 200), [1112, 227, 73, 36280])
   assert.deepEqual(summary(150000, 5, 20, 100), [990, 205, 35, 14256])
   assert.deepEqual(summary(300000, 4, 30, 500), [1432, 220, 140, 92414])
+})
+
+test('student loan [gov.uk] the working behind each example matches gov.uk step by step', () => {
+  // Plan 1 on £33,000: "£2,750 - £2,241 = £509. 9% of £509 = £45.81 ... £45."
+  assert.deepEqual(studentLoanWorking(33000, STUDENT_LOAN.plan1), {
+    monthlyPay: 2750,
+    monthlyThreshold: 2241,
+    over: 509,
+    beforeRounding: 45.81,
+    repayment: 45,
+  })
+  // Plan 4 on £36,000: "£3,000 - £2,816 = £184. 9% of £184 = £16.56 ... £16."
+  assert.deepEqual(studentLoanWorking(36000, STUDENT_LOAN.plan4), {
+    monthlyPay: 3000,
+    monthlyThreshold: 2816,
+    over: 184,
+    beforeRounding: 16.56,
+    repayment: 16,
+  })
+  // The working always ends at the same figure the calculator shows.
+  for (const salary of [0, 21000, 25000, 29385, 30000, 40000, 55555, 120000]) {
+    for (const plan of ['plan1', 'plan2', 'plan4', 'plan5']) {
+      assert.equal(
+        studentLoanWorking(salary, STUDENT_LOAN[plan]).repayment,
+        loan(salary, plan).totalMonthly,
+        `${plan} on ${salary}`,
+      )
+    }
+  }
 })

@@ -68,8 +68,19 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 ## Design
 
 - Plain CSS with the custom properties in `src/index.css`. No UI kit, icon library or CSS framework without asking first.
-- Reuse the existing classes (`field`, `field-row`, `result`, `result-table`, `notice`, `methodology`) and the existing spacing and radius values. No inline styles.
-- Every input needs a visible `<label>`, text needs at least 4.5:1 contrast, and everything must work with the keyboard alone.
+- Reuse the existing classes (`field`, `field-row`, `field--checkbox`, `result`, `result-table`, `notice`, `guide`, `related`) and the existing spacing. Corners use `var(--radius)` and nothing else. No inline styles.
+- `notice` is a neutral note about what a calculator assumes. Add `notice--warning` (red edge) only for a real problem with what was entered, such as going over a limit or being paid under the minimum.
+- Format money with `formatGBP` or `formatGBPPence` from `src/lib/format.js`. Do not write a new formatter. Negative amounts get a real minus sign from those functions, so never type a hyphen in front of an amount.
+- Every result box ends with `<ResultDisclaimer />`.
+- Code is formatted with Prettier, without a config file: `npx prettier@3.3.3 --no-config --no-semi --single-quote --print-width 100 --write "src/**/*.{js,jsx}" "scripts/*.js"`. Run it after editing so indentation stays consistent.
+
+## Accessibility
+
+- Every input needs a visible `<label>`. Text needs at least 4.5:1 contrast and the edges of form fields at least 3:1. Check new colours before using them.
+- Everything must work with the keyboard alone. Keep the skip link, and keep moving focus to `<main>` when the page changes (both are in `Layout.jsx`).
+- Results that change as someone types sit inside an `aria-live="polite"` region, so screen readers announce them.
+- Result tables use `<th scope="row">` for the label in each row.
+- The page language is `en-GB`.
 
 ## Compliance
 

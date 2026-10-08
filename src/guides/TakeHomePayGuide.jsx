@@ -7,12 +7,11 @@ import {
   TAX_YEAR_END,
   TAX_YEAR_START,
 } from '../lib/calculations'
-import { gbp, percent } from './format'
+import { formatGBP as gbp, percent } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '8 October 2026'
 const LAST_UPDATED_ISO = '2026-10-08'
-
 
 export default function TakeHomePayGuide() {
   const {
@@ -63,9 +62,7 @@ export default function TakeHomePayGuide() {
 
       <h3>Income tax bands</h3>
       <ul>
-        <li>
-          Personal allowance: the first {gbp(personalAllowance)} you earn is tax-free.
-        </li>
+        <li>Personal allowance: the first {gbp(personalAllowance)} you earn is tax-free.</li>
         <li>
           Basic rate: {percent(basicRate)} on income from {gbp(personalAllowance + 1)} to{' '}
           {gbp(basicRateLimit)}.
@@ -90,24 +87,24 @@ export default function TakeHomePayGuide() {
 
       <h3>The personal allowance taper above {gbp(taperStart)}</h3>
       <p>
-        Once your income goes over {gbp(taperStart)}, you lose £1 of personal allowance for every
-        £2 above it. At {gbp(taperExample)} the allowance is down to{' '}
+        Once your income goes over {gbp(taperStart)}, you lose £1 of personal allowance for every £2
+        above it. At {gbp(taperExample)} the allowance is down to{' '}
         {gbp(taperedPersonalAllowance(taperExample))}. At {gbp(taperFullyGoneAt)} it has gone
         completely.
       </p>
       <p>
         This makes each extra £100 between {gbp(taperStart)} and {gbp(taperFullyGoneAt)} cost{' '}
-        {gbp(taperTotalTaxPer100)} in income tax. That is {gbp(taperTaxPer100)} at the higher
-        rate, plus {gbp(taperExtraTaxPer100)} because another {gbp(taperLostAllowancePer100)} of
-        your income is no longer tax-free. With {percent(upperRate)} NI on top, you keep{' '}
-        {gbp(taperKeptPer100)} of that £100. Pension contributions and Gift Aid donations reduce
-        the income figure used for the taper.
+        {gbp(taperTotalTaxPer100)} in income tax. That is {gbp(taperTaxPer100)} at the higher rate,
+        plus {gbp(taperExtraTaxPer100)} because another {gbp(taperLostAllowancePer100)} of your
+        income is no longer tax-free. With {percent(upperRate)} NI on top, you keep{' '}
+        {gbp(taperKeptPer100)} of that £100. Pension contributions and Gift Aid donations reduce the
+        income figure used for the taper.
       </p>
 
       <h2>Worked examples</h2>
       <p>
-        Each example assumes one job, the standard personal allowance, no pension contributions
-        and no student loan. Figures are rounded to the nearest pound.
+        Each example assumes one job, the standard personal allowance, no pension contributions and
+        no student loan. Figures are rounded to the nearest pound.
       </p>
 
       <h3>{gbp(25000)} a year</h3>
@@ -122,8 +119,8 @@ export default function TakeHomePayGuide() {
       <p>
         {gbp(35000 - personalAllowance)} is taxable. Income tax at {percent(basicRate)} is{' '}
         {gbp(on35k.incomeTax)} and NI at {percent(mainRate)} is {gbp(on35k.nationalInsurance)}.
-        Take-home pay is {gbp(on35k.takeHomeAnnual)} a year, or about{' '}
-        {gbp(on35k.takeHomeMonthly)} a month.
+        Take-home pay is {gbp(on35k.takeHomeAnnual)} a year, or about {gbp(on35k.takeHomeMonthly)} a
+        month.
       </p>
 
       <h3>{gbp(60000)} a year</h3>
@@ -139,7 +136,9 @@ export default function TakeHomePayGuide() {
 
       <h2>Common questions</h2>
 
-      <h3>Do I pay {percent(higherRate)} tax on everything if I earn over {gbp(basicRateLimit)}?</h3>
+      <h3>
+        Do I pay {percent(higherRate)} tax on everything if I earn over {gbp(basicRateLimit)}?
+      </h3>
       <p>
         No. The {percent(higherRate)} rate only applies to the part of your income above{' '}
         {gbp(basicRateLimit)}. Everything below that is still tax-free or taxed at{' '}
@@ -156,16 +155,16 @@ export default function TakeHomePayGuide() {
 
       <h3>Why is my payslip different from this calculator?</h3>
       <p>
-        The usual reasons are pension contributions, student loan repayments, a tax code other
-        than {standardTaxCode}, taxable benefits such as a company car, or starting the job part
-        way through the tax year.
+        The usual reasons are pension contributions, student loan repayments, a tax code other than{' '}
+        {standardTaxCode}, taxable benefits such as a company car, or starting the job part way
+        through the tax year.
       </p>
 
       <h3>Is income tax different in Scotland?</h3>
       <p>
-        Yes. Scottish taxpayers pay income tax at rates and bands set by the Scottish Government,
-        so their take-home pay is different. NI is the same across the UK. This calculator does
-        not cover Scottish rates.
+        Yes. Scottish taxpayers pay income tax at rates and bands set by the Scottish Government, so
+        their take-home pay is different. NI is the same across the UK. This calculator does not
+        cover Scottish rates.
       </p>
 
       <h2>Where these figures come from</h2>

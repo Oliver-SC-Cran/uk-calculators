@@ -1,13 +1,12 @@
 import { checkMinimumWage, MINIMUM_WAGE } from '../lib/calculations'
-import { gbp, gbpPence } from './format'
+import { formatGBP as gbp, formatGBPPence as gbpPence } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '8 October 2026'
 const LAST_UPDATED_ISO = '2026-10-08'
 
 export default function MinimumWageGuide() {
-  const { effectiveFrom, nationalLivingWage, age18to20, under18, apprentice, minAge } =
-    MINIMUM_WAGE
+  const { effectiveFrom, nationalLivingWage, age18to20, under18, apprentice, minAge } = MINIMUM_WAGE
   const year = effectiveFrom.slice(-4)
 
   // Example 1: paid below the rate.
@@ -35,10 +34,10 @@ export default function MinimumWageGuide() {
         Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
       </p>
       <p>
-        Almost every worker in the UK must be paid at least a minimum hourly rate. The rate
-        depends on your age and whether you are an apprentice. It applies however you are paid,
-        including by salary or by the piece, and however small your employer is. The rates change
-        on 1 April each year.
+        Almost every worker in the UK must be paid at least a minimum hourly rate. The rate depends
+        on your age and whether you are an apprentice. It applies however you are paid, including by
+        salary or by the piece, and however small your employer is. The rates change on 1 April each
+        year.
       </p>
 
       <h3>Rates from {effectiveFrom}</h3>
@@ -50,8 +49,8 @@ export default function MinimumWageGuide() {
       </ul>
       <p>
         The apprentice rate applies if you are under 19, or if you are 19 or over and in the first
-        year of your apprenticeship. After that you get the rate for your age. An apprentice aged
-        21 who has finished their first year is entitled to {gbpPence(nationalLivingWage)}.
+        year of your apprenticeship. After that you get the rate for your age. An apprentice aged 21
+        who has finished their first year is entitled to {gbpPence(nationalLivingWage)}.
       </p>
 
       <h3>Who is not covered</h3>
@@ -82,19 +81,19 @@ export default function MinimumWageGuide() {
 
       <h3>What counts as working time</h3>
       <p>
-        Time you are required to be at work counts, as does training and travel between jobs
-        during the day. Rest breaks and travel between home and work do not. If you regularly work
-        extra hours without pay, the same pay is spread over more hours, which can also take you
-        below the minimum.
+        Time you are required to be at work counts, as does training and travel between jobs during
+        the day. Rest breaks and travel between home and work do not. If you regularly work extra
+        hours without pay, the same pay is spread over more hours, which can also take you below the
+        minimum.
       </p>
 
       <h2>Worked examples</h2>
 
       <h3>Aged 22 and paid {gbpPence(11.5)} an hour</h3>
       <p>
-        The minimum at 22 is {gbpPence(ex1.applicableRate)}, so you are {gbpPence(ex1.shortfall)}{' '}
-        an hour short. Over {ex1Hours} hours that is {gbpPence(ex1.shortfall * ex1Hours)} a week
-        you are owed.
+        The minimum at 22 is {gbpPence(ex1.applicableRate)}, so you are {gbpPence(ex1.shortfall)} an
+        hour short. Over {ex1Hours} hours that is {gbpPence(ex1.shortfall * ex1Hours)} a week you
+        are owed.
       </p>
 
       <h3>A uniform charge</h3>
@@ -108,8 +107,8 @@ export default function MinimumWageGuide() {
       <h3>Unpaid extra hours</h3>
       <p>
         You are paid {gbpPence(ex2Rate)} an hour for {ex3PaidHours} hours, which is{' '}
-        {gbpPence(ex3Pay)} a week, but you work {ex3WorkedHours} hours. Spread over{' '}
-        {ex3WorkedHours} hours your pay is {gbpPence(ex3Hourly)} an hour, which is under{' '}
+        {gbpPence(ex3Pay)} a week, but you work {ex3WorkedHours} hours. Spread over {ex3WorkedHours}{' '}
+        hours your pay is {gbpPence(ex3Hourly)} an hour, which is under{' '}
         {gbpPence(nationalLivingWage)}.
       </p>
 
@@ -117,22 +116,22 @@ export default function MinimumWageGuide() {
 
       <h3>How do I report being paid less than the minimum wage?</h3>
       <p>
-        Talk to your employer first. If that does not fix it, you can ask in writing to see your
-        pay records. You can call the Acas helpline for confidential advice, or make a complaint
-        to HMRC using the online form on gov.uk. You can also complain on someone else's behalf.
+        Talk to your employer first. If that does not fix it, you can ask in writing to see your pay
+        records. You can call the Acas helpline for confidential advice, or make a complaint to HMRC
+        using the online form on gov.uk. You can also complain on someone else's behalf.
       </p>
 
       <h3>What happens after a complaint?</h3>
       <p>
-        If HMRC finds you were underpaid, it sends your employer a notice to pay the arrears, plus
-        a fine. If the employer still refuses, HMRC can take them to court on your behalf. You can
+        If HMRC finds you were underpaid, it sends your employer a notice to pay the arrears, plus a
+        fine. If the employer still refuses, HMRC can take them to court on your behalf. You can
         also go to an employment tribunal yourself.
       </p>
 
       <h3>I am paid a salary. Does the minimum wage still apply?</h3>
       <p>
-        Yes. Work out your pay for the period and divide it by the hours you worked to get an
-        hourly rate.
+        Yes. Work out your pay for the period and divide it by the hours you worked to get an hourly
+        rate.
       </p>
 
       <h3>Is the National Living Wage the same as the real Living Wage?</h3>

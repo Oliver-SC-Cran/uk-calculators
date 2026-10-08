@@ -1,5 +1,5 @@
 import { calculateISAAllowance, ISA, TAX_YEAR } from '../lib/calculations'
-import { gbp, percent } from './format'
+import { formatGBP as gbp, percent } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '8 October 2026'
@@ -39,8 +39,8 @@ export default function ISAGuide() {
       <p>
         There are four types: cash ISAs, stocks and shares ISAs, innovative finance ISAs and
         Lifetime ISAs. You can put the whole {gbp(overallAllowance)} in one account or split it
-        across several, including more than one of the same type. The one exception is the
-        Lifetime ISA: you can only pay into one in a tax year, and no more than {gbp(lisaLimit)}.
+        across several, including more than one of the same type. The one exception is the Lifetime
+        ISA: you can only pay into one in a tax year, and no more than {gbp(lisaLimit)}.
       </p>
       <p>
         The allowance runs from 6 April to 5 April. You can take money out of an ISA at any time
@@ -65,8 +65,8 @@ export default function ISAGuide() {
       <p>
         You can take the money out without a charge to buy your first home, once you are{' '}
         {lisaAccessAge} or over, or if you are terminally ill. For a first home, the property must
-        cost {gbp(lisaPropertyCap)} or less, you must buy with a mortgage, and you must buy at
-        least {lisaMonthsBeforePurchase} months after your first payment into the account.
+        cost {gbp(lisaPropertyCap)} or less, you must buy with a mortgage, and you must buy at least{' '}
+        {lisaMonthsBeforePurchase} months after your first payment into the account.
       </p>
       <p>
         Any other withdrawal has a {percent(lisaWithdrawalChargeRate)} charge on the amount taken
@@ -78,15 +78,15 @@ export default function ISAGuide() {
       <h3>The Cash ISA change from April 2027</h3>
       <p>
         From {cashLimitChangeDate}, people under {cashLimitFullAllowanceAge} will only be able to
-        pay {gbp(cashLimitUnder65AfterChange)} a year into cash ISAs. The overall allowance stays
-        at {gbp(overallAllowance)}, so the rest can still go into a stocks and shares, innovative
+        pay {gbp(cashLimitUnder65AfterChange)} a year into cash ISAs. The overall allowance stays at{' '}
+        {gbp(overallAllowance)}, so the rest can still go into a stocks and shares, innovative
         finance or Lifetime ISA. People aged {cashLimitFullAllowanceAge} and over keep the full{' '}
         {gbp(overallAllowance)} for cash.
       </p>
       <p>
         The regulations were laid before Parliament on 14 September 2026 and come into force on{' '}
-        {cashLimitChangeDate}. They include rules to stop people getting round the lower cash
-        limit. Nothing changes for {TAX_YEAR}, which is the year this calculator covers.
+        {cashLimitChangeDate}. They include rules to stop people getting round the lower cash limit.
+        Nothing changes for {TAX_YEAR}, which is the year this calculator covers.
       </p>
 
       <h2>Worked examples</h2>
@@ -101,15 +101,15 @@ export default function ISAGuide() {
       <h3>Using part of it</h3>
       <p>
         You pay in {gbp(5000)} to cash, {gbp(5000)} to stocks and shares and {gbp(4000)} to a
-        Lifetime ISA. That is {gbp(part.totalContributions)}, leaving{' '}
-        {gbp(part.remainingAllowance)} you can still pay in before 5 April.
+        Lifetime ISA. That is {gbp(part.totalContributions)}, leaving {gbp(part.remainingAllowance)}{' '}
+        you can still pay in before 5 April.
       </p>
 
       <h3>Trying to put {gbp(6000)} in a Lifetime ISA</h3>
       <p>
         Only {gbp(overLisa.lisaCapped)} is allowed, which earns the full {gbp(overLisa.lisaBonus)}{' '}
-        bonus. The other {gbp(6000 - overLisa.lisaCapped)} would have to go into a different type
-        of ISA. You would have {gbp(overLisa.remainingAllowance)} of allowance left for that.
+        bonus. The other {gbp(6000 - overLisa.lisaCapped)} would have to go into a different type of
+        ISA. You would have {gbp(overLisa.remainingAllowance)} of allowance left for that.
       </p>
 
       <h2>Common questions</h2>

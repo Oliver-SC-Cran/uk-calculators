@@ -1,14 +1,9 @@
+import ResultDisclaimer from '../components/ResultDisclaimer'
+import { formatGBP } from '../lib/format'
 import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import TakeHomePayGuide from '../guides/TakeHomePayGuide'
 import { calculateTakeHome, TAX_YEAR } from '../lib/calculations'
-
-const formatGBP = (value) =>
-  new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    maximumFractionDigits: 0,
-  }).format(value)
 
 export default function SalaryCalculator() {
   const [salaryInput, setSalaryInput] = useState('35000')
@@ -37,45 +32,48 @@ export default function SalaryCalculator() {
         />
       </div>
 
-      <div className="result">
+      <div className="result" aria-live="polite">
         <p className="result__figure">{formatGBP(result.takeHomeAnnual)}</p>
         <p className="result__label">Estimated take-home pay per year</p>
 
         <table className="result-table">
           <tbody>
             <tr>
-              <td>Gross salary</td>
+              <th scope="row">Gross salary</th>
               <td>{formatGBP(result.grossAnnual)}</td>
             </tr>
             <tr>
-              <td>Income tax</td>
-              <td>-{formatGBP(result.incomeTax)}</td>
+              <th scope="row">Income tax</th>
+              <td>{formatGBP(-result.incomeTax || 0)}</td>
             </tr>
             <tr>
-              <td>National Insurance</td>
-              <td>-{formatGBP(result.nationalInsurance)}</td>
+              <th scope="row">National Insurance</th>
+              <td>{formatGBP(-result.nationalInsurance || 0)}</td>
             </tr>
             <tr>
-              <td>Take-home per month</td>
+              <th scope="row">Take-home per month</th>
               <td>{formatGBP(result.takeHomeMonthly)}</td>
             </tr>
             <tr>
-              <td>Effective tax + NI rate</td>
+              <th scope="row">Effective tax + NI rate</th>
               <td>{(result.effectiveRate * 100).toFixed(1)}%</td>
             </tr>
           </tbody>
         </table>
+
+        <ResultDisclaimer />
       </div>
 
       <div className="notice">
-        This uses standard England/Wales/Northern Ireland rates, not Scottish rates, which have
-        different bands. It also assumes no student loan, pension contribution, or other
-        deductions.
+        This uses the rates for England, Wales and Northern Ireland. Scotland has different income
+        tax bands. It assumes no pension contributions, student loan or other deductions.
       </div>
 
       <TakeHomePayGuide />
 
-      <RelatedCalculators paths={['/student-loan-calculator', '/minimum-wage-calculator', '/redundancy-calculator']} />
+      <RelatedCalculators
+        paths={['/student-loan-calculator', '/minimum-wage-calculator', '/redundancy-calculator']}
+      />
     </>
   )
 }

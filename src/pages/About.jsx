@@ -1,22 +1,24 @@
+import { TAX_YEAR } from '../lib/calculations'
+
 export default function About() {
   return (
     <>
       <h1>About this site</h1>
       <p>
-        UK Money Calculators is a small, independently run set of tools for common UK money
-        questions, starting with take-home pay and statutory redundancy pay, with more calculators
-        planned.
+        UK Money Calculators is a small, independently run site with six calculators for UK pay, tax
+        and savings: take-home pay, redundancy pay, ISA allowance, mortgage overpayments, minimum
+        wage and student loan repayments.
       </p>
       <p>
-        Every calculator is built directly from published HMRC and gov.uk figures for the current
-        tax year, with a plain-English breakdown of how the number is worked out underneath each
-        result. Figures are reviewed and updated each April when the new tax year's rates are
-        confirmed.
+        The figures are for the {TAX_YEAR} tax year and come from gov.uk, HMRC and nidirect. Under
+        each calculator there is a guide that shows how the result is worked out and links to the
+        source. The figures are checked every April, when the new tax year's rates are confirmed,
+        and whenever a change is announced.
       </p>
       <p>
-        This site provides general information only. It is not financial, tax or legal advice,
-        and you should not rely on it for a decision with real money or legal consequences without
-        checking the official source linked on each calculator.
+        This site gives general information only. It is not financial, tax or legal advice. Before
+        making a decision that involves real money or your legal rights, check the official source
+        linked on each calculator or speak to a qualified adviser.
       </p>
     </>
   )

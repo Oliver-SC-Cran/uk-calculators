@@ -1,5 +1,5 @@
 import { calculateRedundancyPay, REDUNDANCY, TAX_YEAR, TAX_YEAR_START } from '../lib/calculations'
-import { gbp } from './format'
+import { formatGBP as gbp } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '8 October 2026'
@@ -31,11 +31,11 @@ export default function RedundancyGuide() {
       <h3>Who qualifies</h3>
       <p>
         You normally qualify if you are an employee and have worked for your current employer for{' '}
-        {minYearsToQualify} years or more. Self-employed people, and workers who are not
-        employees, do not qualify. You can lose the right if your employer offers you suitable
-        alternative work and you turn it down without good reason. Members of the armed forces,
-        police officers and crown servants are not covered, and being dismissed for misconduct
-        does not count as redundancy.
+        {minYearsToQualify} years or more. Self-employed people, and workers who are not employees,
+        do not qualify. You can lose the right if your employer offers you suitable alternative work
+        and you turn it down without good reason. Members of the armed forces, police officers and
+        crown servants are not covered, and being dismissed for misconduct does not count as
+        redundancy.
       </p>
 
       <h3>How the age bands work</h3>
@@ -63,15 +63,14 @@ export default function RedundancyGuide() {
       <h3>Tax, notice pay and holiday pay</h3>
       <p>
         The first {gbp(taxFreeThreshold)} of redundancy pay is usually tax-free. That limit covers
-        statutory redundancy pay and any extra redundancy payment from your employer added
-        together.
+        statutory redundancy pay and any extra redundancy payment from your employer added together.
       </p>
       <p>
-        Notice pay, holiday pay and unpaid wages are separate from redundancy pay. You are owed
-        them on top, and they are taxed like normal earnings, with National Insurance. That
-        includes payment in lieu of notice. The minimum notice is one week if you have worked
-        there between one month and 2 years, one week for each year between 2 and 12 years, and 12
-        weeks after 12 years or more.
+        Notice pay, holiday pay and unpaid wages are separate from redundancy pay. You are owed them
+        on top, and they are taxed like normal earnings, with National Insurance. That includes
+        payment in lieu of notice. The minimum notice is one week if you have worked there between
+        one month and 2 years, one week for each year between 2 and 12 years, and 12 weeks after 12
+        years or more.
       </p>
 
       <h2>Worked examples</h2>
@@ -82,8 +81,8 @@ export default function RedundancyGuide() {
 
       <h3>Age 30, 5 years' service, {gbp(500)} a week</h3>
       <p>
-        All five years fall in the 22 to 40 band, so you get {example1.totalWeeks} weeks' pay.
-        That is {gbp(example1.pay)}.
+        All five years fall in the 22 to 40 band, so you get {example1.totalWeeks} weeks' pay. That
+        is {gbp(example1.pay)}.
       </p>
 
       <h3>Age 45, 10 years' service, {gbp(600)} a week</h3>
@@ -116,8 +115,8 @@ export default function RedundancyGuide() {
 
       <h3>What if my employer cannot pay?</h3>
       <p>
-        If your employer is insolvent, you can apply to the government's Insolvency Service for
-        the redundancy pay you are owed.
+        If your employer is insolvent, you can apply to the government's Insolvency Service for the
+        redundancy pay you are owed.
       </p>
 
       <h3>Is redundancy pay different in Northern Ireland?</h3>
@@ -133,11 +132,7 @@ export default function RedundancyGuide() {
           your rights in redundancy
         </a>
         , the{' '}
-        <a
-          href="https://www.gov.uk/calculate-your-redundancy-pay"
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a href="https://www.gov.uk/calculate-your-redundancy-pay" target="_blank" rel="noreferrer">
           official redundancy pay calculator
         </a>{' '}
         and{' '}
@@ -149,7 +144,11 @@ export default function RedundancyGuide() {
           tax on termination payments
         </a>
         . Northern Ireland figures are from{' '}
-        <a href="https://www.nidirect.gov.uk/articles/redundancy-pay" target="_blank" rel="noreferrer">
+        <a
+          href="https://www.nidirect.gov.uk/articles/redundancy-pay"
+          target="_blank"
+          rel="noreferrer"
+        >
           nidirect
         </a>
         .

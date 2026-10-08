@@ -1,14 +1,9 @@
+import ResultDisclaimer from '../components/ResultDisclaimer'
+import { formatGBP } from '../lib/format'
 import StudentLoanGuide from '../guides/StudentLoanGuide'
 import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
 import { calculateStudentLoanRepayment, TAX_YEAR } from '../lib/calculations'
-
-const formatGBP = (value) =>
-  new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    maximumFractionDigits: 0,
-  }).format(value)
 
 export default function StudentLoanCalculator() {
   const [salary, setSalary] = useState('30000')
@@ -29,8 +24,8 @@ export default function StudentLoanCalculator() {
     <>
       <h1>Student loan repayment calculator</h1>
       <p className="lede">
-        Work out your monthly student loan repayment for the {TAX_YEAR} tax year, based on your
-        plan type and salary.
+        Work out your monthly student loan repayment for the {TAX_YEAR} tax year, based on your plan
+        type and salary.
       </p>
 
       <div className="field">
@@ -56,38 +51,39 @@ export default function StudentLoanCalculator() {
         </select>
       </div>
 
-      <div className="field">
+      <div className="field field--checkbox">
         <label>
           <input
             type="checkbox"
             checked={hasPostgraduateLoan}
             onChange={(event) => setHasPostgraduateLoan(event.target.checked)}
-            style={{ width: 'auto', marginRight: '0.5rem' }}
           />
           I also have a Postgraduate Loan (Master's or Doctoral)
         </label>
       </div>
 
-      <div className="result">
+      <div className="result" aria-live="polite">
         <p className="result__figure">{formatGBP(result.totalMonthly)}/mo</p>
         <p className="result__label">Estimated total student loan repayment</p>
 
         <table className="result-table">
           <tbody>
             <tr>
-              <td>Undergraduate plan repayment</td>
+              <th scope="row">Undergraduate plan repayment</th>
               <td>{formatGBP(result.undergradMonthly)}/mo</td>
             </tr>
             <tr>
-              <td>Postgraduate Loan repayment</td>
+              <th scope="row">Postgraduate Loan repayment</th>
               <td>{formatGBP(result.postgradMonthly)}/mo</td>
             </tr>
             <tr>
-              <td>Total per year</td>
+              <th scope="row">Total per year</th>
               <td>{formatGBP(result.totalAnnual)}</td>
             </tr>
           </tbody>
         </table>
+
+        <ResultDisclaimer />
       </div>
 
       <StudentLoanGuide />

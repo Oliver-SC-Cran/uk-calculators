@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useRef } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { TAX_YEAR } from '../lib/calculations'
 import { canonicalUrl, findRoute, notFoundRoute } from '../routes'
 
@@ -8,11 +8,18 @@ const setHeadAttribute = (selector, attribute, value) =>
 
 export default function Layout() {
   const { pathname } = useLocation()
+  const mainRef = useRef(null)
+  const isFirstPage = useRef(true)
 
-  // Start each page at the top. Without this, following a link from the
-  // bottom of one page opens the next page at the bottom too.
+  // When moving to another page without a full page load, start at the top
+  // and move keyboard and screen reader focus to the new page's content.
   useEffect(() => {
+    if (isFirstPage.current) {
+      isFirstPage.current = false
+      return
+    }
     window.scrollTo(0, 0)
+    mainRef.current?.focus({ preventScroll: true })
   }, [pathname])
 
   // Each built page already has the right tags in its HTML. This keeps them
@@ -31,26 +38,32 @@ export default function Layout() {
 
   return (
     <div className="site">
-      <nav className="site-nav">
+      <a className="skip-link" href="#main">
+        Skip to main content
+      </a>
+
+      <nav className="site-nav" aria-label="Main">
         <div className="site-nav__inner">
           <Link to="/" className="site-nav__brand">
             UK Money Calculators
           </Link>
           <div className="site-nav__links">
-            <Link to="/">Calculators</Link>
-            <Link to="/about">About</Link>
+            <NavLink to="/" end>
+              Calculators
+            </NavLink>
+            <NavLink to="/about">About</NavLink>
           </div>
         </div>
       </nav>
 
-      <main>
+      <main id="main" tabIndex={-1} ref={mainRef}>
         <Outlet />
       </main>
 
       <footer className="site-footer">
         <p>
-          General information only, not financial or legal advice. Figures are for the{' '}
-          {TAX_YEAR} tax year unless stated otherwise. <Link to="/privacy">Privacy</Link>
+          General information only, not financial or legal advice. Figures are for the {TAX_YEAR}{' '}
+          tax year unless stated otherwise. <Link to="/privacy">Privacy</Link>
         </p>
       </footer>
     </div>

@@ -1,5 +1,5 @@
 import { calculateMortgageOverpayment, MORTGAGE } from '../lib/calculations'
-import { gbp, percent, yearsAndMonths } from './format'
+import { formatGBP as gbp, percent, yearsAndMonths } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '8 October 2026'
@@ -50,9 +50,9 @@ export default function MortgageOverpaymentGuide() {
         lender's standard variable rate there is often no limit.
       </p>
       <p>
-        On a {gbp(limitBalance)} mortgage, {percent(typicalOverpaymentLimit)} is {gbp(limitYear)}{' '}
-        a year, or about {gbp(limitMonth)} a month. Lenders measure the limit in different ways
-        and some set a lower one, so check your own mortgage offer before you start.
+        On a {gbp(limitBalance)} mortgage, {percent(typicalOverpaymentLimit)} is {gbp(limitYear)} a
+        year, or about {gbp(limitMonth)} a month. Lenders measure the limit in different ways and
+        some set a lower one, so check your own mortgage offer before you start.
       </p>
 
       <h3>Reducing your term or your monthly payment</h3>
@@ -63,8 +63,8 @@ export default function MortgageOverpaymentGuide() {
           calculator above shows.
         </li>
         <li>
-          Your lender recalculates a lower monthly payment and the mortgage finishes on the
-          original date.
+          Your lender recalculates a lower monthly payment and the mortgage finishes on the original
+          date.
         </li>
       </ul>
       <p>
@@ -80,12 +80,12 @@ export default function MortgageOverpaymentGuide() {
           interest than a mortgage.
         </li>
         <li>
-          You have no savings to fall back on. MoneyHelper suggests keeping enough to cover at
-          least three months before paying your mortgage off early.
+          You have no savings to fall back on. MoneyHelper suggests keeping enough to cover at least
+          three months before paying your mortgage off early.
         </li>
         <li>
-          You are not paying into a pension. Tax relief and employer contributions can be worth
-          more than the mortgage interest you would save.
+          You are not paying into a pension. Tax relief and employer contributions can be worth more
+          than the mortgage interest you would save.
         </li>
         <li>A savings account pays a higher rate than your mortgage charges.</li>
         <li>
@@ -97,8 +97,8 @@ export default function MortgageOverpaymentGuide() {
 
       <h2>Worked examples</h2>
       <p>
-        Each example assumes the interest rate stays the same for the whole term and the
-        overpayment is made every month.
+        Each example assumes the interest rate stays the same for the whole term and the overpayment
+        is made every month.
       </p>
 
       <h3>
@@ -117,8 +117,8 @@ export default function MortgageOverpaymentGuide() {
       </h3>
       <p>
         The standard payment is {gbp(ex2.standardPayment)} a month. Paying {gbp(ex2.newPayment)}{' '}
-        clears it in {yearsAndMonths(ex2.newTermMonths)}, which is{' '}
-        {yearsAndMonths(ex2.monthsSaved)} sooner, and saves {gbp(ex2.interestSaved)} in interest.
+        clears it in {yearsAndMonths(ex2.newTermMonths)}, which is {yearsAndMonths(ex2.monthsSaved)}{' '}
+        sooner, and saves {gbp(ex2.interestSaved)} in interest.
       </p>
 
       <h3>
@@ -127,10 +127,10 @@ export default function MortgageOverpaymentGuide() {
       </h3>
       <p>
         The standard payment is {gbp(ex3.standardPayment)} a month. Paying {gbp(ex3.newPayment)}{' '}
-        clears it in {yearsAndMonths(ex3.newTermMonths)}, which is{' '}
-        {yearsAndMonths(ex3.monthsSaved)} sooner, and saves {gbp(ex3.interestSaved)} in interest.
-        The extra {gbp(ex3.monthlyOverpayment * 12)} a year is {percent(ex3ShareOfBalance)} of the
-        balance, well inside a {percent(typicalOverpaymentLimit)} limit.
+        clears it in {yearsAndMonths(ex3.newTermMonths)}, which is {yearsAndMonths(ex3.monthsSaved)}{' '}
+        sooner, and saves {gbp(ex3.interestSaved)} in interest. The extra{' '}
+        {gbp(ex3.monthlyOverpayment * 12)} a year is {percent(ex3ShareOfBalance)} of the balance,
+        well inside a {percent(typicalOverpaymentLimit)} limit.
       </p>
 
       <h2>Common questions</h2>
@@ -143,8 +143,8 @@ export default function MortgageOverpaymentGuide() {
 
       <h3>Will I be charged for overpaying?</h3>
       <p>
-        Only if you go over the limit in your mortgage deal. Your mortgage offer or annual
-        statement will say what the limit and the charge are.
+        Only if you go over the limit in your mortgage deal. Your mortgage offer or annual statement
+        will say what the limit and the charge are.
       </p>
 
       <h3>When is the best time to make an overpayment?</h3>

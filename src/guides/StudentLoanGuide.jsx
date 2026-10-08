@@ -1,10 +1,11 @@
 import {
   calculateStudentLoanRepayment,
   monthlyLoanThreshold,
+  studentLoanWorking,
   STUDENT_LOAN,
   TAX_YEAR,
 } from '../lib/calculations'
-import { gbp, gbpPence, percent } from './format'
+import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '8 October 2026'
@@ -16,12 +17,9 @@ export default function StudentLoanGuide() {
   const thresholdText = (plan) =>
     `${gbp(plan.threshold)} a year (${gbp(monthlyLoanThreshold(plan))} a month)`
 
-  // Shows the sum behind one month's repayment, before it is rounded down.
-  const working = (salary, plan) => {
-    const monthlyPay = salary / 12
-    const over = monthlyPay - monthlyLoanThreshold(plan)
-    return { monthlyPay, over, beforeRounding: over * plan.rate }
-  }
+  // The same working the calculator uses, so every in-between figure in the
+  // examples is the one the final answer was worked out from.
+  const working = studentLoanWorking
 
   const ex1 = working(33000, plan1)
   const ex1Result = calculateStudentLoanRepayment({ grossAnnual: 33000, plan: 'plan1' })
@@ -42,9 +40,8 @@ export default function StudentLoanGuide() {
         Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
       </p>
       <p>
-        You repay a student loan out of your pay once you earn more than a threshold. What you
-        repay depends on your income, not on how much you owe. Bonuses and overtime count as
-        income.
+        You repay a student loan out of your pay once you earn more than a threshold. What you repay
+        depends on your income, not on how much you owe. Bonuses and overtime count as income.
       </p>
 
       <h3>Which plan you are on</h3>
@@ -55,8 +52,8 @@ export default function StudentLoanGuide() {
           applied to Student Finance Northern Ireland.
         </li>
         <li>
-          Plan 2: England, if your course started between 1 September 2012 and 31 July 2023.
-          Wales, if it started on or after 1 September 2012.
+          Plan 2: England, if your course started between 1 September 2012 and 31 July 2023. Wales,
+          if it started on or after 1 September 2012.
         </li>
         <li>Plan 4: everyone who applied to the Student Awards Agency Scotland.</li>
         <li>Plan 5: England, if your course started on or after 1 August 2023.</li>
@@ -101,7 +98,10 @@ export default function StudentLoanGuide() {
       </p>
 
       <h3>When loans are written off</h3>
-      <p>Whatever is left is cancelled after a set time, counted from the April you were first due to repay.</p>
+      <p>
+        Whatever is left is cancelled after a set time, counted from the April you were first due to
+        repay.
+      </p>
       <ul>
         <li>
           Plan 1: {plan1.writeOffYears} years, or when you turn 65 if your first loan was paid
@@ -109,8 +109,8 @@ export default function StudentLoanGuide() {
         </li>
         <li>Plan 2: {plan2.writeOffYears} years</li>
         <li>
-          Plan 4: {plan4.writeOffYears} years. If your first loan was paid before 1 August 2007,
-          it is when you turn 65 if that comes sooner
+          Plan 4: {plan4.writeOffYears} years. If your first loan was paid before 1 August 2007, it
+          is when you turn 65 if that comes sooner
         </li>
         <li>Plan 5: {plan5.writeOffYears} years</li>
         <li>Postgraduate Loan (England and Wales): {postgraduate.writeOffYears} years</li>
@@ -122,7 +122,7 @@ export default function StudentLoanGuide() {
       <h3>{gbp(33000)} a year on Plan 1</h3>
       <p>
         Monthly pay is {gbp(ex1.monthlyPay)}. That is {gbp(ex1.over)} over the{' '}
-        {gbp(monthlyLoanThreshold(plan1))} threshold. {percent(plan1.rate)} of {gbp(ex1.over)} is{' '}
+        {gbp(ex1.monthlyThreshold)} threshold. {percent(plan1.rate)} of {gbp(ex1.over)} is{' '}
         {gbpPence(ex1.beforeRounding)}, so you repay {gbp(ex1Result.totalMonthly)} a month.
       </p>
 
@@ -132,14 +132,13 @@ export default function StudentLoanGuide() {
         {gbp(ex2Plan.over)} over the threshold is {gbpPence(ex2Plan.beforeRounding)}, which rounds
         down to {gbp(ex2Result.undergradMonthly)}. For the Postgraduate Loan,{' '}
         {percent(postgraduate.rate)} of the {gbp(ex2Postgrad.over)} over its threshold is{' '}
-        {gbp(ex2Result.postgradMonthly)}. You repay {gbp(ex2Result.totalMonthly)} a month in
-        total.
+        {gbp(ex2Result.postgradMonthly)}. You repay {gbp(ex2Result.totalMonthly)} a month in total.
       </p>
 
       <h3>{gbp(40000)} a year on Plan 5</h3>
       <p>
         Monthly pay is {gbpPence(ex3.monthlyPay)}, which is {gbpPence(ex3.over)} over the{' '}
-        {gbp(monthlyLoanThreshold(plan5))} threshold. {percent(plan5.rate)} of that is{' '}
+        {gbp(ex3.monthlyThreshold)} threshold. {percent(plan5.rate)} of that is{' '}
         {gbpPence(ex3.beforeRounding)}, so you repay {gbp(ex3Result.totalMonthly)} a month, or{' '}
         {gbp(ex3Result.totalAnnual)} a year.
       </p>

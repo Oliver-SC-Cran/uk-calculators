@@ -48,7 +48,9 @@ function buildPage(template, route, { indexable }) {
   html = replaceTag(
     html,
     /<link rel="canonical"[^>]*>/,
-    indexable ? `<link rel="canonical" href="${url}" />` : '<meta name="robots" content="noindex" />',
+    indexable
+      ? `<link rel="canonical" href="${url}" />`
+      : '<meta name="robots" content="noindex" />',
   )
   html = replaceTag(
     html,

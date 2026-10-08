@@ -1,14 +1,9 @@
+import ResultDisclaimer from '../components/ResultDisclaimer'
+import { formatGBP, percent } from '../lib/format'
 import MortgageOverpaymentGuide from '../guides/MortgageOverpaymentGuide'
 import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
-import { calculateMortgageOverpayment } from '../lib/calculations'
-
-const formatGBP = (value) =>
-  new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    maximumFractionDigits: 0,
-  }).format(value)
+import { calculateMortgageOverpayment, MORTGAGE } from '../lib/calculations'
 
 function formatYearsMonths(totalMonths) {
   const years = Math.floor(totalMonths / 12)
@@ -39,8 +34,7 @@ export default function MortgageOverpaymentCalculator() {
     <>
       <h1>Mortgage overpayment calculator</h1>
       <p className="lede">
-        See how much interest and time a monthly overpayment could save on your remaining
-        mortgage.
+        See how much interest and time a monthly overpayment could save on your remaining mortgage.
       </p>
 
       <div className="field-row">
@@ -93,43 +87,46 @@ export default function MortgageOverpaymentCalculator() {
         </div>
       </div>
 
-      {result && (
-        <>
-          <div className="result">
-            <p className="result__figure">{formatGBP(result.interestSaved)}</p>
-            <p className="result__label">Interest saved over the life of the mortgage</p>
+      <div aria-live="polite">
+        {result && (
+          <>
+            <div className="result">
+              <p className="result__figure">{formatGBP(result.interestSaved)}</p>
+              <p className="result__label">Interest saved over the life of the mortgage</p>
 
-            <table className="result-table">
-              <tbody>
-                <tr>
-                  <td>Standard monthly payment</td>
-                  <td>{formatGBP(result.standardPayment)}</td>
-                </tr>
-                <tr>
-                  <td>New monthly payment</td>
-                  <td>{formatGBP(result.newPayment)}</td>
-                </tr>
-                <tr>
-                  <td>Time saved</td>
-                  <td>{formatYearsMonths(result.monthsSaved)}</td>
-                </tr>
-                <tr>
-                  <td>New payoff time</td>
-                  <td>{formatYearsMonths(result.newTermMonths)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+              <table className="result-table">
+                <tbody>
+                  <tr>
+                    <th scope="row">Standard monthly payment</th>
+                    <td>{formatGBP(result.standardPayment)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">New monthly payment</th>
+                    <td>{formatGBP(result.newPayment)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Time saved</th>
+                    <td>{formatYearsMonths(result.monthsSaved)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">New payoff time</th>
+                    <td>{formatYearsMonths(result.newTermMonths)}</td>
+                  </tr>
+                </tbody>
+              </table>
 
-          <div className="notice">
-            This compares your current deal's rate held constant for the full remaining term.
-            Real mortgages usually have a fixed period followed by a rate that can change, and
-            most lenders cap penalty-free overpayments at 10% of the balance a year. Check your
-            mortgage's specific overpayment allowance before committing to a regular extra
-            payment.
-          </div>
-        </>
-      )}
+              <ResultDisclaimer />
+            </div>
+
+            <div className="notice">
+              This assumes your interest rate stays the same for the rest of the term. Most
+              mortgages have a fixed period and then a rate that can change. Many lenders let you
+              overpay {percent(MORTGAGE.typicalOverpaymentLimit)} of the balance a year without a
+              charge, so check your own limit first.
+            </div>
+          </>
+        )}
+      </div>
 
       <MortgageOverpaymentGuide />
 

@@ -3,11 +3,15 @@
   --ink-soft: #4c5568;
   --paper: #f2f3ee;
   --surface: #fbfbf8;
-  --accent: #1f7a5b;
+  --accent: #1a6b4f;
   --accent-soft: #e4efe9;
-  --interactive: #b8502b;
+  --interactive: #a8451f;
   --border: #d9d5c6;
+  /* For the edges of form fields, which need 3:1 contrast to be seen. */
+  --border-strong: #858070;
   --danger: #a23b2e;
+
+  --radius: 6px;
 
   --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --font-sans:
@@ -68,6 +72,28 @@ a:hover {
   text-decoration-thickness: 2px;
 }
 
+a:focus-visible {
+  outline: 2px solid var(--interactive);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 1;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+  outline: 2px solid var(--surface);
+  outline-offset: -4px;
+}
+
 .site {
   min-height: 100vh;
   display: flex;
@@ -113,12 +139,23 @@ a:hover {
   color: var(--interactive);
 }
 
+.site-nav__links a[aria-current='page'] {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 main {
   flex: 1;
   max-width: 680px;
   margin: 0 auto;
   padding: 2.5rem 1.25rem 4rem;
   width: 100%;
+}
+
+/* main only takes focus from the skip link or a page change, never by tabbing. */
+main:focus {
+  outline: none;
 }
 
 .site-footer {
@@ -152,7 +189,7 @@ main {
   display: block;
   padding: 1rem 1.1rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   text-decoration: none;
   background: var(--surface);
 }
@@ -169,10 +206,18 @@ main {
   margin-bottom: 0.2rem;
 }
 
+.calc-list__title:only-child {
+  margin-bottom: 0;
+}
+
 .calc-list__desc {
   display: block;
   color: var(--ink-soft);
   font-size: 0.92rem;
+}
+
+.back-link {
+  margin-top: 1.5rem;
 }
 
 .field {
@@ -191,8 +236,8 @@ main {
   width: 100%;
   padding: 0.65rem 0.75rem;
   font-size: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink);
   font-variant-numeric: tabular-nums;
@@ -202,6 +247,17 @@ main {
 .field select:focus {
   outline: 2px solid var(--interactive);
   outline-offset: 1px;
+}
+
+.field--checkbox label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.field--checkbox input {
+  width: auto;
+  flex: none;
 }
 
 .field-row {
@@ -218,7 +274,7 @@ main {
   padding: 1.5rem;
   background: var(--accent-soft);
   border: 1px solid var(--accent);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 .result__figure {
@@ -235,6 +291,12 @@ main {
   margin: 0;
 }
 
+.result__note {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 1rem 0 0;
+}
+
 .result-table {
   width: 100%;
   margin-top: 1rem;
@@ -242,54 +304,46 @@ main {
   font-size: 0.95rem;
 }
 
+.result-table th,
 .result-table td {
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
 }
 
-.result-table td:last-child {
-  text-align: right;
-  color: var(--ink);
+.result-table th {
+  text-align: left;
+  font-weight: 400;
 }
 
+.result-table td {
+  text-align: right;
+}
+
+.result-table tr:last-child th,
 .result-table tr:last-child td {
-  border-bottom: none;
   font-weight: 600;
 }
 
+/* A note about what the calculator assumes. */
 .notice {
   margin-top: 1.5rem;
   padding: 0.9rem 1.1rem;
-  border-left: 3px solid var(--danger);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius);
   background: var(--surface);
   font-size: 0.92rem;
   color: var(--ink-soft);
 }
 
-.methodology {
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
-  font-size: 0.92rem;
-  color: var(--ink-soft);
-}
-
-.methodology h2 {
-  font-size: 1.1rem;
+/* Only for a real problem with what was entered, such as going over a limit. */
+.notice--warning {
+  border-left-color: var(--danger);
   color: var(--ink);
 }
 
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.7rem;
-  }
-  .field-row {
-    flex-direction: column;
-    gap: 0;
-  }
-}
-.guide {
+.guide,
+.related {
   margin-top: 2.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border);
@@ -322,16 +376,16 @@ main {
   color: var(--ink-soft);
 }
 
-.related {
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
-}
-
 .related .calc-list {
   margin-top: 1rem;
 }
 
-.related .calc-list__title {
-  margin-bottom: 0;
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.7rem;
+  }
+  .field-row {
+    flex-direction: column;
+    gap: 0;
+  }
 }

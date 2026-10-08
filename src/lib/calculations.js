@@ -206,7 +206,8 @@ export function checkMinimumWage({ age, hourlyRate, isApprentice }) {
   }
 
   // Work in whole pence so 12.71 - 11.50 is exactly 1.21.
-  const shortfallPence = Math.round(applicableRate * 100) - Math.round(atLeastZero(hourlyRate) * 100)
+  const shortfallPence =
+    Math.round(applicableRate * 100) - Math.round(atLeastZero(hourlyRate) * 100)
   const shortfall = Math.max(0, shortfallPence) / 100
 
   return {
@@ -237,13 +238,26 @@ export const STUDENT_LOAN = {
  */
 export const monthlyLoanThreshold = ({ threshold }) => Math.floor(threshold / 12)
 
-function monthlyLoanRepayment(grossAnnual, { threshold, rate }) {
-  const monthlyThreshold = Math.floor(threshold / 12)
+/**
+ * Every step of one month's repayment on one loan, so the guide can show
+ * exactly the figures the final answer was worked out from.
+ */
+export function studentLoanWorking(grossAnnual, plan) {
+  const monthlyThreshold = monthlyLoanThreshold(plan)
   // Whole pence and a whole-number percentage keep the rounding exact.
-  const excessPence = Math.round((grossAnnual / 12 - monthlyThreshold) * 100)
-  if (excessPence <= 0) return 0
-  return Math.floor((excessPence * Math.round(rate * 100)) / 10000)
+  const payPence = Math.round((atLeastZero(grossAnnual) / 12) * 100)
+  const overPence = Math.max(0, payPence - monthlyThreshold * 100)
+  const beforeRoundingPence = (overPence * Math.round(plan.rate * 100)) / 100
+  return {
+    monthlyPay: payPence / 100,
+    monthlyThreshold,
+    over: overPence / 100,
+    beforeRounding: Math.round(beforeRoundingPence) / 100,
+    repayment: Math.floor(beforeRoundingPence / 100),
+  }
 }
+
+const monthlyLoanRepayment = (grossAnnual, plan) => studentLoanWorking(grossAnnual, plan).repayment
 
 /**
  * Student loan repayments for the 2026/27 tax year, for an employee paid the
