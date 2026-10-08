@@ -282,10 +282,13 @@ export function calculateMortgageOverpayment({
  * long-serving employee gets 0.5/1/1.5 weeks per year depending on how
  * old they were during *that* year, not just their age today.
  *
- * This is an approximation matching the widely-used simplified method.
- * For a real, live dismissal — especially right on an age-band boundary —
- * verify against the official gov.uk redundancy calculator, since exact
- * employment dates can shift the result by a few days' worth of age.
+ * A year only counts at the higher rate if the employee was 22 (or 41) or
+ * older for the whole of it, so each year is banded by the age they were
+ * when it started. This matches the gov.uk ready reckoner table.
+ *
+ * It works in whole years of age. For a real, live dismissal, especially
+ * right on an age-band boundary, verify against the official gov.uk
+ * redundancy calculator, since exact employment dates can shift the result.
  */
 export function calculateRedundancyPay({ age, yearsOfService, weeklyPay, region = 'GB' }) {
   const { weeklyPayCapGB, weeklyPayCapNI, maxYearsCounted, minYearsToQualify, taxFreeThreshold } =
@@ -301,9 +304,9 @@ export function calculateRedundancyPay({ age, yearsOfService, weeklyPay, region 
 
   let totalWeeks = 0
   for (let i = 0; i < cappedYears; i++) {
-    const ageDuringYear = age - i
-    if (ageDuringYear >= 41) totalWeeks += 1.5
-    else if (ageDuringYear >= 22) totalWeeks += 1
+    const ageAtStartOfYear = age - i - 1
+    if (ageAtStartOfYear >= 41) totalWeeks += 1.5
+    else if (ageAtStartOfYear >= 22) totalWeeks += 1
     else totalWeeks += 0.5
   }
 

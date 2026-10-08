@@ -37,7 +37,7 @@ export default function Privacy() {
       </p>
 
       <h2>Contact</h2>
-      <p>Questions about this policy can be sent to uk-calculators_help@gmail.com.</p>
+      <p>Questions about this policy can be sent to hello@ukmoneycalculators.co.uk.</p>
     </>
   )
 }

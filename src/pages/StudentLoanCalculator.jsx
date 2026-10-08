@@ -92,9 +92,11 @@ export default function StudentLoanCalculator() {
         <h2>Which plan am I on?</h2>
         <p>
           Plan 1 covers English and Welsh students who started before September 2012, and
-          Northern Irish students of any year. Plan 2 covers English and Welsh students who
-          started between September 2012 and July 2023. Plan 5 covers English and Welsh students
-          starting from August 2023 onwards. Plan 4 covers Scottish students funded through SAAS.
+          Northern Irish students of any year. Plan 2 covers English students who started between
+          September 2012 and July 2023, and Welsh students who started from September 2012
+          onwards. Plan 5 covers English students only, starting from August 2023 onwards. Welsh
+          students who started after that date are still on Plan 2. Plan 4 covers Scottish
+          students funded through SAAS.
           A Postgraduate Loan is separate and can run alongside any of these.
         </p>
         <h2>How this is calculated</h2>
