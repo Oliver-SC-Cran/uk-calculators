@@ -58,6 +58,7 @@ function buildPage(template, route, { indexable }) {
     indexable ? `\n    <meta property="og:url" content="${url}" />` : '',
   )
   html = replaceTag(html, /\s*<!-- The tags below.*?-->/s, '')
+  if (indexable) html = replaceTag(html, /\n {2}<\/head>/, `\n    ${adSenseTag}\n  </head>`)
 
   const body = render(route.path)
   const isNotFoundPage = body.includes('Page not found')
@@ -66,6 +67,16 @@ function buildPage(template, route, { indexable }) {
   }
   return replaceTag(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`)
 }
+
+// The AdSense publisher ID lives in one place: public/ads.txt.
+const adsTxt = await readFile(path.join(root, 'public', 'ads.txt'), 'utf8')
+const publisherId = adsTxt.match(/^google\.com,\s*(pub-\d+)\s*,/m)?.[1]
+if (!publisherId) throw new Error('No Google publisher ID found in public/ads.txt')
+
+// Loads Google AdSense, which also shows the consent message published in the
+// AdSense account to visitors who need to see it. Real pages only: the 404
+// page has no content, so it carries no ads.
+const adSenseTag = `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${publisherId}" crossorigin="anonymous"></script>`
 
 const template = await readFile(path.join(dist, 'index.html'), 'utf8')
 

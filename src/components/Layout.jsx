@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { TAX_YEAR } from '../lib/calculations'
+import CookieSettingsLink from './CookieSettingsLink'
 import { canonicalUrl, findRoute, notFoundRoute } from '../routes'
 
 const setHeadAttribute = (selector, attribute, value) =>
@@ -63,8 +64,19 @@ export default function Layout() {
       <footer className="site-footer">
         <p>
           General information only, not financial or legal advice. Figures are for the {TAX_YEAR}{' '}
-          tax year unless stated otherwise. <Link to="/privacy">Privacy</Link>
+          tax year unless stated otherwise.
         </p>
+        <ul className="site-footer__links">
+          <li>
+            <Link to="/privacy">Privacy policy</Link>
+          </li>
+          <li>
+            <Link to="/cookies">Cookie policy</Link>
+          </li>
+          <li>
+            <CookieSettingsLink />
+          </li>
+        </ul>
       </footer>
     </div>
   )

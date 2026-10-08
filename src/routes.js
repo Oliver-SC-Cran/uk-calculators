@@ -5,6 +5,8 @@
 import { ISA, MINIMUM_WAGE, REDUNDANCY, TAX_YEAR } from './lib/calculations.js'
 
 export const SITE_URL = 'https://ukmoneycalculators.co.uk'
+export const SITE_NAME = 'UK Money Calculators'
+export const CONTACT_EMAIL = 'hello@ukmoneycalculators.co.uk'
 
 const pounds = (value) => `£${value.toLocaleString('en-GB')}`
 
@@ -62,6 +64,12 @@ export const routes = [
     title: 'Privacy policy | UK Money Calculators',
     description:
       'How UK Money Calculators handles your data. Numbers you type into the calculators stay in your browser and are not sent to us.',
+  },
+  {
+    path: '/cookies',
+    title: 'Cookie policy | UK Money Calculators',
+    description:
+      'The cookies Google AdSense may set on UK Money Calculators, what each one is for, how long it lasts and how to change your choice.',
   },
 ]
 

@@ -9,6 +9,7 @@ import MinimumWageCalculator from './pages/MinimumWageCalculator'
 import StudentLoanCalculator from './pages/StudentLoanCalculator'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
+import Cookies from './pages/Cookies'
 import NotFound from './pages/NotFound'
 import { routes } from './routes'
 
@@ -23,6 +24,7 @@ const pages = {
   '/student-loan-calculator': StudentLoanCalculator,
   '/about': About,
   '/privacy': Privacy,
+  '/cookies': Cookies,
 }
 
 export function AppRoutes() {

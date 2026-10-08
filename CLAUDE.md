@@ -85,3 +85,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 ## Compliance
 
 - Do not add any third-party script, tracker, ad tag or embedded font without flagging it first. Anything that sets non-essential cookies needs consent before it loads, and the privacy policy must match what the site actually loads.
+- The only third-party script is Google AdSense. `scripts/prerender.js` adds its tag to the head of every real page at build time, using the publisher ID in `public/ads.txt`. It is not in `index.html`, so the dev server does not load it, and the 404 page does not carry it. Do not add manual ad units: the site uses Auto ads.
+- Consent is handled by Google's own consent message, published in the AdSense account under Privacy & messaging. The footer's "Privacy and cookie settings" link (`CookieSettingsLink.jsx`) reopens it. Do not build a separate cookie banner.
+- `src/pages/Privacy.jsx` and `src/pages/Cookies.jsx` must describe what the site actually loads. If a script, host or cookie changes, update both pages and their "Last updated" dates in the same batch. The cookie list comes from Google's published lists, linked in the file. Re-check them when editing it.
+- The site owner is given as the site name only for now (decided 8 October 2026). `SITE_NAME` and `CONTACT_EMAIL` are in `src/routes.js`.

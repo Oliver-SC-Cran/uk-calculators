@@ -389,3 +389,55 @@ main:focus {
     gap: 0;
   }
 }
+
+.site-footer__links {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 1.25rem;
+}
+
+/* Wide tables scroll sideways inside this box, so the page itself never does. */
+.table-scroll {
+  overflow-x: auto;
+  margin: 0 0 1.5rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.data-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.4rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table tbody th {
+  font-weight: 400;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.88rem;
+}
+
+main ul {
+  margin: 0 0 1em;
+  padding-left: 1.25rem;
+}
+
+main ul.calc-list {
+  padding-left: 0;
+  margin: 1.5rem 0 0;
+}
