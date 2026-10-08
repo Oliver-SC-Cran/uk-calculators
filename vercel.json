@@ -1,3 +1,9 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/(salary-calculator|redundancy-calculator|isa-calculator|mortgage-overpayment-calculator|minimum-wage-calculator|student-loan-calculator|about|privacy)",
+      "destination": "/index.html"
+    }
+  ]
 }

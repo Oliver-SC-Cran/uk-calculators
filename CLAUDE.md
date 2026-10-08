@@ -32,6 +32,8 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - `src/lib/calculations.js`: every tax figure and all calculation logic
 - `src/index.css`: the only stylesheet
 - `public/sitemap.xml`: update this whenever a route is added, renamed or removed
+- `vercel.json`: lists every route that should load the app. Update it whenever a route is added, renamed or removed, or the new page will return a 404 on the live site
+- `404.html`: second build entry. Vercel serves it with a 404 status for any unknown URL, and the app then shows the not found page
 
 ## Writing rules
 

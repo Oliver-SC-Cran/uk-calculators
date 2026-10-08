@@ -13,9 +13,8 @@ export default function Privacy() {
 
       <h2>Cookies and advertising</h2>
       <p>
-        This site uses Google AdSense to show ads and Google Analytics to understand traffic.
-        Both may set cookies and use data about your visit to personalise ads and measure site
-        usage. You can control or opt out of personalised advertising through{' '}
+        This site uses Google AdSense to show ads. It may set cookies and use data about your
+        visit to personalise ads. You can control or opt out of personalised advertising through{' '}
         <a href="https://adssettings.google.com" target="_blank" rel="noreferrer">
           Google's ad settings
         </a>
