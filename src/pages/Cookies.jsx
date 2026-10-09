@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 
 // Change this by hand whenever the policy or the cookie list changes.
-const LAST_UPDATED = '8 October 2026'
-const LAST_UPDATED_ISO = '2026-10-08'
+const LAST_UPDATED = '9 October 2026'
+const LAST_UPDATED_ISO = '2026-10-09'
 
 // Names, purposes and durations as Google publishes them at
 // https://business.safety.google/adscookies/ and
@@ -162,8 +162,9 @@ export default function Cookies() {
         consent message and change your choice. You can do this as often as you like.
       </p>
       <p>
-        If nothing opens, your browser or an ad blocker is probably blocking Google's script. You
-        can also:
+        If no message opens, the link brings you to this section instead. That happens when Google's
+        consent message is not running on this site, or when your browser or an ad blocker blocks
+        it. You can also:
       </p>
       <ul>
         <li>delete or block cookies in your browser's settings</li>
