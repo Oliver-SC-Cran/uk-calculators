@@ -72,7 +72,7 @@ export default function SalaryCalculator() {
       <TakeHomePayGuide />
 
       <RelatedCalculators
-        paths={['/student-loan-calculator', '/minimum-wage-calculator', '/redundancy-calculator']}
+        paths={['/pay-rise-calculator', '/student-loan-calculator', '/minimum-wage-calculator']}
       />
     </>
   )

@@ -7,7 +7,7 @@ UK financial calculators. React 19 + Vite, react-router-dom, plain CSS, deployed
 - `npm run dev` starts the dev server
 - `npm run build` builds to `dist/`
 - `npm run lint` runs oxlint
-- `npm test` runs the worked examples in `src/lib/calculations.test.js`
+- `npm test` runs the tests in `src/lib/` and `src/routes.test.js`
 
 Run `npm test`, `npm run lint` and `npm run build` before finishing any task. If any of them fails, the task is not finished.
 
@@ -35,6 +35,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - `src/guides/`: the written guide shown below each calculator, one component per guide, with shared number formatting in `format.js`. Every figure comes from the constants and functions in `calculations.js`, and each guide has a "Last updated" date to change by hand when its wording or figures change. Every factual claim in a guide must come from a gov.uk or other official page fetched at the time of writing (MoneyHelper for mortgages). If a claim is from memory, say so when reporting the change so it can be checked
 - `src/components/RelatedCalculators.jsx`: the "Related calculators" links at the bottom of each calculator page. Names come from the `name` field in `routes.js`
 - `src/lib/calculations.js`: every tax figure and all calculation logic
+- `src/lib/payRise.js`: the pay rise calculator. It adds pensions (salary sacrifice, net pay, relief at source) on top of the tax, NI and student loan functions in `calculations.js` and must not copy any of their logic. Its tests are in `src/lib/payRise.test.js`
 - `src/index.css`: the only stylesheet
 - `scripts/prerender.js` and `src/entry-server.jsx`: build-time only. They render every route to its own HTML file
 

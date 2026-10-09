@@ -316,6 +316,17 @@ main:focus {
   font-weight: 400;
 }
 
+.result-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.result-table thead th {
+  text-align: right;
+  font-weight: 600;
+}
+
 .result-table td {
   text-align: right;
 }

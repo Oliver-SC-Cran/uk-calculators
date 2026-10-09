@@ -9,6 +9,12 @@ const calculators = [
       'Work out your income tax, National Insurance and monthly take-home pay from a gross salary.',
   },
   {
+    path: '/pay-rise-calculator',
+    title: 'Pay rise calculator',
+    description:
+      'See how much of a pay rise you keep after tax, National Insurance, student loan and pension.',
+  },
+  {
     path: '/redundancy-calculator',
     title: 'Statutory redundancy pay calculator',
     description:

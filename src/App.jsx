@@ -2,6 +2,7 @@ import { Route, BrowserRouter, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import SalaryCalculator from './pages/SalaryCalculator'
+import PayRiseCalculator from './pages/PayRiseCalculator'
 import RedundancyCalculator from './pages/RedundancyCalculator'
 import ISACalculator from './pages/ISACalculator'
 import MortgageOverpaymentCalculator from './pages/MortgageOverpaymentCalculator'
@@ -17,6 +18,7 @@ import { routes } from './routes'
 const pages = {
   '/': Home,
   '/salary-calculator': SalaryCalculator,
+  '/pay-rise-calculator': PayRiseCalculator,
   '/redundancy-calculator': RedundancyCalculator,
   '/isa-calculator': ISACalculator,
   '/mortgage-overpayment-calculator': MortgageOverpaymentCalculator,

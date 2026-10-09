@@ -55,18 +55,26 @@ export function taperedPersonalAllowance(grossAnnual) {
  * allowance). The basic rate band is a fixed width, £37,700 in 2026/27, so
  * when the taper shrinks the allowance, the lost allowance is taxed at the
  * higher rate, not the basic rate.
+ *
+ * reliefAtSourceGross is the gross amount paid into a relief at source
+ * pension (what was paid plus the basic rate relief the provider claimed).
+ * It widens the basic rate band and raises the higher rate limit by that
+ * amount, and comes off the income used for the allowance taper. That gives
+ * the tax someone owes once they have claimed their extra relief.
  */
-export function calculateIncomeTax(grossAnnual) {
+export function calculateIncomeTax(grossAnnual, { reliefAtSourceGross = 0 } = {}) {
   const gross = atLeastZero(grossAnnual)
-  const pa = taperedPersonalAllowance(gross)
+  const reliefAtSource = atLeastZero(reliefAtSourceGross)
+  const pa = taperedPersonalAllowance(gross - reliefAtSource)
   const { personalAllowance, basicRateLimit, higherRateLimit } = INCOME_TAX
   const { basicRate, higherRate, additionalRate } = INCOME_TAX
 
   const taxable = Math.max(0, gross - pa)
-  const basicBand = basicRateLimit - personalAllowance
+  const basicBand = basicRateLimit - personalAllowance + reliefAtSource
+  const higherLimit = higherRateLimit + reliefAtSource
   const inBasicBand = Math.min(taxable, basicBand)
-  const inHigherBand = Math.max(0, Math.min(taxable, higherRateLimit) - basicBand)
-  const inAdditionalBand = Math.max(0, taxable - higherRateLimit)
+  const inHigherBand = Math.max(0, Math.min(taxable, higherLimit) - basicBand)
+  const inAdditionalBand = Math.max(0, taxable - higherLimit)
 
   const tax =
     inBasicBand * basicRate + inHigherBand * higherRate + inAdditionalBand * additionalRate

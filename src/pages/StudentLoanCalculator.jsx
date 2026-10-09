@@ -88,7 +88,9 @@ export default function StudentLoanCalculator() {
 
       <StudentLoanGuide />
 
-      <RelatedCalculators paths={['/salary-calculator', '/minimum-wage-calculator']} />
+      <RelatedCalculators
+        paths={['/salary-calculator', '/pay-rise-calculator', '/minimum-wage-calculator']}
+      />
     </>
   )
 }

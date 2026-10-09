@@ -23,6 +23,12 @@ export const routes = [
     description: `Enter your salary to see your take-home pay after income tax and National Insurance for ${TAX_YEAR}. Covers England, Wales and Northern Ireland.`,
   },
   {
+    path: '/pay-rise-calculator',
+    name: 'Pay rise calculator',
+    title: `Pay rise calculator ${TAX_YEAR}: how much of a rise you keep`,
+    description: `See how much of a pay rise you keep after income tax, National Insurance, student loan and pension in ${TAX_YEAR}, and whether it crosses a tax threshold.`,
+  },
+  {
     path: '/redundancy-calculator',
     name: 'Statutory redundancy pay calculator',
     title: `Statutory redundancy pay calculator ${TAX_YEAR}`,
