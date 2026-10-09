@@ -15,6 +15,12 @@ const calculators = [
       'See how much of a pay rise you keep after tax, National Insurance, student loan and pension.',
   },
   {
+    path: '/self-employed-tax-calculator',
+    title: 'Self-employed tax calculator',
+    description:
+      'Work out the tax and National Insurance on your self-employed profit, and what to set aside each month.',
+  },
+  {
     path: '/redundancy-calculator',
     title: 'Statutory redundancy pay calculator',
     description:

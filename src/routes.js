@@ -29,6 +29,12 @@ export const routes = [
     description: `See how much of a pay rise you keep after income tax, National Insurance, student loan and pension in ${TAX_YEAR}, and whether it crosses a tax threshold.`,
   },
   {
+    path: '/self-employed-tax-calculator',
+    name: 'Self-employed tax calculator',
+    title: `Self-employed tax calculator ${TAX_YEAR}: tax, NI and what to save`,
+    description: `Work out income tax, Class 4 National Insurance and student loan on your self-employed profit for ${TAX_YEAR}, with a job alongside if you have one.`,
+  },
+  {
     path: '/redundancy-calculator',
     name: 'Statutory redundancy pay calculator',
     title: `Statutory redundancy pay calculator ${TAX_YEAR}`,

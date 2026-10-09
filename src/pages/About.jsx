@@ -5,9 +5,9 @@ export default function About() {
     <>
       <h1>About this site</h1>
       <p>
-        UK Money Calculators is a small, independently run site with eight calculators for UK pay,
-        tax, savings and property: take-home pay, pay rises, redundancy pay, ISA allowance, mortgage
-        overpayments, stamp duty, minimum wage and student loan repayments.
+        UK Money Calculators is a small, independently run site with nine calculators for UK pay,
+        tax, savings and property: take-home pay, pay rises, self-employed tax, redundancy pay, ISA
+        allowance, mortgage overpayments, stamp duty, minimum wage and student loan repayments.
       </p>
       <p>
         The figures are for the {TAX_YEAR} tax year and come from gov.uk, HMRC and nidirect. Under

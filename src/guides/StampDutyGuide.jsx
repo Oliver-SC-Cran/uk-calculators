@@ -64,8 +64,10 @@ export default function StampDutyGuide() {
 
       <h3>First-time buyers</h3>
       <p>
-        If you, and anyone you are buying with, have never owned a home, you can claim a relief. You
-        pay nothing up to {gbp(reliefNilBand.upTo)} and {percent(reliefSecondBand.rate)} on the part
+        You are a first-time buyer if you have never owned a home anywhere in the world, including
+        one you inherited. Everyone buying with you must be a first-time buyer too, and you must
+        intend to live in the property as your main home. If so, you can claim a relief. You pay
+        nothing up to {gbp(reliefNilBand.upTo)} and {percent(reliefSecondBand.rate)} on the part
         from {gbp(reliefNilBand.upTo)} to {gbp(reliefSecondBand.upTo)}.
       </p>
       <p>
