@@ -411,3 +411,91 @@ export function calculateRedundancyPay({ age, yearsOfService, weeklyPay, region 
     cap,
   }
 }
+
+// Stamp Duty Land Tax on residential property in England and Northern Ireland.
+// These rates are not tied to the tax year. They have applied since 1 April 2025.
+// Source: https://www.gov.uk/stamp-duty-land-tax/residential-property-rates
+export const STAMP_DUTY = {
+  ratesFrom: '1 April 2025',
+  // Each rate applies to the slice of the price up to that amount.
+  bands: [
+    { upTo: 125000, rate: 0 },
+    { upTo: 250000, rate: 0.02 },
+    { upTo: 925000, rate: 0.05 },
+    { upTo: 1500000, rate: 0.1 },
+    { upTo: Infinity, rate: 0.12 },
+  ],
+  // First-time buyer relief. Over maxPrice there is no relief at all.
+  firstTimeBuyer: {
+    maxPrice: 500000,
+    bands: [
+      { upTo: 300000, rate: 0 },
+      { upTo: 500000, rate: 0.05 },
+    ],
+  },
+  additionalPropertySurcharge: 0.05, // added to every band
+  nonResidentSurcharge: 0.02, // added to every band
+  surchargeMinimumPrice: 40000, // the surcharges apply to purchases of this much or more
+  returnDeadlineDays: 14, // to send a return and pay, counted from completion
+  replaceMainHomeMonths: 36, // time to sell a previous main home and avoid or reclaim the surcharge
+  refundClaimMonths: 12, // time to claim that refund
+  nonResidentDays: 183, // days in the UK in the 12 months before buying to count as resident
+}
+
+/**
+ * Stamp duty for one residential purchase by an individual.
+ * buyerType is 'homeMover', 'firstTimeBuyer' or 'additional'.
+ *
+ * The tax is charged in slices, like income tax. Surcharges are added to the
+ * rate of every slice, including the first one. The total is rounded down to
+ * the whole pound.
+ */
+export function calculateStampDuty({ price, buyerType = 'homeMover', nonResident = false }) {
+  const { firstTimeBuyer, additionalPropertySurcharge, nonResidentSurcharge } = STAMP_DUTY
+  const amount = atLeastZero(price)
+
+  const isFirstTimeBuyer = buyerType === 'firstTimeBuyer'
+  const firstTimeBuyerOverLimit = isFirstTimeBuyer && amount > firstTimeBuyer.maxPrice
+  const reliefApplies = isFirstTimeBuyer && !firstTimeBuyerOverLimit
+  const bands = reliefApplies ? firstTimeBuyer.bands : STAMP_DUTY.bands
+
+  const surchargesApply = amount >= STAMP_DUTY.surchargeMinimumPrice
+  const additionalApplies = buyerType === 'additional' && surchargesApply
+  const nonResidentApplies = Boolean(nonResident) && surchargesApply
+  const surcharge =
+    (additionalApplies ? additionalPropertySurcharge : 0) +
+    (nonResidentApplies ? nonResidentSurcharge : 0)
+
+  const breakdown = []
+  let from = 0
+  for (const band of bands) {
+    if (amount <= from) break
+    const to = Math.min(amount, band.upTo)
+    // Whole-number percentages keep the sums exact.
+    const ratePercent = Math.round((band.rate + surcharge) * 100)
+    breakdown.push({
+      from,
+      to,
+      rate: ratePercent / 100,
+      amountInBand: to - from,
+      tax: ((to - from) * ratePercent) / 100,
+    })
+    from = band.upTo
+  }
+
+  const tax = Math.floor(breakdown.reduce((total, band) => total + band.tax, 0))
+
+  return {
+    price: amount,
+    tax,
+    effectiveRate: amount > 0 ? tax / amount : 0,
+    breakdown,
+    reliefApplies,
+    firstTimeBuyerOverLimit,
+    additionalApplies,
+    nonResidentApplies,
+    // Buying an additional property or as a non-resident, but under the minimum price.
+    surchargeWaived:
+      amount > 0 && (buyerType === 'additional' || Boolean(nonResident)) && !surchargesApply,
+  }
+}

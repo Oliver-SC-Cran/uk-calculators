@@ -149,7 +149,9 @@ export default function ISACalculator() {
 
       <ISAGuide />
 
-      <RelatedCalculators paths={['/mortgage-overpayment-calculator', '/salary-calculator']} />
+      <RelatedCalculators
+        paths={['/mortgage-overpayment-calculator', '/stamp-duty-calculator', '/salary-calculator']}
+      />
     </>
   )
 }

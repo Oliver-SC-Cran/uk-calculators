@@ -1,16 +1,17 @@
 # UK Money Calculators
 
-The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): seven calculators for UK pay, tax and savings, each with a written guide.
+The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): eight calculators for UK pay, tax, savings and property, each with a written guide.
 
 - Take-home pay
 - Pay rises
 - Statutory redundancy pay
 - ISA and Lifetime ISA allowance
 - Mortgage overpayments
+- Stamp duty (England and Northern Ireland)
 - Minimum wage
 - Student loan repayments
 
-Figures are for the 2026/27 tax year.
+Figures are for the 2026/27 tax year. Stamp duty rates are the ones in force since 1 April 2025.
 
 ## Running it
 

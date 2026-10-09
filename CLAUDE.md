@@ -35,6 +35,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - `src/guides/`: the written guide shown below each calculator, one component per guide, with shared number formatting in `format.js`. Every figure comes from the constants and functions in `calculations.js`, and each guide has a "Last updated" date to change by hand when its wording or figures change. Every factual claim in a guide must come from a gov.uk or other official page fetched at the time of writing (MoneyHelper for mortgages). If a claim is from memory, say so when reporting the change so it can be checked
 - `src/components/RelatedCalculators.jsx`: the "Related calculators" links at the bottom of each calculator page. Names come from the `name` field in `routes.js`
 - `src/lib/calculations.js`: every tax figure and all calculation logic
+- Stamp duty (SDLT) rates are in `STAMP_DUTY` in `calculations.js`. They are not tied to the tax year, so the page states the date they apply from. The calculator covers England and Northern Ireland only, and its tests are in `src/lib/stampDuty.test.js`
 - `src/lib/payRise.js`: the pay rise calculator. It adds pensions (salary sacrifice, net pay, relief at source) on top of the tax, NI and student loan functions in `calculations.js` and must not copy any of their logic. Its tests are in `src/lib/payRise.test.js`
 - `src/index.css`: the only stylesheet
 - `scripts/prerender.js` and `src/entry-server.jsx`: build-time only. They render every route to its own HTML file

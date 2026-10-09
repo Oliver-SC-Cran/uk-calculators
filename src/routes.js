@@ -2,7 +2,7 @@
 // script (scripts/prerender.js) and the sitemap are all built from this list.
 // To add a page: add it here, then map its path to a component in App.jsx.
 
-import { ISA, MINIMUM_WAGE, REDUNDANCY, TAX_YEAR } from './lib/calculations.js'
+import { ISA, MINIMUM_WAGE, REDUNDANCY, STAMP_DUTY, TAX_YEAR } from './lib/calculations.js'
 
 export const SITE_URL = 'https://ukmoneycalculators.co.uk'
 export const SITE_NAME = 'UK Money Calculators'
@@ -46,6 +46,12 @@ export const routes = [
     title: 'Mortgage overpayment calculator: interest and time saved',
     description:
       'See how much interest you could save, and how many years sooner you could clear your mortgage, by overpaying a set amount each month.',
+  },
+  {
+    path: '/stamp-duty-calculator',
+    name: 'Stamp duty calculator',
+    title: 'Stamp duty calculator: SDLT in England and Northern Ireland',
+    description: `Work out stamp duty on a home in England or Northern Ireland, for home movers, first-time buyers (relief up to ${pounds(STAMP_DUTY.firstTimeBuyer.maxPrice)}) and additional properties.`,
   },
   {
     path: '/minimum-wage-calculator',

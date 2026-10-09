@@ -327,6 +327,10 @@ main:focus {
   font-weight: 600;
 }
 
+.result-table thead th:first-child {
+  text-align: left;
+}
+
 .result-table td {
   text-align: right;
 }

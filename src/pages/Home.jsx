@@ -33,6 +33,12 @@ const calculators = [
       'See how much interest and time a monthly overpayment could save on your mortgage.',
   },
   {
+    path: '/stamp-duty-calculator',
+    title: 'Stamp duty calculator',
+    description:
+      'Work out stamp duty on a home in England or Northern Ireland, including first-time buyer relief.',
+  },
+  {
     path: '/minimum-wage-calculator',
     title: 'Minimum wage checker',
     description:

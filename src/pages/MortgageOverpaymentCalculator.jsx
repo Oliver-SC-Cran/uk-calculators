@@ -130,7 +130,9 @@ export default function MortgageOverpaymentCalculator() {
 
       <MortgageOverpaymentGuide />
 
-      <RelatedCalculators paths={['/isa-calculator', '/salary-calculator']} />
+      <RelatedCalculators
+        paths={['/stamp-duty-calculator', '/isa-calculator', '/salary-calculator']}
+      />
     </>
   )
 }
