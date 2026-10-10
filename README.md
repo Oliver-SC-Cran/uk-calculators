@@ -41,6 +41,8 @@ npm run build
 - `src/lib/calculations.js` holds every rate, threshold and calculation.
 - `src/routes.js` lists every page with its title and description.
 - `src/pages/` has one component per page, and `src/guides/` has the guide shown under each calculator.
+- `src/components/` has the parts every calculator page shares: the page layout, the numbered input fields and the result panel.
+- The Sora and Figtree fonts are served from the site itself. They come from the `@fontsource-variable` packages.
 - `scripts/prerender.js` turns each page into static HTML at build time.
 
 The site is hosted on Vercel. Pushing a branch creates a preview, and pushing `main` deploys the live site.
