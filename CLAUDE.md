@@ -93,3 +93,13 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - Consent is handled by Google's own consent message, published in the AdSense account under Privacy & messaging. The footer's "Privacy and cookie settings" link (`CookieSettingsLink.jsx`) reopens it. Do not build a separate cookie banner.
 - `src/pages/Privacy.jsx` and `src/pages/Cookies.jsx` must describe what the site actually loads. If a script, host or cookie changes, update both pages and their "Last updated" dates in the same batch. The cookie list comes from Google's published lists, linked in the file. Re-check them when editing it.
 - The site owner is given as the site name only for now (decided 8 October 2026). `SITE_NAME` and `CONTACT_EMAIL` are in `src/routes.js`.
+
+## Security
+
+- Security headers are set for every page in `vercel.json`: `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy` and a Content Security Policy.
+- The Content Security Policy is `Content-Security-Policy-Report-Only`. It blocks nothing and only logs to the browser console. Do not switch it to an enforcing `Content-Security-Policy` without being asked. Google only supports a nonce-based policy for AdSense and publishes no list of domains, and this static site cannot make nonces, so enforcing the script list could stop ads.
+- `Referrer-Policy` must stay `strict-origin-when-cross-origin`. Google's consent tool needs it.
+- If a new third-party script or host is added, add it to the policy in the same batch, and to the privacy and cookie policies.
+- Keep the site free of inline scripts and inline styles, so the policy stays simple.
+- The site uses no secrets or environment variables. `.env` files are ignored by git. Never commit a key or token.
+- Do not turn on source maps for the production build.

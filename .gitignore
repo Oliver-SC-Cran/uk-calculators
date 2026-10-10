@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets. The site uses none, but never commit them if that changes.
+.env
+.env.*
