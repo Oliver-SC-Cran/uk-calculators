@@ -1,8 +1,9 @@
+import TextPage from '../components/TextPage'
 import { TAX_YEAR } from '../lib/calculations'
 
 export default function About() {
   return (
-    <>
+    <TextPage>
       <h1>About this site</h1>
       <p>
         UK Money Calculators is a small, independently run site with ten calculators for UK pay,
@@ -21,6 +22,6 @@ export default function About() {
         making a decision that involves real money or your legal rights, check the official source
         linked on each calculator or speak to a qualified adviser.
       </p>
-    </>
+    </TextPage>
   )
 }

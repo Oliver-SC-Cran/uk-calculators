@@ -1,96 +1,85 @@
-import ResultDisclaimer from '../components/ResultDisclaimer'
-import { formatGBP } from '../lib/format'
-import StudentLoanGuide from '../guides/StudentLoanGuide'
-import RelatedCalculators from '../components/RelatedCalculators'
 import { useMemo, useState } from 'react'
+import CalculatorPage from '../components/CalculatorPage'
+import { Checkbox, NumberField, SelectField, Steps } from '../components/Fields'
+import Notice from '../components/Notice'
+import ResultPanel from '../components/ResultPanel'
+import { useNumberField } from '../components/useNumberField'
+import StudentLoanGuide from '../guides/StudentLoanGuide'
 import { calculateStudentLoanRepayment, TAX_YEAR } from '../lib/calculations'
+import { formatGBP } from '../lib/format'
 
 export default function StudentLoanCalculator() {
-  const [salary, setSalary] = useState('30000')
+  const salary = useNumberField('30000', { label: 'Your salary' })
   const [plan, setPlan] = useState('plan2')
   const [hasPostgraduateLoan, setHasPostgraduateLoan] = useState(false)
 
   const result = useMemo(
-    () =>
-      calculateStudentLoanRepayment({
-        grossAnnual: Number(salary) || 0,
-        plan,
-        hasPostgraduateLoan,
-      }),
-    [salary, plan, hasPostgraduateLoan],
+    () => calculateStudentLoanRepayment({ grossAnnual: salary.value, plan, hasPostgraduateLoan }),
+    [salary.value, plan, hasPostgraduateLoan],
   )
 
   return (
-    <>
-      <h1>Student loan repayment calculator</h1>
-      <p className="lede">
-        Work out your monthly student loan repayment for the {TAX_YEAR} tax year, based on your plan
-        type and salary.
-      </p>
+    <CalculatorPage
+      title="Student loan repayment calculator"
+      rates={`${TAX_YEAR} rates`}
+      inputs={
+        <>
+          <Steps>
+            <NumberField id="salary" hint="For a year, before tax." before="£" field={salary} />
+            <SelectField
+              id="plan"
+              label="Your student loan plan"
+              hint="Choose 'No undergraduate loan' if you only have a Postgraduate Loan."
+              value={plan}
+              onChange={setPlan}
+              below={
+                <Checkbox checked={hasPostgraduateLoan} onChange={setHasPostgraduateLoan}>
+                  I also have a Postgraduate Loan (Master's or Doctoral)
+                </Checkbox>
+              }
+            >
+              <option value="none">No undergraduate loan</option>
+              <option value="plan1">Plan 1</option>
+              <option value="plan2">Plan 2</option>
+              <option value="plan4">Plan 4 (Scotland)</option>
+              <option value="plan5">Plan 5</option>
+            </SelectField>
+          </Steps>
 
-      <div className="field">
-        <label htmlFor="salary">Gross annual salary (£)</label>
-        <input
-          id="salary"
-          type="number"
-          min="0"
-          step="500"
-          value={salary}
-          onChange={(event) => setSalary(event.target.value)}
-        />
-      </div>
-
-      <div className="field">
-        <label htmlFor="plan">Your undergraduate plan</label>
-        <select id="plan" value={plan} onChange={(event) => setPlan(event.target.value)}>
-          <option value="none">No undergraduate loan</option>
-          <option value="plan1">Plan 1</option>
-          <option value="plan2">Plan 2</option>
-          <option value="plan4">Plan 4 (Scotland)</option>
-          <option value="plan5">Plan 5</option>
-        </select>
-      </div>
-
-      <div className="field field--checkbox">
-        <label>
-          <input
-            type="checkbox"
-            checked={hasPostgraduateLoan}
-            onChange={(event) => setHasPostgraduateLoan(event.target.checked)}
-          />
-          I also have a Postgraduate Loan (Master's or Doctoral)
-        </label>
-      </div>
-
-      <div className="result" aria-live="polite">
-        <p className="result__figure">{formatGBP(result.totalMonthly)}/mo</p>
-        <p className="result__label">Estimated total student loan repayment</p>
-
-        <table className="result-table">
-          <tbody>
-            <tr>
-              <th scope="row">Undergraduate plan repayment</th>
-              <td>{formatGBP(result.undergradMonthly)}/mo</td>
-            </tr>
-            <tr>
-              <th scope="row">Postgraduate Loan repayment</th>
-              <td>{formatGBP(result.postgradMonthly)}/mo</td>
-            </tr>
-            <tr>
-              <th scope="row">Total per year</th>
-              <td>{formatGBP(result.totalAnnual)}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <ResultDisclaimer />
-      </div>
-
-      <StudentLoanGuide />
-
-      <RelatedCalculators
-        paths={['/salary-calculator', '/pay-rise-calculator', '/minimum-wage-calculator']}
-      />
-    </>
+          <Notice>
+            This is for an employee paid the same amount every month. The guide below explains how
+            repayments work if you are self-employed.
+          </Notice>
+        </>
+      }
+      result={
+        <ResultPanel
+          label="You repay"
+          figure={formatGBP(result.totalMonthly)}
+          detail={<>a month, or {formatGBP(result.totalAnnual)} a year</>}
+          prompt={!salary.valid && 'Enter your salary to see your student loan repayment.'}
+          link={{ to: '/salary-calculator', text: 'See your take-home pay after tax' }}
+        >
+          <table className="result-table result-table--total">
+            <tbody>
+              <tr>
+                <th scope="row">Undergraduate plan, a month</th>
+                <td>{formatGBP(result.undergradMonthly)}</td>
+              </tr>
+              <tr>
+                <th scope="row">Postgraduate Loan, a month</th>
+                <td>{formatGBP(result.postgradMonthly)}</td>
+              </tr>
+              <tr>
+                <th scope="row">Total a year</th>
+                <td>{formatGBP(result.totalAnnual)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </ResultPanel>
+      }
+      guide={<StudentLoanGuide />}
+      related={['/salary-calculator', '/pay-rise-calculator', '/minimum-wage-calculator']}
+    />
   )
 }

@@ -2,7 +2,7 @@
 // route in src/routes.js to its own HTML file in dist/, with that page's title,
 // description and canonical URL, then writes the sitemap from the same list.
 
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -58,7 +58,8 @@ function buildPage(template, route, { indexable }) {
     indexable ? `\n    <meta property="og:url" content="${url}" />` : '',
   )
   html = replaceTag(html, /\s*<!-- The tags below.*?-->/s, '')
-  if (indexable) html = replaceTag(html, /\n {2}<\/head>/, `\n    ${adSenseTag}\n  </head>`)
+  const headTags = indexable ? [...fontPreloads, adSenseTag] : fontPreloads
+  html = replaceTag(html, /\n {2}<\/head>/, `\n    ${headTags.join('\n    ')}\n  </head>`)
 
   const body = render(route.path)
   const isNotFoundPage = body.includes('Page not found')
@@ -77,6 +78,15 @@ if (!publisherId) throw new Error('No Google publisher ID found in public/ads.tx
 // AdSense account to visitors who need to see it. Real pages only: the 404
 // page has no content, so it carries no ads.
 const adSenseTag = `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${publisherId}" crossorigin="anonymous"></script>`
+
+// The two font files are fetched early, so text does not wait for the
+// stylesheet to ask for them. Vite adds a hash to each file name.
+const assets = await readdir(path.join(dist, 'assets'))
+const fontPreloads = ['sora', 'figtree'].map((font) => {
+  const file = assets.find((name) => name.startsWith(`${font}-latin-wght-normal`))
+  if (!file) throw new Error(`No ${font} font file found in dist/assets`)
+  return `<link rel="preload" href="/assets/${file}" as="font" type="font/woff2" crossorigin />`
+})
 
 const template = await readFile(path.join(dist, 'index.html'), 'utf8')
 

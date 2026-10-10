@@ -53,7 +53,7 @@ export default function CookieSettingsLink() {
 
   return (
     <a href={SETTINGS_URL} onClick={openConsentMessage}>
-      Privacy and cookie settings
+      Cookie settings
     </a>
   )
 }

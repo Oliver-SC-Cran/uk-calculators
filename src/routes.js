@@ -102,6 +102,12 @@ export const routes = [
     description:
       'The cookies Google AdSense may set on UK Money Calculators, what each one is for, how long it lasts and how to change your choice.',
   },
+  {
+    path: '/terms',
+    title: 'Terms of use | UK Money Calculators',
+    description:
+      'The terms for using UK Money Calculators. The calculators give estimates for general information, not financial, tax or legal advice.',
+  },
 ]
 
 // Shown for any URL not in the list above. Never indexed, so no canonical URL.

@@ -14,6 +14,7 @@ import StudentLoanCalculator from './pages/StudentLoanCalculator'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
 import Cookies from './pages/Cookies'
+import Terms from './pages/Terms'
 import NotFound from './pages/NotFound'
 import { routes } from './routes'
 
@@ -33,6 +34,7 @@ const pages = {
   '/about': About,
   '/privacy': Privacy,
   '/cookies': Cookies,
+  '/terms': Terms,
 }
 
 export function AppRoutes() {

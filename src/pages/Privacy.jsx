@@ -1,15 +1,16 @@
+import TextPage from '../components/TextPage'
 import { Link } from 'react-router-dom'
 import { CONTACT_EMAIL, SITE_NAME } from '../routes'
 
 // Change this by hand whenever the policy changes.
-const LAST_UPDATED = '8 October 2026'
-const LAST_UPDATED_ISO = '2026-10-08'
+const LAST_UPDATED = '10 October 2026'
+const LAST_UPDATED_ISO = '2026-10-10'
 
 export default function Privacy() {
   return (
-    <>
+    <TextPage>
       <h1>Privacy policy</h1>
-      <p>
+      <p className="prose__updated">
         Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
       </p>
 
@@ -55,16 +56,37 @@ export default function Privacy() {
         .
       </p>
 
+      <h2>Visitor statistics</h2>
+      <p>
+        We use Vercel Web Analytics to count visits, so that we can see which calculators are used
+        and how people find the site. It does not use cookies and does not store anything on your
+        device.
+      </p>
+      <p>
+        For each page you open, it records the time, the address of the page, the address of the
+        page that linked you here, your approximate location (country, region and city), and the
+        type of device, operating system and browser you are using. To count a visitor once, Vercel
+        makes a short-lived code from details of the request your browser sends. That code is thrown
+        away after 24 hours and is not used to follow you to other websites.
+      </p>
+      <p>
+        What we see is totals, such as how many times a page was opened. We do not see your IP
+        address or anything you type into the calculators. Vercel explains{' '}
+        <a href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noreferrer">
+          how Web Analytics handles data
+        </a>
+        .
+      </p>
+
       <h2>Our lawful basis, and how to withdraw consent</h2>
       <p>
         Our lawful basis for advertising cookies and personalised ads is your consent. You can
-        withdraw it at any time, as easily as you gave it, with the "Privacy and cookie settings"
-        link at the bottom of every page. That reopens Google's consent message so you can change
-        your choice.
+        withdraw it at any time, as easily as you gave it, with the "Cookie settings" link at the
+        bottom of every page. That reopens Google's consent message so you can change your choice.
       </p>
       <p>
-        For the server logs described below, our lawful basis is our legitimate interest in keeping
-        the site secure and working.
+        For visitor statistics and for the server logs described below, our lawful basis is our
+        legitimate interest in understanding how the site is used and keeping it secure and working.
       </p>
 
       <h2>Hosting and server logs</h2>
@@ -92,10 +114,11 @@ export default function Privacy() {
         message for as long as it takes to deal with your question. Advertising cookies last for the
         periods shown in the <Link to="/cookies">cookie policy</Link>, up to 13 months. Vercel keeps
         server logs for a limited time under its own{' '}
-        <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noreferrer">
+        <a href="https://vercel.com/legal/privacy-notice" target="_blank" rel="noreferrer">
           privacy policy
         </a>
-        .
+        . Vercel sets how long visitor statistics are kept, which is one month or longer. They
+        contain nothing that identifies you.
       </p>
 
       <h2>Your rights</h2>
@@ -125,6 +148,6 @@ export default function Privacy() {
 
       <h2>Changes to this policy</h2>
       <p>If this policy changes, the date at the top of this page will change too.</p>
-    </>
+    </TextPage>
   )
 }

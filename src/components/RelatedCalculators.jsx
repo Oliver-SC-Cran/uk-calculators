@@ -8,11 +8,11 @@ export default function RelatedCalculators({ paths }) {
   return (
     <section className="related">
       <h2>Related calculators</h2>
-      <ul className="calc-list">
+      <ul className="tiles">
         {related.map(({ path, name }) => (
           <li key={path}>
-            <Link to={path}>
-              <span className="calc-list__title">{name}</span>
+            <Link to={path} className="tile">
+              <span className="tile__name">{name}</span>
             </Link>
           </li>
         ))}

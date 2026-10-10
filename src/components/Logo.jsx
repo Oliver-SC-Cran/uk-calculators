@@ -1,0 +1,16 @@
+/**
+ * The site mark: a navy square with a yellow pound sign. The pound sign is the
+ * outline of the £ in Sora ExtraBold, drawn as a path so it looks the same
+ * before the font has loaded. public/favicon.svg uses the same shapes.
+ */
+export default function Logo() {
+  return (
+    <svg className="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <rect className="logo__square" width="32" height="32" rx="8" />
+      <path
+        className="logo__pound"
+        d="M10.91 24.5L10.91 13.43Q10.91 10.5 12.76 9Q14.6 7.5 17.7 7.5Q18.2 7.5 18.92 7.53Q19.64 7.57 20.35 7.63Q21.06 7.68 21.5 7.73L21.5 11.07Q21.06 11.03 20.33 10.97Q19.6 10.91 18.86 10.88Q18.13 10.85 17.7 10.85Q16.57 10.85 15.92 11.17Q15.27 11.49 14.99 12.11Q14.72 12.72 14.72 13.59L14.72 24.5ZM9.45 24.5L9.45 21.29L20.17 21.29L20.17 24.5ZM9.58 17.35L9.58 14.6L19.99 14.6L19.99 17.35ZM19.35 24.5L19.35 19.32L22.55 19.32L22.55 24.5Z"
+      />
+    </svg>
+  )
+}
