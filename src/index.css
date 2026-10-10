@@ -340,6 +340,31 @@ main:focus {
   font-weight: 600;
 }
 
+.result__details {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.result__details summary {
+  cursor: pointer;
+  color: var(--interactive);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.result__details summary:focus-visible {
+  outline: 2px solid var(--interactive);
+  outline-offset: 2px;
+}
+
+.result + .result {
+  margin-top: 1.5rem;
+}
+
+.notice ul {
+  margin: 0.5rem 0 0;
+}
+
 /* A note about what the calculator assumes. */
 .notice {
   margin-top: 1.5rem;

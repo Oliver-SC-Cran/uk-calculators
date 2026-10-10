@@ -107,6 +107,8 @@ export function calculateSelfEmployedTax({
     dueInJuly: paymentOnAccount,
     // Things the page points out.
     underTradingAllowance: turnover > 0 && turnover <= tradingAllowance,
+    // Income over the trading allowance has to be reported even when no tax is due.
+    mustRegisterWithNothingToPay: turnover > tradingAllowance && totalBill === 0,
     tradingAllowanceWouldBeBetter:
       !useTradingAllowance && turnover > 0 && atLeastZero(expenses) < tradingAllowance,
     belowSmallProfitsThreshold: profit < class2.smallProfitsThreshold,

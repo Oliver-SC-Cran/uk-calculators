@@ -121,6 +121,20 @@ test('self-employed [gov.uk] trading income of £1,000 or less is covered in ful
   assert.equal(soleTrader(1001, { useTradingAllowance: true }).underTradingAllowance, false)
 })
 
+test('self-employed [gov.uk] income over £1,000 must be registered even with no tax due', () => {
+  // "You must tell HMRC if you have: gross trading income over £1,000 - register for Self Assessment"
+  // £8,000 of income and £2,000 of expenses is £6,000 of profit, inside the personal allowance.
+  const noTax = soleTrader(8000, { expenses: 2000 })
+  assert.equal(noTax.totalBill, 0)
+  assert.equal(noTax.mustRegisterWithNothingToPay, true)
+  // The line is income, not profit: £1,001 of income with the allowance is £1 of profit.
+  assert.equal(soleTrader(1001, { useTradingAllowance: true }).mustRegisterWithNothingToPay, true)
+  assert.equal(soleTrader(1000, { useTradingAllowance: true }).mustRegisterWithNothingToPay, false)
+  // Not shown once there is a bill, or when there is no income.
+  assert.equal(soleTrader(30000).mustRegisterWithNothingToPay, false)
+  assert.equal(soleTrader(0).mustRegisterWithNothingToPay, false)
+})
+
 test('self-employed [own working] the trading allowance instead of expenses', () => {
   // £5,000 of income less the £1,000 allowance is £4,000 of profit, inside the personal allowance.
   const alone = soleTrader(5000, { useTradingAllowance: true })

@@ -1,10 +1,11 @@
 # UK Money Calculators
 
-The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): nine calculators for UK pay, tax, savings and property, each with a written guide.
+The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): ten calculators for UK pay, tax, savings and property, each with a written guide.
 
 - Take-home pay
 - Pay rises
 - Self-employed tax
+- Maternity and paternity pay
 - Statutory redundancy pay
 - ISA and Lifetime ISA allowance
 - Mortgage overpayments

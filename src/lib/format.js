@@ -25,6 +25,26 @@ export const formatGBPPence = (value) => withMinusSign(poundsAndPence.format(val
 /** 0.09 becomes 9%, 0.045 becomes 4.5% */
 export const percent = (rate) => `${Math.round(rate * 1000) / 10}%`
 
+const longDate = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+const shortDate = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+/** '2027-03-01' becomes "1 March 2027" */
+export const formatDate = (isoDate) => longDate.format(new Date(`${isoDate}T00:00:00Z`))
+
+/** '2027-03-01' becomes "1 Mar 2027", for tables */
+export const formatDateShort = (isoDate) => shortDate.format(new Date(`${isoDate}T00:00:00Z`))
+
 /** 227 becomes "18 years and 11 months" */
 export function yearsAndMonths(totalMonths) {
   const years = Math.floor(totalMonths / 12)

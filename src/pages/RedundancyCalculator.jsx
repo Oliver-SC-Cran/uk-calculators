@@ -120,7 +120,9 @@ export default function RedundancyCalculator() {
 
       <RedundancyGuide />
 
-      <RelatedCalculators paths={['/salary-calculator', '/minimum-wage-calculator']} />
+      <RelatedCalculators
+        paths={['/salary-calculator', '/maternity-pay-calculator', '/minimum-wage-calculator']}
+      />
     </>
   )
 }

@@ -27,6 +27,12 @@ const calculators = [
       'Work out your statutory redundancy pay from your age, length of service and weekly pay.',
   },
   {
+    path: '/maternity-pay-calculator',
+    title: 'Maternity and paternity pay calculator',
+    description:
+      'Work out statutory maternity or paternity pay, whether you qualify and your key dates.',
+  },
+  {
     path: '/isa-calculator',
     title: 'ISA and Lifetime ISA allowance calculator',
     description:

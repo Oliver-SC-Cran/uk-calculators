@@ -2,7 +2,14 @@
 // script (scripts/prerender.js) and the sitemap are all built from this list.
 // To add a page: add it here, then map its path to a component in App.jsx.
 
-import { ISA, MINIMUM_WAGE, REDUNDANCY, STAMP_DUTY, TAX_YEAR } from './lib/calculations.js'
+import {
+  ISA,
+  MINIMUM_WAGE,
+  PARENTAL_PAY,
+  REDUNDANCY,
+  STAMP_DUTY,
+  TAX_YEAR,
+} from './lib/calculations.js'
 
 export const SITE_URL = 'https://ukmoneycalculators.co.uk'
 export const SITE_NAME = 'UK Money Calculators'
@@ -39,6 +46,12 @@ export const routes = [
     name: 'Statutory redundancy pay calculator',
     title: `Statutory redundancy pay calculator ${TAX_YEAR}`,
     description: `Work out your statutory redundancy pay from your age, years of service and weekly pay. Uses the ${TAX_YEAR} weekly pay cap of ${pounds(REDUNDANCY.weeklyPayCapGB)} (${pounds(REDUNDANCY.weeklyPayCapNI)} in Northern Ireland).`,
+  },
+  {
+    path: '/maternity-pay-calculator',
+    name: 'Maternity and paternity pay calculator',
+    title: 'Maternity and paternity pay calculator: SMP and SPP 2026/27',
+    description: `Work out Statutory Maternity Pay or Paternity Pay at the ${PARENTAL_PAY.ratesFrom} rate of £${PARENTAL_PAY.weeklyRate.toFixed(2)} a week, check if you qualify, and see your qualifying week.`,
   },
   {
     path: '/isa-calculator',

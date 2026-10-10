@@ -105,7 +105,7 @@ export default function MinimumWageCalculator() {
       <MinimumWageGuide />
 
       <RelatedCalculators
-        paths={['/salary-calculator', '/redundancy-calculator', '/student-loan-calculator']}
+        paths={['/salary-calculator', '/maternity-pay-calculator', '/redundancy-calculator']}
       />
     </>
   )

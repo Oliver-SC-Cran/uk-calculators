@@ -8,6 +8,7 @@ import ISACalculator from './pages/ISACalculator'
 import MortgageOverpaymentCalculator from './pages/MortgageOverpaymentCalculator'
 import MinimumWageCalculator from './pages/MinimumWageCalculator'
 import StampDutyCalculator from './pages/StampDutyCalculator'
+import MaternityPayCalculator from './pages/MaternityPayCalculator'
 import SelfEmployedTaxCalculator from './pages/SelfEmployedTaxCalculator'
 import StudentLoanCalculator from './pages/StudentLoanCalculator'
 import About from './pages/About'
@@ -26,6 +27,7 @@ const pages = {
   '/isa-calculator': ISACalculator,
   '/mortgage-overpayment-calculator': MortgageOverpaymentCalculator,
   '/stamp-duty-calculator': StampDutyCalculator,
+  '/maternity-pay-calculator': MaternityPayCalculator,
   '/minimum-wage-calculator': MinimumWageCalculator,
   '/student-loan-calculator': StudentLoanCalculator,
   '/about': About,

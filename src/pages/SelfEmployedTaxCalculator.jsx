@@ -237,6 +237,23 @@ export default function SelfEmployedTaxCalculator() {
           <ResultDisclaimer />
         </div>
 
+        {result.mustRegisterWithNothingToPay && (
+          <div className="notice">
+            You have no tax to pay, but your self-employed income is over{' '}
+            {formatGBP(tradingAllowance)}, so you still need to register for Self Assessment and
+            send a tax return. The deadline to register is 5 October after the end of the tax year,
+            which is {SELF_EMPLOYED.registerBy} for {TAX_YEAR}. You can{' '}
+            <a
+              href="https://www.gov.uk/register-for-self-assessment"
+              target="_blank"
+              rel="noreferrer"
+            >
+              register for Self Assessment on gov.uk
+            </a>
+            .
+          </div>
+        )}
+
         {result.underTradingAllowance && (
           <div className="notice">
             Self-employed income of {formatGBP(tradingAllowance)} or less in a tax year is covered
