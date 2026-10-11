@@ -270,7 +270,7 @@ export default function Payslip() {
 
       <h2>Where this comes from</h2>
       <p>
-        All from gov.uk: <Source href="https://www.gov.uk/payslips-your-rights">payslips</Source>,{' '}
+        All from gov.uk: <Source href="https://www.gov.uk/payslips">payslips</Source>,{' '}
         <Source href="https://www.gov.uk/guidance/check-if-the-tax-on-your-payslip-is-correct">
           checking your payslip
         </Source>

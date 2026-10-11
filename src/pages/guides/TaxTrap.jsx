@@ -202,10 +202,7 @@ export default function TaxTrap() {
       <h2>Where these figures come from</h2>
       <p>
         All from gov.uk:{' '}
-        <Source href="https://www.gov.uk/income-tax-rates/income-over-100000">
-          income over {gbp(taperStart)}
-        </Source>
-        ,{' '}
+        <Source href="https://www.gov.uk/income-tax-rates">income over {gbp(taperStart)}</Source>,{' '}
         <Source href="https://www.gov.uk/guidance/adjusted-net-income">adjusted net income</Source>,{' '}
         <Source href="https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief">
           tax relief on pension contributions
