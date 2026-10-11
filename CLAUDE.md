@@ -60,7 +60,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 
 ## Hosting
 
-- Cloudflare Pages builds the site from GitHub. `main` is the live site. Every other branch gets a preview at `<branch>.<project>.pages.dev`, which Cloudflare marks as not to be indexed.
+- Cloudflare Pages builds the site from GitHub. `main` is the live site. The Pages project is `uk-calculators-b2y`, so every other branch gets a preview at `<branch>.uk-calculators-b2y.pages.dev`, which Cloudflare marks as not to be indexed.
 - Build settings, in the Pages project: framework preset None, build command `npm run build`, output folder `dist`. `.node-version` sets the Node.js version Cloudflare builds with. The free plan allows 500 builds a month.
 - `public/_headers` holds the response headers. Cloudflare Pages reads it and does not serve it. There is no `_redirects` file. Pages redirects `/about.html` to `/about` by itself. It should do the same for `/about/`, but that has not been checked on a preview yet (11 October 2026). If it does not, add a line for each page to `public/_redirects`.
 - Three things are set in the Cloudflare dashboard, not in this repo: the redirect from `www` to the bare domain (a Bulk Redirect), the redirect from http to https (Always Use HTTPS), and DNS.
@@ -115,7 +115,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 
 - Do not add any third-party script, tracker, ad tag or embedded font without flagging it first. Anything that sets non-essential cookies needs consent before it loads, and the privacy policy must match what the site actually loads.
 - The site loads two outside services: Google AdSense and Cloudflare Web Analytics. For AdSense, `scripts/prerender.js` adds its tag to the head of every real page at build time, using the publisher ID in `public/ads.txt`. It is not in `index.html`, so the dev server does not load it, and the 404 page does not carry it. Do not add manual ad units: the site uses Auto ads.
-- Cloudflare Web Analytics counts page views without cookies and stores nothing on the device, so it does not need consent. Its tag is not in the build yet (11 October 2026). `scripts/prerender.js` will add it, next to the AdSense tag, once the site's Web Analytics token is known. In the Cloudflare dashboard the site must be set to "Enable with JS Snippet installation", so that Cloudflare does not add a second copy of the tag by itself. Do not add custom events or anything that sends what people type.
+- Cloudflare Web Analytics counts page views without cookies and stores nothing on the device, so it does not need consent. `scripts/prerender.js` adds its tag to the end of every page at build time, the 404 page included. It is not in `index.html`, so the dev server does not load it. In the Cloudflare dashboard the site must stay set to "Enable with JS Snippet installation", so that Cloudflare does not add a second copy of the tag by itself. With `vite preview` the tag logs errors in the browser console, because Cloudflare does not accept counts from `localhost` with a port. That is expected. Do not add custom events or anything that sends what people type.
 - Consent is handled by Google's own consent message, published in the AdSense account under Privacy & messaging. The footer's "Cookie settings" link (`CookieSettingsLink.jsx`) reopens it. Do not build a separate cookie banner.
 - `src/pages/Privacy.jsx` and `src/pages/Cookies.jsx` must describe what the site actually loads. If a script, host or cookie changes, update both pages and their "Last updated" dates in the same batch. The cookie list comes from Google's published lists, linked in the file. Re-check them when editing it.
 - `src/pages/Terms.jsx` is the terms of use. It is a plain-English draft that has not been reviewed by a solicitor. Change its "Last updated" date when its wording changes.
@@ -129,7 +129,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - If a new third-party script or host is added, add it to the policy in the same batch, and to the privacy and cookie policies. The fonts are served from this site's own address, so `'self'` already covers them. Cloudflare Web Analytics loads its script from `static.cloudflareinsights.com` and sends its counts to `cloudflareinsights.com`, and both are in the policy.
 - Files under `/assets/` have a hash in their names, so `public/_headers` lets browsers keep them for a year. Do not put files there by hand.
 - Keep the site free of inline scripts and inline styles, so the policy stays simple.
-- The site uses no secrets or environment variables. `.env` files are ignored by git. Never commit a key or token.
+- The site uses no secrets or environment variables. `.env` files are ignored by git. Never commit a key or token. The one exception is the Cloudflare Web Analytics site token in `scripts/prerender.js`, which the owner agreed to commit on 11 October 2026. It is not a secret: it is printed in the HTML of every page, like the AdSense publisher ID in `public/ads.txt`, and it only says which site a page view belongs to.
 - Do not turn on source maps for the production build.
 
 ## Site checklist
@@ -209,7 +209,7 @@ None of these may appear on the site:
 
 ### 4. Security
 
-- Hide API keys: N/A. The site has none. The AdSense publisher ID in `public/ads.txt` is public by design
+- Hide API keys: N/A. The site has none. The AdSense publisher ID in `public/ads.txt` and the Cloudflare Web Analytics token in `scripts/prerender.js` are public by design
 - Check env variables: N/A. None are used
 - Protect admin routes: N/A. There is no admin area
 - Proper authentication: N/A. There are no accounts
@@ -226,5 +226,5 @@ None of these may appear on the site:
 - No exposed files: `dist/` holds only pages, assets, icons, `ads.txt`, `robots.txt`, the sitemap and `_headers`, which Cloudflare Pages reads and does not serve
 - Secure database access: N/A. There is no database
 - Passwords hashed properly: N/A. There are no passwords
-- No secrets in git: scan the files and the history for keys and `.env` files
+- No secrets in git: scan the files and the history for keys and `.env` files. The Web Analytics token is public and does not count
 - Full security audit: the checks in this list. It is a self-check, not an outside test

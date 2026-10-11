@@ -60,6 +60,7 @@ function buildPage(template, route, { indexable }) {
   html = replaceTag(html, /\s*<!-- The tags below.*?-->/s, '')
   const headTags = indexable ? [...fontPreloads, adSenseTag] : fontPreloads
   html = replaceTag(html, /\n {2}<\/head>/, `\n    ${headTags.join('\n    ')}\n  </head>`)
+  html = replaceTag(html, /\n {2}<\/body>/, `\n    ${analyticsTag}\n  </body>`)
 
   const body = render(route.path)
   const isNotFoundPage = body.includes('Page not found')
@@ -78,6 +79,22 @@ if (!publisherId) throw new Error('No Google publisher ID found in public/ads.tx
 // AdSense account to visitors who need to see it. Real pages only: the 404
 // page has no content, so it carries no ads.
 const adSenseTag = `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${publisherId}" crossorigin="anonymous"></script>`
+
+// Cloudflare Web Analytics counts page views without cookies. This token only
+// says which site the counts belong to. It is not a secret: it is printed in
+// the HTML of every page, like the AdSense publisher ID, so it is safe to keep
+// here. It comes from Web Analytics in the Cloudflare dashboard, where the site
+// is set to "Enable with JS Snippet installation" so that Cloudflare does not
+// add a second copy of the tag by itself.
+const WEB_ANALYTICS_TOKEN = '074d4e07fc9847858772a08fa95d9bd3'
+if (!/^[0-9a-f]{32}$/.test(WEB_ANALYTICS_TOKEN)) {
+  throw new Error('The Cloudflare Web Analytics token should be 32 letters and numbers')
+}
+
+// The tag as Cloudflare's documentation gives it, placed at the end of the
+// body. It goes on every page, the 404 page included, so broken links show up
+// in the counts.
+const analyticsTag = `<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${WEB_ANALYTICS_TOKEN}"}'></script>`
 
 // The two font files are fetched early, so text does not wait for the
 // stylesheet to ask for them. Vite adds a hash to each file name.
