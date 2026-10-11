@@ -1,13 +1,13 @@
 # UK Money Calculators (ukmoneycalculators.co.uk)
 
-UK financial calculators. React 19 + Vite, react-router-dom, plain CSS, deployed on Vercel as a client-side SPA.
+UK financial calculators. React 19 + Vite, react-router-dom, plain CSS. Every page is built to its own HTML file and the site is hosted on Cloudflare Pages.
 
 ## Commands
 
 - `npm run dev` starts the dev server
 - `npm run build` builds to `dist/`
 - `npm run lint` runs oxlint
-- `npm test` runs the tests in `src/lib/` and `src/routes.test.js`
+- `npm test` runs the tests in `src/lib/`, `src/routes.test.js` and `src/headers.test.js`
 
 Run `npm test`, `npm run lint` and `npm run build` before finishing any task. If any of them fails, the task is not finished.
 
@@ -19,7 +19,7 @@ Use this for every batch of changes. Never commit straight to `main`.
 
 1. Create a new branch from an up-to-date `main`, named after the change (for example `fix-redundancy-age-bands`).
 2. Commit with a clear message that says what changed and why.
-3. Push the branch to GitHub (`origin`) so Vercel creates a preview deployment.
+3. Push the branch to GitHub (`origin`) so Cloudflare Pages creates a preview deployment.
 4. Say what changed, then stop. Do not merge.
 
 Only when the user says "merge it": merge the branch into `main` and push `main`. That deploys to the live site, so never do it without being asked.
@@ -48,14 +48,25 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 
 ## How pages are built
 
-`npm run build` renders every route to real HTML: `dist/index.html`, `dist/<route>/index.html` and `dist/404.html`, plus `dist/sitemap.xml`. The browser then hydrates that HTML, so the calculators work as before.
+`npm run build` renders every route to real HTML: `dist/index.html`, `dist/<route>.html` and `dist/404.html`, plus `dist/sitemap.xml`. The browser then hydrates that HTML, so the calculators work as before.
 
-- To add a page: add it to `src/routes.js` with a unique title and description, then map its path to a component in `src/App.jsx`. Nothing else needs editing. Do not hand-write a sitemap or add rewrites to `vercel.json`.
+- To add a page: add it to `src/routes.js` with a unique title and description, then map its path to a component in `src/App.jsx`. Nothing else needs editing. Do not hand-write a sitemap or add a redirect for the page.
 - Titles and descriptions are written for someone searching in the UK: say what the page does, include the tax year where it matters, and take figures from the constants in `calculations.js`.
 - Page components must render the same HTML on the server and in the browser. Do not read `window`, `document`, the date or random values while rendering. Use an effect for those.
-- After a build, check the HTML in `dist/` for the page you changed. With `vite preview`, open routes with a trailing slash (`/isa-calculator/`), because the preview server otherwise serves the homepage file. Vercel does not have this problem.
-- Unknown URLs get `dist/404.html` with a 404 status from Vercel.
+- Pages are flat files (`dist/about.html`, not `dist/about/index.html`) so that addresses have no trailing slash. Cloudflare Pages serves `about.html` at `/about`. It would serve `about/index.html` at `/about/` and redirect `/about` to it, which would send every canonical URL, sitemap entry and internal link through a redirect.
+- After a build, check the HTML in `dist/` for the page you changed. With `vite preview`, open routes without a trailing slash (`/isa-calculator`). The preview server serves the homepage file for a route with a trailing slash and for unknown URLs. Cloudflare Pages does not.
+- Unknown URLs get `dist/404.html` with a 404 status from Cloudflare Pages. If that file were missing, Pages would answer every unknown URL with the homepage.
 - `scripts/prerender.js` also adds a preload tag for the two font files to every page. The social image tags (`og:image`, `twitter:image`) are in `index.html` and are the same on every page.
+
+## Hosting
+
+- Cloudflare Pages builds the site from GitHub. `main` is the live site. Every other branch gets a preview at `<branch>.<project>.pages.dev`, which Cloudflare marks as not to be indexed.
+- Build settings, in the Pages project: framework preset None, build command `npm run build`, output folder `dist`. `.node-version` sets the Node.js version Cloudflare builds with. The free plan allows 500 builds a month.
+- `public/_headers` holds the response headers. Cloudflare Pages reads it and does not serve it. There is no `_redirects` file. Pages redirects `/about.html` to `/about` by itself. It should do the same for `/about/`, but that has not been checked on a preview yet (11 October 2026). If it does not, add a line for each page to `public/_redirects`.
+- Three things are set in the Cloudflare dashboard, not in this repo: the redirect from `www` to the bare domain (a Bulk Redirect), the redirect from http to https (Always Use HTTPS), and DNS.
+- Keep these Cloudflare settings off for the domain, because they change the HTML or add scripts and cookies that the policies do not describe: Email Address Obfuscation (on by default, and it rewrites the email links), Rocket Loader, Bot Fight Mode, and automatic injection of Web Analytics.
+- The site is moving from Vercel in October 2026. Until the Vercel project is retired, `vercel.json` stays, with `cleanUrls` so that Vercel serves the same flat files, and it must send the same headers as `public/_headers` (`src/headers.test.js` checks this). After that, delete `vercel.json`, the last test in `src/headers.test.js`, the sentence about Vercel in the privacy policy, and this line.
+- Vercel was dropped because its free plan does not allow sites that carry adverts. Check a host's terms for this before moving again.
 
 ## Writing rules
 
@@ -103,8 +114,8 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 ## Compliance
 
 - Do not add any third-party script, tracker, ad tag or embedded font without flagging it first. Anything that sets non-essential cookies needs consent before it loads, and the privacy policy must match what the site actually loads.
-- The site loads two outside services: Google AdSense and Vercel Web Analytics. For AdSense, `scripts/prerender.js` adds its tag to the head of every real page at build time, using the publisher ID in `public/ads.txt`. It is not in `index.html`, so the dev server does not load it, and the 404 page does not carry it. Do not add manual ad units: the site uses Auto ads.
-- Vercel Web Analytics counts page views without cookies and stores nothing on the device, so it does not need consent. `src/main.jsx` starts it in production only. Its script and its requests use this site's own address (`/_vercel/insights/`), and it only works once Web Analytics is switched on for the project in the Vercel dashboard. Do not add custom events or anything that sends what people type.
+- The site loads two outside services: Google AdSense and Cloudflare Web Analytics. For AdSense, `scripts/prerender.js` adds its tag to the head of every real page at build time, using the publisher ID in `public/ads.txt`. It is not in `index.html`, so the dev server does not load it, and the 404 page does not carry it. Do not add manual ad units: the site uses Auto ads.
+- Cloudflare Web Analytics counts page views without cookies and stores nothing on the device, so it does not need consent. Its tag is not in the build yet (11 October 2026). `scripts/prerender.js` will add it, next to the AdSense tag, once the site's Web Analytics token is known. In the Cloudflare dashboard the site must be set to "Enable with JS Snippet installation", so that Cloudflare does not add a second copy of the tag by itself. Do not add custom events or anything that sends what people type.
 - Consent is handled by Google's own consent message, published in the AdSense account under Privacy & messaging. The footer's "Cookie settings" link (`CookieSettingsLink.jsx`) reopens it. Do not build a separate cookie banner.
 - `src/pages/Privacy.jsx` and `src/pages/Cookies.jsx` must describe what the site actually loads. If a script, host or cookie changes, update both pages and their "Last updated" dates in the same batch. The cookie list comes from Google's published lists, linked in the file. Re-check them when editing it.
 - `src/pages/Terms.jsx` is the terms of use. It is a plain-English draft that has not been reviewed by a solicitor. Change its "Last updated" date when its wording changes.
@@ -112,11 +123,11 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 
 ## Security
 
-- Security headers are set for every page in `vercel.json`: `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy` and a Content Security Policy.
+- Security headers are set for every page in `public/_headers`: `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, `Strict-Transport-Security` and a Content Security Policy. Cloudflare allows up to 100 rules in that file and 2,000 characters on a line. `src/headers.test.js` checks the limits and the rules below.
 - The Content Security Policy is `Content-Security-Policy-Report-Only`. It blocks nothing and only logs to the browser console. Do not switch it to an enforcing `Content-Security-Policy` without being asked. Google only supports a nonce-based policy for AdSense and publishes no list of domains, and this static site cannot make nonces, so enforcing the script list could stop ads.
 - `Referrer-Policy` must stay `strict-origin-when-cross-origin`. Google's consent tool needs it.
-- If a new third-party script or host is added, add it to the policy in the same batch, and to the privacy and cookie policies. Vercel Web Analytics and the fonts are served from this site's own address, so `'self'` already covers them.
-- Files under `/assets/` have a hash in their names, so `vercel.json` lets browsers keep them for a year. Do not put files there by hand.
+- If a new third-party script or host is added, add it to the policy in the same batch, and to the privacy and cookie policies. The fonts are served from this site's own address, so `'self'` already covers them. Cloudflare Web Analytics loads its script from `static.cloudflareinsights.com` and sends its counts to `cloudflareinsights.com`, and both are in the policy.
+- Files under `/assets/` have a hash in their names, so `public/_headers` lets browsers keep them for a year. Do not put files there by hand.
 - Keep the site free of inline scripts and inline styles, so the policy stays simple.
 - The site uses no secrets or environment variables. `.env` files are ignored by git. Never commit a key or token.
 - Do not turn on source maps for the production build.
@@ -134,7 +145,7 @@ Go through these four lists for every batch of changes, and finish the batch wit
 - Cookie consent banner: Google's consent message, set up in the AdSense account. Do not build another
 - Check form consents: N/A. No form collects personal data, and calculator inputs never leave the browser
 - No unnecessary data: the site collects nothing itself. Analytics is cookieless and sends nothing that is typed
-- Audit third-party SDKs: two, Google AdSense and Vercel Web Analytics. Both are described in the privacy policy
+- Audit third-party SDKs: two, Google AdSense and Cloudflare Web Analytics. Both are described in the privacy policy
 - Remove dark patterns: no pre-ticked boxes, fake urgency, nagging or hidden opt-outs
 - Remove hidden fees: N/A. The site is free and takes no payments
 - Remove fake reviews: N/A. There are no reviews or testimonials
@@ -178,7 +189,7 @@ None of these may appear on the site:
 - Privacy policy page: `/privacy`
 - Terms page: `/terms`
 - Secrets off the front end: there are none
-- Force HTTPS: Vercel redirects http to https and sends `Strict-Transport-Security`
+- Force HTTPS: Cloudflare redirects http to https (Always Use HTTPS, in the dashboard), and `public/_headers` sends `Strict-Transport-Security`
 - Cookie consent banner: Google's consent message
 - Meta titles and descriptions: `src/routes.js`, checked by `src/routes.test.js`
 - Social preview image: `public/social-image.png`, on every page
@@ -193,26 +204,26 @@ None of these may appear on the site:
 - No broken links: check every internal and external link in `dist/`
 - Form validation: `src/lib/validation.js` and the field components
 - Spam protection: N/A. No form sends anything. Contact is an email link
-- Analytics: Vercel Web Analytics, which must be switched on in the Vercel dashboard
+- Analytics: Cloudflare Web Analytics, set up for the site in the Cloudflare dashboard
 - One clear call to action: the one yellow button in the homepage hero
 
 ### 4. Security
 
 - Hide API keys: N/A. The site has none. The AdSense publisher ID in `public/ads.txt` is public by design
-- Check env variables: N/A. None are used, apart from Vite's own built-in `PROD` flag
+- Check env variables: N/A. None are used
 - Protect admin routes: N/A. There is no admin area
 - Proper authentication: N/A. There are no accounts
 - Check user access: N/A. Every page is public
 - Sanitise forms: inputs are read as numbers or dates by `validation.js`, used in the browser only, and never stored or sent
 - Protect against XSS: React escapes everything it renders. No `dangerouslySetInnerHTML`, no inline scripts, and a Content Security Policy in report-only mode
-- Rate limiting: N/A. The site has no endpoints of its own. Vercel serves the static files
+- Rate limiting: N/A. The site has no endpoints of its own. Cloudflare serves the static files
 - Secure API endpoints: N/A. There is no API
 - CORS settings: N/A. There is no API
-- Security headers: `vercel.json`
-- Debug mode off: production builds only, no source maps, and the analytics debug script is never loaded
+- Security headers: `public/_headers`
+- Debug mode off: production builds only, and no source maps
 - Dependencies updated: `npm outdated` and `npm audit`
 - Unused packages removed: every package in `package.json` must be imported somewhere
-- No exposed files: `dist/` holds only pages, assets, icons, `ads.txt`, `robots.txt` and the sitemap
+- No exposed files: `dist/` holds only pages, assets, icons, `ads.txt`, `robots.txt`, the sitemap and `_headers`, which Cloudflare Pages reads and does not serve
 - Secure database access: N/A. There is no database
 - Passwords hashed properly: N/A. There are no passwords
 - No secrets in git: scan the files and the history for keys and `.env` files

@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { CONTACT_EMAIL, SITE_NAME } from '../routes'
 
 // Change this by hand whenever the policy changes.
-const LAST_UPDATED = '10 October 2026'
-const LAST_UPDATED_ISO = '2026-10-10'
+const LAST_UPDATED = '11 October 2026'
+const LAST_UPDATED_ISO = '2026-10-11'
 
 export default function Privacy() {
   return (
@@ -58,22 +58,21 @@ export default function Privacy() {
 
       <h2>Visitor statistics</h2>
       <p>
-        We use Vercel Web Analytics to count visits, so that we can see which calculators are used
-        and how people find the site. It does not use cookies and does not store anything on your
-        device.
+        We use Cloudflare Web Analytics to count visits, so that we can see which calculators are
+        used and how people find the site. It does not use cookies and does not store anything on
+        your device. Cloudflare says it does not fingerprint visitors, and does not track them from
+        one website to another.
       </p>
       <p>
-        For each page you open, it records the time, the address of the page, the address of the
-        page that linked you here, your approximate location (country, region and city), and the
-        type of device, operating system and browser you are using. To count a visitor once, Vercel
-        makes a short-lived code from details of the request your browser sends. That code is thrown
-        away after 24 hours and is not used to follow you to other websites.
+        For each page you open, it records the time, the address of the page (without anything after
+        a question mark), the page that linked you here, your country, the type of device, operating
+        system and browser you are using, and how long the page took to load.
       </p>
       <p>
         What we see is totals, such as how many times a page was opened. We do not see your IP
-        address or anything you type into the calculators. Vercel explains{' '}
-        <a href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noreferrer">
-          how Web Analytics handles data
+        address or anything you type into the calculators. Cloudflare explains{' '}
+        <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noreferrer">
+          how Web Analytics works
         </a>
         .
       </p>
@@ -91,17 +90,25 @@ export default function Privacy() {
 
       <h2>Hosting and server logs</h2>
       <p>
-        The site is hosted by Vercel Inc. When your browser loads a page, Vercel processes your IP
-        address and basic details of the request in its server logs, so that it can deliver the page
-        and protect the site from abuse. We do not use these logs to identify you.
+        The site is hosted by Cloudflare, Inc. When your browser loads a page, Cloudflare processes
+        your IP address and basic details of the request, so that it can deliver the page and
+        protect the site from abuse. We do not use this information to identify you.
+      </p>
+      <p>
+        We are moving the site to Cloudflare from our previous host, Vercel Inc., in October 2026.
+        Until the move is finished, Vercel may handle your request in the same way, under its own{' '}
+        <a href="https://vercel.com/legal/privacy-notice" target="_blank" rel="noreferrer">
+          privacy notice
+        </a>
+        .
       </p>
 
       <h2>Transfers outside the UK</h2>
       <p>
-        Google and Vercel are based in the United States and may process data there and in other
-        countries. Vercel states that it complies with the UK Extension to the EU-U.S. Data Privacy
-        Framework and uses standard contractual clauses. Google describes the safeguards it relies
-        on in its{' '}
+        Google and Cloudflare are based in the United States and may process data there and in other
+        countries. Cloudflare states that it complies with the UK Extension to the EU-U.S. Data
+        Privacy Framework, and that it relies on standard contractual clauses if that stops
+        applying. Google describes the safeguards it relies on in its{' '}
         <a href="https://policies.google.com/privacy/frameworks" target="_blank" rel="noreferrer">
           data transfer frameworks
         </a>{' '}
@@ -112,13 +119,12 @@ export default function Privacy() {
       <p>
         We do not keep any personal data from your visit ourselves. If you email us, we keep your
         message for as long as it takes to deal with your question. Advertising cookies last for the
-        periods shown in the <Link to="/cookies">cookie policy</Link>, up to 13 months. Vercel keeps
-        server logs for a limited time under its own{' '}
-        <a href="https://vercel.com/legal/privacy-notice" target="_blank" rel="noreferrer">
+        periods shown in the <Link to="/cookies">cookie policy</Link>, up to 13 months. Cloudflare
+        keeps its records of requests for a limited time under its own{' '}
+        <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noreferrer">
           privacy policy
         </a>
-        . Vercel sets how long visitor statistics are kept, which is one month or longer. They
-        contain nothing that identifies you.
+        . Visitor statistics can be viewed for six months. They contain nothing that identifies you.
       </p>
 
       <h2>Your rights</h2>

@@ -91,13 +91,16 @@ const fontPreloads = ['sora', 'figtree'].map((font) => {
 const template = await readFile(path.join(dist, 'index.html'), 'utf8')
 
 for (const route of routes) {
-  // "/" becomes dist/index.html, "/about" becomes dist/about/index.html.
-  const file = path.join(dist, route.path, 'index.html')
+  // "/" becomes dist/index.html and "/about" becomes dist/about.html. Cloudflare
+  // Pages serves about.html at "/about". It would serve about/index.html at
+  // "/about/" and redirect "/about" there, which is not the address we use.
+  const file = path.join(dist, route.path === '/' ? 'index.html' : `${route.path}.html`)
   await mkdir(path.dirname(file), { recursive: true })
   await writeFile(file, buildPage(template, route, { indexable: true }))
 }
 
-// Vercel serves dist/404.html, with a 404 status, for any URL that has no file.
+// Cloudflare Pages serves dist/404.html, with a 404 status, for any URL that
+// has no file. Without it, Pages would answer every unknown URL with the homepage.
 await writeFile(
   path.join(dist, '404.html'),
   buildPage(template, notFoundRoute, { indexable: false }),

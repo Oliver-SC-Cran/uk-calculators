@@ -2,12 +2,12 @@ import TextPage from '../components/TextPage'
 import { Link } from 'react-router-dom'
 
 // Change this by hand whenever the policy or the cookie list changes.
-const LAST_UPDATED = '10 October 2026'
-const LAST_UPDATED_ISO = '2026-10-10'
+const LAST_UPDATED = '11 October 2026'
+const LAST_UPDATED_ISO = '2026-10-11'
 
 // Names, purposes and durations as Google publishes them at
 // https://business.safety.google/adscookies/ and
-// https://policies.google.com/technologies/cookies (checked 10 October 2026).
+// https://policies.google.com/technologies/cookies (checked 11 October 2026).
 // Re-check both pages whenever this list is edited.
 const advertisingCookies = [
   {
@@ -138,9 +138,9 @@ export default function Cookies() {
 
       <h2>Cookies this site sets itself</h2>
       <p>
-        None. The calculators do not save anything in your browser. Visits are counted with Vercel
-        Web Analytics, which does not use cookies or store anything on your device. Every cookie
-        below comes from Google AdSense, which shows the ads.
+        None. The calculators do not save anything in your browser. Visits are counted with
+        Cloudflare Web Analytics, which does not use cookies or store anything on your device. Every
+        cookie below comes from Google AdSense, which shows the ads.
       </p>
 
       <h2>Advertising cookies from Google AdSense</h2>

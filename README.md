@@ -45,7 +45,7 @@ npm run build
 - The Sora and Figtree fonts are served from the site itself. They come from the `@fontsource-variable` packages.
 - `scripts/prerender.js` turns each page into static HTML at build time.
 
-The site is hosted on Vercel. Pushing a branch creates a preview, and pushing `main` deploys the live site.
+The site is hosted on Cloudflare Pages. Pushing a branch creates a preview, and pushing `main` deploys the live site. The build command is `npm run build`, the output folder is `dist`, and `.node-version` sets the Node.js version Cloudflare builds with. Response headers are in `public/_headers`.
 
 ## Updating the figures each April
 
