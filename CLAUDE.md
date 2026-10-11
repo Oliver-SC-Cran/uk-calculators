@@ -124,8 +124,8 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - Consent is handled by Google's own consent message, published in the AdSense account under Privacy & messaging. The footer's "Cookie settings" link (`CookieSettingsLink.jsx`) reopens it. Do not build a separate cookie banner.
 - `src/pages/Privacy.jsx` and `src/pages/Cookies.jsx` must describe what the site actually loads. If a script, host or cookie changes, update both pages and their "Last updated" dates in the same batch. The cookie list comes from Google's published lists, linked in the file. Re-check them when editing it.
 - `src/pages/Terms.jsx` is the terms of use. It is a plain-English draft that has not been reviewed by a solicitor. Change its "Last updated" date when its wording changes.
-- The site is run by Oliver Cran, who is named on the About page, in the privacy policy and in the terms (decided 11 October 2026). No postal address is given. `OWNER_NAME`, `SITE_NAME` and `CONTACT_EMAIL` are in `src/routes.js`.
-- The wording of the About page is the owner's own. Do not rewrite it. Fix typos only, and say so if a sentence on it stops being true.
+- The site is run by Oliver Cran, who is named on the About page, in the privacy policy and in the terms (decided 11 October 2026). No postal address is given yet: the owner wants a business address service, not a home address. `OWNER_NAME`, `SITE_NAME` and `CONTACT_EMAIL` are in `src/routes.js`.
+- The wording of the About page is the owner's own. Do not rewrite it. Fix typos only, and say so if a sentence on it stops being true. Its two sentences about checking begin "Every calculator that uses official rates" because the mortgage overpayment calculator uses none.
 
 ## Security
 
@@ -159,7 +159,7 @@ Go through these four lists for every batch of changes, and finish the batch wit
 - Accessibility alt text: pages have no content images. The logo is decorative and sits beside the site name. The social image has `og:image:alt`
 - Fix colour contrast: check every new pairing (4.5:1 for text, 3:1 for field edges)
 - Keyboard navigation: skip link, visible focus, and focus moved to the new page
-- Business details: the owner's name (Oliver Cran) and a contact email, on the About page, in the privacy policy and in the terms. The owner closed this item on 11 October 2026. No postal address is given
+- Business details: Open. It needs a business address service, not the owner's home address (owner's note, 11 October 2026). Until then the owner's name (Oliver Cran) and a contact email are on the About page, in the privacy policy and in the terms
 - Age consent for kids' data: N/A. No accounts, and the site collects no personal data from anyone
 - Unsubscribe link in emails: N/A. The site sends no emails
 - Licensed fonts and images: Sora and Figtree under the SIL Open Font Licence 1.1. The logo and social image were made for the site

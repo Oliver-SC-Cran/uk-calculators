@@ -17,10 +17,10 @@ export default function About() {
 
       <h2>How the figures are checked</h2>
       <p>
-        Every calculator uses the official rates published on gov.uk. Each one is tested against the
-        worked examples gov.uk publishes, and against the government's own calculators where they
-        exist. When the rules change, the site is updated, and everything is checked again each
-        April for the new tax year.
+        Every calculator that uses official rates uses the ones published on gov.uk. Every
+        calculator that uses official rates is tested against the worked examples gov.uk publishes,
+        and against the government's own calculators where they exist. When the rules change, the
+        site is updated, and everything is checked again each April for the new tax year.
       </p>
 
       <h2>What this site isn't</h2>
