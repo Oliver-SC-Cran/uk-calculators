@@ -125,7 +125,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - `src/pages/Privacy.jsx` and `src/pages/Cookies.jsx` must describe what the site actually loads. If a script, host or cookie changes, update both pages and their "Last updated" dates in the same batch. The cookie list comes from Google's published lists, linked in the file. Re-check them when editing it.
 - `src/pages/Terms.jsx` is the terms of use. It is a plain-English draft that has not been reviewed by a solicitor. Change its "Last updated" date when its wording changes.
 - The site is run by Oliver Cran, who is named on the About page, in the privacy policy and in the terms (decided 11 October 2026). No postal address is given yet: the owner wants a business address service, not a home address. `OWNER_NAME`, `SITE_NAME` and `CONTACT_EMAIL` are in `src/routes.js`.
-- The wording of the About page is the owner's own. Do not rewrite it. Fix typos only, and say so if a sentence on it stops being true. Its two sentences about checking begin "Every calculator that uses official rates" because the mortgage overpayment calculator uses none.
+- The wording of the About page is the owner's own. Do not rewrite it. Fix typos only, and say so if a sentence on it stops being true. Its sentence about checking begins "Every calculator that uses official rates" because the mortgage overpayment calculator uses none, and names nidirect because the Northern Ireland redundancy limit comes from there.
 
 ## Security
 
