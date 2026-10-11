@@ -202,7 +202,7 @@ None of these may appear on the site:
 - Sitemap and robots.txt: `dist/sitemap.xml` is built from `routes.js`, and `public/robots.txt` points to it
 - Alt text on images: as in the legal list
 - Compressed images: keep the social image a palette PNG
-- Page load speed: run Lighthouse (mobile) on the homepage and two calculators. Its default mode gave the same page anything from 78 to 100 for Performance on a Cloudflare preview, so run it more than once, or add `--throttling-method=devtools`. A preview scores about 66 for SEO because previews are marked as not to be indexed
+- Page load speed: run Lighthouse (mobile) on the homepage and two calculators with `--throttling-method=devtools`, which loads each page over a connection that really is slowed down. On the live site on 11 October 2026 that gave 91 to 99 for Performance. Do not judge a change by Lighthouse's default mode, which estimates the slow connection from a fast load. On Cloudflare it scores the same pages about 70 on most runs and 100 on the rest (69 to 100 that day, in runs made one after another), and the reason is not known. A preview scores about 66 for SEO because previews are marked as not to be indexed
 - Colour contrast: as in the legal list
 - Mobile friendly: check at 375px wide with no sideways scroll
 - Custom 404 page: `src/pages/NotFound.jsx`, built to `dist/404.html`
