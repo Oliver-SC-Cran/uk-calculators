@@ -1,18 +1,26 @@
-import { INCOME_TAX, NATIONAL_INSURANCE, STUDENT_LOAN, TAX_YEAR } from '../lib/calculations'
+import {
+  INCOME_TAX,
+  NATIONAL_INSURANCE,
+  SCOTTISH_INCOME_TAX,
+  STUDENT_LOAN,
+  TAX_YEAR,
+} from '../lib/calculations'
 import { formatGBP as gbp, percent } from '../lib/format'
 import { calculatePayRise, CHILD_BENEFIT_CHARGE, SALARY_SACRIFICE_CHANGE } from '../lib/payRise'
 
 // Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '9 October 2026'
-const LAST_UPDATED_ISO = '2026-10-09'
+const LAST_UPDATED = '11 October 2026'
+const LAST_UPDATED_ISO = '2026-10-11'
 
-const pence = (share) => `${Math.round(share * 100)}p`
+// 0.72 becomes 72p, and 0.305 becomes 30.5p
+const pence = (share) => `${Number((share * 100).toFixed(1))}p`
 
 export default function PayRiseGuide() {
   const { personalAllowance, basicRateLimit, taperStart, taperFullyGoneAt } = INCOME_TAX
   const { basicRate, higherRate, additionalRate } = INCOME_TAX
-  const { mainRate, upperRate } = NATIONAL_INSURANCE
+  const { mainRate, upperRate, upperEarningsLimit } = NATIONAL_INSURANCE
   const { plan2, postgraduate } = STUDENT_LOAN
+  const scotland = SCOTTISH_INCOME_TAX
 
   // What comes off each extra pound in each band: income tax plus NI.
   const basicBand = basicRate + mainRate
@@ -35,6 +43,13 @@ export default function PayRiseGuide() {
   })
 
   const ex4 = calculatePayRise({ currentSalary: 29000, newSalary: 31000, plan: 'plan2' })
+
+  // Scotland. Relief at source is claimed at the UK basic rate, so the extra
+  // relief is the Scottish rate less that.
+  const scotTaperRate = scotland.advancedRate * 1.5
+  const scotEx1 = calculatePayRise({ currentSalary: 35000, newSalary: 38000, scottish: true })
+  const scotEx2 = calculatePayRise({ currentSalary: 45000, newSalary: 49000, scottish: true })
+  const scotEx2Elsewhere = calculatePayRise({ currentSalary: 45000, newSalary: 49000 })
 
   return (
     <article className="guide">
@@ -77,6 +92,54 @@ export default function PayRiseGuide() {
         Postgraduate Loan {percent(postgraduate.rate)}.
       </p>
 
+      <h3>What comes off each extra pound in Scotland</h3>
+      <p>
+        Scottish income tax has six rates. NI is the same across the UK, so it stays at{' '}
+        {percent(mainRate)} up to {gbp(upperEarningsLimit)}, although the Scottish higher rate
+        starts above {gbp(scotland.intermediateRateLimit)}. Between those two figures you keep half
+        of each extra pound.
+      </p>
+      <ul>
+        <li>
+          {gbp(personalAllowance)} to {gbp(scotland.starterRateLimit)}:{' '}
+          {percent(scotland.starterRate)} tax and {percent(mainRate)} NI. You keep{' '}
+          {pence(1 - scotland.starterRate - mainRate)}.
+        </li>
+        <li>
+          {gbp(scotland.starterRateLimit)} to {gbp(scotland.basicRateLimit)}:{' '}
+          {percent(scotland.basicRate)} tax and {percent(mainRate)} NI. You keep{' '}
+          {pence(1 - scotland.basicRate - mainRate)}.
+        </li>
+        <li>
+          {gbp(scotland.basicRateLimit)} to {gbp(scotland.intermediateRateLimit)}:{' '}
+          {percent(scotland.intermediateRate)} tax and {percent(mainRate)} NI. You keep{' '}
+          {pence(1 - scotland.intermediateRate - mainRate)}.
+        </li>
+        <li>
+          {gbp(scotland.intermediateRateLimit)} to {gbp(upperEarningsLimit)}:{' '}
+          {percent(scotland.higherRate)} tax and {percent(mainRate)} NI. You keep{' '}
+          {pence(1 - scotland.higherRate - mainRate)}.
+        </li>
+        <li>
+          {gbp(upperEarningsLimit)} to {gbp(scotland.higherRateLimit)}:{' '}
+          {percent(scotland.higherRate)} tax and {percent(upperRate)} NI. You keep{' '}
+          {pence(1 - scotland.higherRate - upperRate)}.
+        </li>
+        <li>
+          {gbp(scotland.higherRateLimit)} to {gbp(taperStart)}: {percent(scotland.advancedRate)} tax
+          and {percent(upperRate)} NI. You keep {pence(1 - scotland.advancedRate - upperRate)}.
+        </li>
+        <li>
+          {gbp(taperStart)} to {gbp(taperFullyGoneAt)}: you also lose £1 of personal allowance for
+          every £2, which makes the tax {percent(scotTaperRate)}. You keep{' '}
+          {pence(1 - scotTaperRate - upperRate)}.
+        </li>
+        <li>
+          Above {gbp(scotland.advancedRateLimit)}: {percent(scotland.topRate)} tax and{' '}
+          {percent(upperRate)} NI. You keep {pence(1 - scotland.topRate - upperRate)}.
+        </li>
+      </ul>
+
       <h3>How your pension changes the sums</h3>
       <ul>
         <li>
@@ -93,6 +156,18 @@ export default function PayRiseGuide() {
           if you pay tax above {percent(basicRate)} you claim the rest yourself.
         </li>
       </ul>
+      <p>
+        In Scotland, salary sacrifice and net pay give relief at your Scottish rate without a claim.
+        With relief at source, the provider still claims {percent(basicRate)}. If your top rate is
+        the {percent(scotland.starterRate)} starter rate, you do not pay back the difference. If you
+        pay more than {percent(basicRate)}, you can claim{' '}
+        {percent(scotland.intermediateRate - basicRate)} on income taxed at{' '}
+        {percent(scotland.intermediateRate)}, {percent(scotland.higherRate - basicRate)} on income
+        taxed at {percent(scotland.higherRate)}, {percent(scotland.advancedRate - basicRate)} at{' '}
+        {percent(scotland.advancedRate)} and {percent(scotland.topRate - basicRate)} at{' '}
+        {percent(scotland.topRate)}. You claim it on a Self Assessment tax return, or by making a
+        claim to HMRC if you do not send one.
+      </p>
       <p>
         All three reduce your adjusted net income. That is the figure HMRC uses for the{' '}
         {gbp(taperStart)} personal allowance taper and the {gbp(CHILD_BENEFIT_CHARGE.threshold)}{' '}
@@ -149,6 +224,28 @@ export default function PayRiseGuide() {
         {gbp(ex4.kept)}, which is {percent(ex4.keptShare)} of the rise.
       </p>
 
+      <h3>
+        {gbp(35000)} to {gbp(38000)} in Scotland
+      </h3>
+      <p>
+        The whole {gbp(scotEx1.rise)} is taxed at the {percent(scotland.intermediateRate)}{' '}
+        intermediate rate, with {percent(mainRate)} NI. Tax takes {gbp(scotEx1.goesTo.incomeTax)}{' '}
+        and NI {gbp(scotEx1.goesTo.nationalInsurance)}. You keep {gbp(scotEx1.kept)}, which is{' '}
+        {percent(scotEx1.keptShare)} of the rise.
+      </p>
+
+      <h3>
+        {gbp(45000)} to {gbp(49000)} in Scotland
+      </h3>
+      <p>
+        Both salaries are between {gbp(scotland.intermediateRateLimit)} and{' '}
+        {gbp(upperEarningsLimit)}, where the {percent(scotland.higherRate)} higher rate and{' '}
+        {percent(mainRate)} NI overlap. Tax takes {gbp(scotEx2.goesTo.incomeTax)} and NI{' '}
+        {gbp(scotEx2.goesTo.nationalInsurance)}. You keep {gbp(scotEx2.kept)}, which is{' '}
+        {percent(scotEx2.keptShare)} of the rise. In the rest of the UK the same rise is taxed at{' '}
+        {percent(basicRate)}, and you would keep {gbp(scotEx2Elsewhere.kept)}.
+      </p>
+
       <h2>Common questions</h2>
 
       <h3>Can a pay rise leave me with less take-home pay?</h3>
@@ -165,7 +262,7 @@ export default function PayRiseGuide() {
       <p>
         Because the personal allowance is withdrawn in that range. Each extra £2 is taxed at{' '}
         {percent(higherRate)} and also makes another £1 of your income taxable at{' '}
-        {percent(higherRate)}.
+        {percent(higherRate)}. In Scotland both are taxed at {percent(scotland.advancedRate)}.
       </p>
 
       <h3>Do pension contributions change which thresholds I cross?</h3>
@@ -177,8 +274,9 @@ export default function PayRiseGuide() {
 
       <h3>Is this different in Scotland?</h3>
       <p>
-        Yes. Scotland has its own income tax bands, so the shares above do not apply. NI and student
-        loan rules are the same. This calculator does not cover Scottish rates.
+        Yes. Scotland has its own income tax bands, so you keep a different share of each pound. The
+        Scottish list above shows them. NI, student loan rules and the personal allowance taper are
+        the same. Choose Scotland in the calculator to use the Scottish rates.
       </p>
 
       <h2>Where these figures come from</h2>
@@ -186,6 +284,10 @@ export default function PayRiseGuide() {
         See gov.uk for{' '}
         <a href="https://www.gov.uk/income-tax-rates" target="_blank" rel="noreferrer">
           income tax rates
+        </a>
+        ,{' '}
+        <a href="https://www.gov.uk/scottish-income-tax" target="_blank" rel="noreferrer">
+          Income Tax in Scotland
         </a>
         ,{' '}
         <a

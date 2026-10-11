@@ -10,6 +10,7 @@
 // https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief
 // https://www.gov.uk/guidance/adjusted-net-income
 // https://www.gov.uk/guidance/salary-sacrifice-and-the-effects-on-paye
+// https://www.gov.uk/scottish-income-tax (checked on 11 October 2026)
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
@@ -321,4 +322,207 @@ test('pay rise [own working] the worked examples in the £100,000 tax trap guide
   near(withPension.adjustedNetIncome, 100000)
   assert.equal(withPension.personalAllowanceUsed, 12570)
   near(noPension.takeHomeAnnual - withPension.takeHomeAnnual, 3800)
+})
+
+// ---------------------------------------------------------------------------
+// Scottish taxpayers
+// ---------------------------------------------------------------------------
+
+const scot = { scottish: true }
+
+test('Scottish pay rise [own working] no pension or loan matches the take-home calculator', () => {
+  for (const salary of [0, 12570, 16537, 29526, 43662, 47000, 50270, 75000, 110000, 200000]) {
+    const result = calculatePayPackage({ salary, ...scot })
+    const takeHome = calculateTakeHome(salary, scot)
+    near(result.takeHomeAnnual, takeHome.takeHomeAnnual, `take-home on ${salary}:`)
+    near(result.incomeTax, takeHome.incomeTax, `income tax on ${salary}:`)
+    near(result.nationalInsurance, takeHome.nationalInsurance, `NI on ${salary}:`)
+  }
+})
+
+test('Scottish pay rise [own working] the worked examples shown in the guide', () => {
+  // £35,000 to £38,000 is all at the 21% intermediate rate, with 8% NI.
+  const intermediate = rise(35000, 38000, scot)
+  near(intermediate.goesTo.incomeTax, 630)
+  near(intermediate.goesTo.nationalInsurance, 240)
+  near(intermediate.kept, 2130)
+  near(intermediate.keptShare, 0.71)
+  assert.deepEqual(intermediate.warnings, [])
+  // £45,000 to £49,000 is all at the 42% higher rate, and NI is still 8%.
+  const overlap = rise(45000, 49000, scot)
+  near(overlap.goesTo.incomeTax, 1680)
+  near(overlap.goesTo.nationalInsurance, 320)
+  near(overlap.kept, 2000)
+  near(overlap.keptShare, 0.5)
+  assert.deepEqual(overlap.warnings, [])
+  // The same rise in the rest of the UK is at 20% and 8%.
+  near(rise(45000, 49000).kept, 2880)
+})
+
+test('Scottish pay rise [own working] rises across the higher and advanced rates', () => {
+  // £40,000 to £46,000: £3,662 at 21% and £2,338 at 42%.
+  const acrossHigher = rise(40000, 46000, scot)
+  near(acrossHigher.goesTo.incomeTax, 1750.98)
+  near(acrossHigher.goesTo.nationalInsurance, 480)
+  near(acrossHigher.kept, 3769.02)
+  assert.deepEqual(acrossHigher.warnings, ['higher-rate'])
+  // £45,000 to £55,000: all at 42%. NI is 8% on £5,270 and 2% on £4,730.
+  const acrossNiLimit = rise(45000, 55000, scot)
+  near(acrossNiLimit.goesTo.incomeTax, 4200)
+  near(acrossNiLimit.goesTo.nationalInsurance, 516.2)
+  near(acrossNiLimit.kept, 5283.8)
+  assert.deepEqual(acrossNiLimit.warnings, []) // £50,270 is not a tax threshold in Scotland
+  // £70,000 to £80,000: £5,000 at 42% and £5,000 at 45%, with 2% NI.
+  const acrossAdvanced = rise(70000, 80000, scot)
+  near(acrossAdvanced.goesTo.incomeTax, 4350)
+  near(acrossAdvanced.kept, 5450)
+  assert.deepEqual(acrossAdvanced.warnings, ['advanced-rate'])
+})
+
+test('Scottish pay rise [own working] which thresholds give a warning', () => {
+  // The higher rate starts above £43,662, not £50,270.
+  assert.deepEqual(rise(42000, 43662, scot).warnings, [])
+  assert.deepEqual(rise(42000, 43663, scot).warnings, ['higher-rate'])
+  assert.deepEqual(rise(43662, 45000, scot).warnings, ['higher-rate']) // first pound over is in the rise
+  assert.deepEqual(rise(43663, 45000, scot).warnings, []) // already over
+  assert.deepEqual(rise(48000, 52000, scot).warnings, [])
+  // The advanced rate starts above £75,000.
+  assert.deepEqual(rise(70000, 75000, scot).warnings, [])
+  assert.deepEqual(rise(70000, 75001, scot).warnings, ['advanced-rate'])
+  assert.deepEqual(rise(75000, 80000, scot).warnings, ['advanced-rate'])
+  assert.deepEqual(rise(75001, 80000, scot).warnings, [])
+  // No warning for the one point steps at £16,537 and £29,526.
+  assert.deepEqual(rise(15000, 18000, scot).warnings, [])
+  assert.deepEqual(rise(28000, 31000, scot).warnings, [])
+  // The taper, the Child Benefit charge and student loans are the same across the UK.
+  assert.deepEqual(rise(59000, 60001, scot).warnings, ['child-benefit'])
+  assert.deepEqual(rise(98000, 100002, scot).warnings, ['taper'])
+  assert.deepEqual(rise(29000, 31000, { plan: 'plan2', ...scot }).warnings, ['student-loan'])
+  assert.deepEqual(rise(40000, 80000, scot).warnings, [
+    'higher-rate',
+    'advanced-rate',
+    'child-benefit',
+  ])
+  // Outside Scotland nothing has moved, and there is no advanced rate.
+  assert.deepEqual(rise(42000, 45000).warnings, [])
+  assert.deepEqual(rise(48000, 50271).warnings, ['higher-rate'])
+  assert.deepEqual(rise(70000, 80000).warnings, [])
+})
+
+test('Scottish pay rise [own working] the taper and the top rate', () => {
+  // £95,000 to £105,000: £10,000 at 45% is £4,500. £2,500 of allowance is lost,
+  // taxed at 45%: another £1,125.
+  const across = rise(95000, 105000, scot)
+  near(across.goesTo.incomeTax, 5625)
+  near(across.goesTo.nationalInsurance, 200)
+  near(across.kept, 4175)
+  assert.deepEqual(across.warnings, ['taper'])
+  // Wholly inside the taper: every £100 loses £67.50 in tax and £2 in NI.
+  const inside = rise(105000, 115000, scot)
+  near(inside.goesTo.incomeTax, 6750)
+  near(inside.kept, 3050)
+  assert.deepEqual(inside.warnings, ['inside-taper'])
+  // Above £125,140: 48% tax and 2% NI.
+  const above = rise(130000, 140000, scot)
+  near(above.goesTo.incomeTax, 4800)
+  near(above.kept, 5000)
+  assert.deepEqual(above.warnings, [])
+})
+
+test('Scottish pay rise [own working] salary sacrifice and net pay give relief at Scottish rates', () => {
+  // £60,000 with 5%: tax on £57,000 is £6,320.09 + £13,338 at 42%.
+  const sacrifice = pack(60000, 'salarySacrifice', 5, scot)
+  near(sacrifice.incomeTax, 11922.05)
+  near(sacrifice.nationalInsurance, 3150.6) // the same as outside Scotland
+  near(sacrifice.takeHomeAnnual, 57000 - 11922.05 - 3150.6)
+  assert.equal(sacrifice.extraReliefToClaim, 0)
+  const netPay = pack(60000, 'netPay', 5, scot)
+  near(netPay.incomeTax, 11922.05)
+  near(netPay.nationalInsurance, 3210.6)
+  assert.equal(netPay.extraReliefToClaim, 0)
+  // Either way the £3,000 saves 42% tax: £1,260.
+  near(pack(60000, 'netPay', 0, scot).incomeTax - netPay.incomeTax, 1260)
+})
+
+test('Scottish pay rise [gov.uk] relief at source: 20% from the provider, the rest by claiming', () => {
+  // gov.uk, "If you pay Income Tax above 20% (Scotland)": you can claim
+  // "1% up to the amount of any income you have paid 21% tax on, 22% up to the
+  // amount of any income you have paid 42% tax on, 25% up to the amount of any
+  // income you have paid 45% tax on, 28% up to the amount of any income you
+  // have paid 48% tax on".
+  const claim = (salary, percent = 5) =>
+    pack(salary, 'reliefAtSource', percent, scot).extraReliefToClaim
+  near(claim(35000), 17.5) // 1% of £1,750
+  near(claim(60000), 660) // 22% of £3,000
+  near(claim(80000), 1000) // 25% of £4,000
+  near(claim(200000), 2800) // 28% of £10,000
+  // "Up to the amount": £45,000 has £1,338 taxed at 42%, so £2,250 gets 22% on
+  // £1,338 and 1% on the other £912.
+  near(claim(45000), 294.36 + 9.12)
+  // £76,000 has £1,000 taxed at 45%: 25% on that and 22% on the other £2,800.
+  near(claim(76000), 250 + 616)
+  // £31,000 has £1,474 taxed at 21%. Of £3,100, the rest was taxed at 20%.
+  near(claim(31000, 10), 14.74)
+  // Nothing more for someone whose top rate is 20%.
+  assert.equal(claim(25000), 0)
+
+  // The payslip is taxed in full, and the provider adds 20% whatever the rate.
+  const higher = pack(60000, 'reliefAtSource', 5, scot)
+  near(higher.incomeTax, 13182.05) // the same as with no pension
+  assert.equal(higher.pensionFromPay, 2400)
+  assert.equal(higher.hmrcTopUp, 600)
+  assert.equal(higher.adjustedNetIncome, 57000)
+
+  // "If your rate of Income Tax in Scotland is 19% your pension provider will
+  // claim tax relief for you at a rate of 20%. You do not need to pay the difference."
+  const starter = pack(15000, 'reliefAtSource', 5, scot)
+  assert.equal(starter.topTaxRate, 0.19)
+  assert.equal(starter.pensionIntoPot, 750)
+  assert.equal(starter.hmrcTopUp, 150)
+  assert.equal(starter.extraReliefToClaim, 0)
+})
+
+test('Scottish pay rise [own working] relief at source and the personal allowance', () => {
+  // £105,000 with 5%: the payslip is taxed as £105,000, with £2,500 of allowance
+  // lost. Adjusted net income is £99,750, so the full allowance is due. The claim
+  // is 25% of £5,250 (£1,312.50) plus £2,500 of allowance at 45% (£1,125).
+  const result = pack(105000, 'reliefAtSource', 5, scot)
+  near(result.incomeTax, 34107.05)
+  near(result.extraReliefToClaim, 2437.5)
+  const crossing = rise(95000, 105000, {
+    pensionPercent: 5,
+    pensionType: 'reliefAtSource',
+    ...scot,
+  })
+  assert.deepEqual(crossing.warnings, ['taper-reclaim'])
+  // £130,000 with 5%: £6,500 goes in and adjusted net income is £123,500, which
+  // brings back £820 of allowance. 28% on the £4,860 taxed at 48%, 25% on the
+  // other £1,640, and £820 at 45%.
+  near(pack(130000, 'reliefAtSource', 5, scot).extraReliefToClaim, 1360.8 + 410 + 369)
+})
+
+test('Scottish pay rise [own working] the pieces always add up to the rise', () => {
+  const settings = [
+    {},
+    { plan: 'plan4', hasPostgraduateLoan: true },
+    { pensionPercent: 8, pensionType: 'salarySacrifice', plan: 'plan4' },
+    { pensionPercent: 8, pensionType: 'netPay', plan: 'plan1' },
+    { pensionPercent: 8, pensionType: 'reliefAtSource', plan: 'plan2', hasPostgraduateLoan: true },
+  ]
+  for (const setting of settings) {
+    for (const [from, to] of [
+      [15000, 19000],
+      [28000, 32000],
+      [42000, 52000],
+      [72000, 78000],
+      [97000, 104000],
+      [120000, 135000],
+    ]) {
+      const { rise: total, kept, goesTo } = rise(from, to, { ...setting, ...scot })
+      const parts =
+        kept + goesTo.incomeTax + goesTo.nationalInsurance + goesTo.studentLoan + goesTo.pension
+      near(parts, total, `${JSON.stringify(setting)} ${from} to ${to}:`)
+      assert.ok(kept > 0 && kept < total, `${from} to ${to}: kept ${kept}`)
+    }
+  }
 })

@@ -8,6 +8,7 @@ import {
   calculateStudentLoanForYear,
   calculateStudentLoanRepayment,
   INCOME_TAX,
+  SCOTTISH_INCOME_TAX,
   SELF_EMPLOYED,
 } from './calculations.js'
 
@@ -21,6 +22,9 @@ const atLeastZero = (value) => (Number.isFinite(value) ? Math.max(0, value) : 0)
  * the lower tax bands, so the tax on the profit is the tax on everything
  * together minus the tax on the job alone. Student loan works the same way:
  * the repayment on total income for the year, minus what the employer took.
+ *
+ * scottish uses the Scottish income tax rates, for the job and the profit.
+ * Class 4 National Insurance and student loans are the same across the UK.
  */
 export function calculateSelfEmployedTax({
   income,
@@ -29,6 +33,7 @@ export function calculateSelfEmployedTax({
   employmentIncome = 0,
   plan = 'none',
   hasPostgraduateLoan = false,
+  scottish = false,
 }) {
   const { tradingAllowance, paymentsOnAccount, class2 } = SELF_EMPLOYED
   const turnover = atLeastZero(income)
@@ -39,8 +44,8 @@ export function calculateSelfEmployedTax({
   const deducted = Math.min(turnover, costs)
   const profit = turnover - deducted
 
-  const taxOnJob = calculateIncomeTax(job)
-  const taxOnEverything = calculateIncomeTax(job + profit)
+  const taxOnJob = calculateIncomeTax(job, { scottish })
+  const taxOnEverything = calculateIncomeTax(job + profit, { scottish })
   const incomeTax = taxOnEverything.tax - taxOnJob.tax
   const class4 = calculateClass4NationalInsurance(profit)
 
@@ -62,11 +67,16 @@ export function calculateSelfEmployedTax({
   const takeHomeAnnual = (useTradingAllowance ? turnover : profit) - totalBill
 
   // How much of the allowance and basic rate band the job leaves for the profit.
+  // For a Scottish taxpayer it is the starter, basic and intermediate bands
+  // together: the income left before the higher rate starts.
   const personalAllowance = taxOnEverything.personalAllowanceUsed
   const allowanceUsedByJob = Math.min(job, personalAllowance)
+  const higherRateStartsAbove = scottish
+    ? SCOTTISH_INCOME_TAX.intermediateRateLimit
+    : INCOME_TAX.basicRateLimit
   const basicRateBandLeft = Math.max(
     0,
-    INCOME_TAX.basicRateLimit - Math.max(job, INCOME_TAX.personalAllowance),
+    higherRateStartsAbove - Math.max(job, INCOME_TAX.personalAllowance),
   )
 
   // Payments on account cover income tax and Class 4, not student loan. They

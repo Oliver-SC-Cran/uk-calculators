@@ -3,6 +3,8 @@
 // Each test name says where its expected values came from:
 //   [gov.uk]      a worked example, published rule or official calculator result
 //                 on gov.uk, checked on 8 October 2026
+//   [gov.scot]    a table published by the Scottish Government on gov.scot,
+//                 checked on 11 October 2026
 //   [own working] worked out by hand from the published rates and rules
 //
 // When the figures change in April, re-check the [gov.uk] values at the links
@@ -110,6 +112,158 @@ test('take-home [own working] blank or negative input counts as zero', () => {
     assert.equal(result.takeHomeAnnual, 0)
     assert.equal(result.effectiveRate, 0)
   }
+})
+
+// ---------------------------------------------------------------------------
+// Take-home pay for Scottish taxpayers
+// https://www.gov.uk/scottish-income-tax
+// https://www.gov.scot/publications/scottish-income-tax-rates-and-bands/pages/2026-to-2027/
+// https://www.gov.scot/publications/scottish-income-tax-technical-factsheet/
+// ---------------------------------------------------------------------------
+
+const scottish = (salary) => calculateTakeHome(salary, { scottish: true })
+
+test('Scottish take-home [gov.scot] tax against the rest of the UK at 17 incomes', () => {
+  // Table 2 of the technical factsheet, "Position relative to the rest of the UK
+  // in 2026 to 2027": how much better off (or, if negative, worse off) a Scottish
+  // taxpayer is, to the nearest pound. NI is the same, so it is the difference
+  // in income tax.
+  const table = [
+    [15000, 24],
+    [20000, 40],
+    [20350, 40],
+    [25782, 40],
+    [31136, 24],
+    [35000, -15],
+    [40000, -65],
+    [45000, -396],
+    [46300, -682],
+    [50000, -1496],
+    [60000, -1750],
+    [70000, -1950],
+    [80000, -2300],
+    [90000, -2800],
+    [100000, -3300],
+    [130000, -5331],
+    [800000, -25431],
+  ]
+  for (const [income, betterOff] of table) {
+    const difference = calculateTakeHome(income).incomeTax - scottish(income).incomeTax
+    assert.equal(Math.round(difference), betterOff, `at ${income}`)
+    // Take-home pay differs by exactly the same amount.
+    near(scottish(income).takeHomeAnnual - calculateTakeHome(income).takeHomeAnnual, difference)
+  }
+})
+
+test('Scottish take-home [own working] tax and NI at every band boundary', () => {
+  const cases = [
+    // salary, income tax, National Insurance
+    [0, 0, 0],
+    [12570, 0, 0], // all inside the personal allowance
+    [12571, 0.19, 0.08], // first pound at the 19% starter rate
+    [16537, 753.73, 317.36], // top of the starter band: £3,967 at 19%
+    [16538, 753.93, 317.44], // first pound at the 20% basic rate
+    [29526, 3351.53, 1356.48], // + £12,989 at 20%
+    [29527, 3351.74, 1356.56], // first pound at the 21% intermediate rate
+    [43662, 6320.09, 2487.36], // + £14,136 at 21%
+    [43663, 6320.51, 2487.44], // first pound at the 42% higher rate, NI still 8%
+    [50270, 9095.45, 3016], // + £6,608 at 42%. The NI upper earnings limit
+    [50271, 9095.87, 3016.02], // tax still 42%, NI now 2%
+    [75000, 19482.05, 3510.6], // £6,320.09 + £31,338 at 42%
+    [75001, 19482.5, 3510.62], // first pound at the 45% advanced rate
+    [100000, 30732.05, 4010.6], // + £25,000 at 45%
+    [100002, 30733.4, 4010.64], // £2 over: £1 of allowance lost, so £3 more is taxed at 45%
+    [125140, 47701.55, 4513.4], // allowance gone: £19,482.05 + £62,710 at 45%
+    [125141, 47702.03, 4513.42], // first pound at the 48% top rate
+    [1000000, 467634.35, 22010.6], // £47,701.55 + £874,860 at 48%
+  ]
+  for (const [salary, tax, ni] of cases) {
+    const result = scottish(salary)
+    near(result.incomeTax, tax, `income tax on ${salary}:`)
+    near(result.nationalInsurance, ni, `NI on ${salary}:`)
+    near(result.takeHomeAnnual, salary - tax - ni, `take-home on ${salary}:`)
+    // NI does not depend on where you live.
+    near(result.nationalInsurance, calculateTakeHome(salary).nationalInsurance)
+  }
+})
+
+test('Scottish take-home [own working] higher rate tax and full NI between £43,662 and £50,270', () => {
+  const keptFrom100 = (salary) =>
+    scottish(salary + 100).takeHomeAnnual - scottish(salary).takeHomeAnnual
+  // Just below: 21% tax and 8% NI.
+  near(keptFrom100(43562), 71)
+  // Inside the range: 42% tax and 8% NI, so half of each £100 is kept.
+  for (const salary of [43662, 45000, 47000, 50170]) {
+    const before = scottish(salary)
+    const after = scottish(salary + 100)
+    near(after.incomeTax - before.incomeTax, 42, `tax from ${salary}:`)
+    near(after.nationalInsurance - before.nationalInsurance, 8, `NI from ${salary}:`)
+    near(keptFrom100(salary), 50, `kept from ${salary}:`)
+  }
+  // Just above: 42% tax and 2% NI.
+  near(keptFrom100(50270), 56)
+  // Across the whole range: £6,608 at 42% and at 8%.
+  near(scottish(50270).incomeTax - scottish(43662).incomeTax, 2775.36)
+  near(scottish(50270).nationalInsurance - scottish(43662).nationalInsurance, 528.64)
+  // The rest of the UK is at 20% and 8% all the way through it.
+  near(calculateTakeHome(47100).takeHomeAnnual - calculateTakeHome(47000).takeHomeAnnual, 72)
+})
+
+test('Scottish take-home [own working] the personal allowance taper', () => {
+  // The allowance is the same across the UK. The lost allowance is taxed at 45%.
+  assert.equal(scottish(100000).personalAllowanceUsed, 12570)
+  assert.equal(scottish(100002).personalAllowanceUsed, 12569)
+  assert.equal(scottish(110000).personalAllowanceUsed, 7570)
+  assert.equal(scottish(125140).personalAllowanceUsed, 0)
+  // £110,000: £19,482.05, then £40,000 at 45% (taxable income is £102,430).
+  near(scottish(110000).incomeTax, 37482.05)
+  // £100 more costs £45 at the advanced rate, plus £22.50 for the £50 of allowance lost.
+  const before = scottish(110000)
+  const after = scottish(110100)
+  near(after.incomeTax - before.incomeTax, 67.5)
+  near(after.takeHomeAnnual - before.takeHomeAnnual, 30.5)
+  // Above £125,140 the allowance has gone: 48% tax and 2% NI.
+  near(scottish(130100).takeHomeAnnual - scottish(130000).takeHomeAnnual, 50)
+})
+
+test('Scottish take-home [own working] the worked examples shown in the guide', () => {
+  const pounds = (salary) => {
+    const result = scottish(salary)
+    return [
+      result.incomeTax,
+      result.nationalInsurance,
+      result.takeHomeAnnual,
+      result.takeHomeMonthly,
+    ].map(Math.round)
+  }
+  // £30,000: £753.73 + £2,597.80 + £474 at 21% is £3,451.07. NI is 8% of £17,430.
+  assert.deepEqual(pounds(30000), [3451, 1394, 25155, 2096])
+  // £35,000: £753.73 + £2,597.80 + £5,474 at 21% is £4,501.07. NI is 8% of £22,430.
+  assert.deepEqual(pounds(35000), [4501, 1794, 28705, 2392])
+  // £47,000: £6,320.09 + £3,338 at 42% is £7,722.05. NI is 8% of £34,430.
+  assert.deepEqual(pounds(47000), [7722, 2754, 36524, 3044])
+})
+
+test('Scottish take-home [own working] a pay rise never reduces take-home pay', () => {
+  let previous = -1
+  for (let salary = 0; salary <= 200000; salary += 250) {
+    const { takeHomeAnnual } = scottish(salary)
+    assert.ok(takeHomeAnnual > previous, `take-home fell at ${salary}`)
+    previous = takeHomeAnnual
+  }
+})
+
+test('Scottish take-home [own working] blank or negative input, and the default', () => {
+  for (const input of [-5000, NaN, undefined]) {
+    const result = scottish(input)
+    assert.equal(result.grossAnnual, 0)
+    assert.equal(result.incomeTax, 0)
+    assert.equal(result.takeHomeAnnual, 0)
+    assert.equal(result.effectiveRate, 0)
+  }
+  // Leaving the option out gives the rates for England, Wales and Northern Ireland.
+  assert.deepEqual(calculateTakeHome(60000), calculateTakeHome(60000, { scottish: false }))
+  near(calculateTakeHome(60000).incomeTax, 11432)
 })
 
 // ---------------------------------------------------------------------------

@@ -1,10 +1,16 @@
-import { INCOME_TAX, SELF_EMPLOYED, STUDENT_LOAN, TAX_YEAR } from '../lib/calculations'
+import {
+  INCOME_TAX,
+  SCOTTISH_INCOME_TAX,
+  SELF_EMPLOYED,
+  STUDENT_LOAN,
+  TAX_YEAR,
+} from '../lib/calculations'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 import { calculateSelfEmployedTax } from '../lib/selfEmployed'
 
 // Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '9 October 2026'
-const LAST_UPDATED_ISO = '2026-10-09'
+const LAST_UPDATED = '11 October 2026'
+const LAST_UPDATED_ISO = '2026-10-11'
 
 export default function SelfEmployedTaxGuide() {
   const { personalAllowance, basicRateLimit, higherRateLimit } = INCOME_TAX
@@ -18,6 +24,9 @@ export default function SelfEmployedTaxGuide() {
   const ex3Settings = { income: 3500, employmentIncome: 30000 }
   const ex3 = calculateSelfEmployedTax({ ...ex3Settings, useTradingAllowance: true })
   const ex3WithExpenses = calculateSelfEmployedTax({ ...ex3Settings, expenses: 200 })
+
+  const scotland = SCOTTISH_INCOME_TAX
+  const scotEx1 = calculateSelfEmployedTax({ income: 30000, scottish: true })
 
   return (
     <article className="guide">
@@ -37,7 +46,7 @@ export default function SelfEmployedTaxGuide() {
           Income tax, at the same rates as an employee: nothing on the first{' '}
           {gbp(personalAllowance)}, {percent(basicRate)} up to {gbp(basicRateLimit)},{' '}
           {percent(higherRate)} up to {gbp(higherRateLimit)} and {percent(additionalRate)} above
-          that.
+          that. If you live in Scotland you pay the Scottish rates, which are listed further down.
         </li>
         <li>
           Class 4 National Insurance: {percent(class4.mainRate)} on profits over{' '}
@@ -142,13 +151,32 @@ export default function SelfEmployedTaxGuide() {
 
       <h3>Is this different in Scotland?</h3>
       <p>
-        Yes. Scotland has its own income tax bands. Class 4 and student loan rules are the same.
-        This calculator does not cover Scottish rates.
+        Yes. If your main home is in Scotland you pay Scottish income tax on your profit:{' '}
+        {percent(scotland.starterRate)} above {gbp(personalAllowance)},{' '}
+        {percent(scotland.basicRate)} above {gbp(scotland.starterRateLimit)},{' '}
+        {percent(scotland.intermediateRate)} above {gbp(scotland.basicRateLimit)},{' '}
+        {percent(scotland.higherRate)} above {gbp(scotland.intermediateRateLimit)},{' '}
+        {percent(scotland.advancedRate)} above {gbp(scotland.higherRateLimit)} and{' '}
+        {percent(scotland.topRate)} above {gbp(scotland.advancedRateLimit)}. An online tax return
+        has a box to say that you pay Scottish income tax.
+      </p>
+      <p>
+        Class 4 and student loan rules are the same across the UK. Class 4 stays at{' '}
+        {percent(class4.mainRate)} up to {gbp(class4.upperProfitsLimit)}, so profit between{' '}
+        {gbp(scotland.intermediateRateLimit)} and {gbp(class4.upperProfitsLimit)} is charged{' '}
+        {percent(scotland.higherRate)} tax and {percent(class4.mainRate)} Class 4. On{' '}
+        {gbp(scotEx1.profit)} of profit, income tax is {gbp(scotEx1.incomeTax)} in Scotland and{' '}
+        {gbp(ex1.incomeTax)} in the rest of the UK. Choose Scotland in the calculator to use the
+        Scottish rates.
       </p>
 
       <h2>Where these figures come from</h2>
       <p>
         See gov.uk for{' '}
+        <a href="https://www.gov.uk/scottish-income-tax" target="_blank" rel="noreferrer">
+          Income Tax in Scotland
+        </a>
+        ,{' '}
         <a
           href="https://www.gov.uk/self-employed-national-insurance-rates"
           target="_blank"

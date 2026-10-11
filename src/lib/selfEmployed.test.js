@@ -9,6 +9,7 @@
 // https://www.gov.uk/understand-self-assessment-bill/payments-on-account
 // https://www.gov.uk/repaying-your-student-loan/what-you-pay
 // https://www.gov.uk/expenses-if-youre-self-employed
+// https://www.gov.uk/scottish-income-tax (checked on 11 October 2026)
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
@@ -311,4 +312,106 @@ test('self-employed [own working] odd inputs', () => {
   }
   assert.equal(soleTrader(5000).belowSmallProfitsThreshold, true)
   assert.equal(soleTrader(7105).belowSmallProfitsThreshold, false)
+})
+
+// ---------------------------------------------------------------------------
+// Scottish taxpayers
+// ---------------------------------------------------------------------------
+
+const scottishTrader = (income, extra = {}) => soleTrader(income, { scottish: true, ...extra })
+
+test('Scottish self-employed [own working] a sole trader on £30,000 profit', () => {
+  const result = scottishTrader(30000)
+  near(result.incomeTax, 3451.07) // £753.73 + £2,597.80 + £474 at 21%
+  near(result.class4, 1045.8) // 6% of £17,430, the same as outside Scotland
+  near(result.totalBill, 4496.87)
+  near(result.takeHomeAnnual, 25503.13)
+  // Income tax is the same as a Scottish employee pays on £30,000.
+  near(result.incomeTax, calculateTakeHome(30000, { scottish: true }).incomeTax)
+  // Nothing from a job: £31,092 of profit above the allowance before the 42% rate.
+  assert.equal(result.allowanceLeftForProfit, 12570)
+  assert.equal(result.basicRateBandLeft, 31092)
+})
+
+test('Scottish self-employed [own working] income tax and Class 4 at each band boundary', () => {
+  const cases = [
+    // profit, income tax, Class 4
+    [0, 0, 0],
+    [12570, 0, 0],
+    [12571, 0.19, 0.06],
+    [16537, 753.73, 238.02], // £3,967 at 19%, and at 6%
+    [29526, 3351.53, 1017.36],
+    [43662, 6320.09, 1865.52],
+    [43663, 6320.51, 1865.58], // 42% tax, Class 4 still 6%
+    [50270, 9095.45, 2262],
+    [50271, 9095.87, 2262.02], // Class 4 drops to 2%
+    [75000, 19482.05, 2756.6],
+    [100000, 30732.05, 3256.6],
+    [100002, 30733.4, 3256.64], // £1 of allowance lost
+    [125140, 47701.55, 3759.4], // allowance gone
+    [125141, 47702.03, 3759.42],
+  ]
+  for (const [profit, tax, class4] of cases) {
+    const result = scottishTrader(profit)
+    near(result.incomeTax, tax, `income tax on ${profit}:`)
+    near(result.class4, class4, `Class 4 on ${profit}:`)
+    near(result.totalBill, tax + class4)
+    near(result.takeHomeAnnual, profit - tax - class4)
+    // Class 4 does not depend on where you live.
+    near(result.class4, soleTrader(profit).class4)
+  }
+})
+
+test('Scottish self-employed [own working] 42% tax and 6% Class 4 between £43,662 and £50,270', () => {
+  const billOn100More = (profit) =>
+    scottishTrader(profit + 100).totalBill - scottishTrader(profit).totalBill
+  near(billOn100More(43562), 27) // 21% and 6%
+  near(billOn100More(47000), 48) // 42% and 6%
+  near(billOn100More(50270), 44) // 42% and 2%
+  near(soleTrader(47100).totalBill - soleTrader(47000).totalBill, 26) // 20% and 6% elsewhere
+})
+
+test('Scottish self-employed [own working] a job plus self-employment', () => {
+  // £25,000 job: £753.73 + £8,463 at 20% is £2,446.33. With £10,000 of profit the
+  // total is the £4,501.07 due on £35,000, so the profit costs £2,054.74.
+  const side = scottishTrader(10000, { employmentIncome: 25000 })
+  near(side.taxOnJob, 2446.33)
+  near(side.incomeTax, 2054.74)
+  assert.equal(side.class4, 0)
+  assert.equal(side.basicRateBandLeft, 18662) // £43,662 - £25,000
+  // £40,000 job + £10,000 profit: £3,662 at 21% and £6,338 at 42%.
+  const acrossHigherRate = scottishTrader(10000, { employmentIncome: 40000 })
+  near(acrossHigherRate.incomeTax, 769.02 + 2661.96)
+  assert.equal(acrossHigherRate.basicRateBandLeft, 3662)
+  // £95,000 job + £10,000 profit: 45% on the profit, plus £2,500 of allowance lost at 45%.
+  near(scottishTrader(10000, { employmentIncome: 95000 }).incomeTax, 5625)
+  // Tax on the job plus tax on the profit is the tax on everything together.
+  for (const [job, profit] of [
+    [25000, 10000],
+    [42000, 9000],
+    [99000, 40000],
+    [0, 60000],
+  ]) {
+    const both = scottishTrader(profit, { employmentIncome: job })
+    near(
+      both.taxOnJob + both.incomeTax,
+      calculateTakeHome(job + profit, { scottish: true }).incomeTax,
+    )
+  }
+  // Student loan is worked out the same way: Plan 4 on £40,000 profit is 9% of £6,205.
+  assert.equal(scottishTrader(40000, { plan: 'plan4' }).studentLoan, 558)
+  assert.equal(soleTrader(40000, { plan: 'plan4' }).studentLoan, 558)
+})
+
+test('Scottish self-employed [own working] odd inputs', () => {
+  for (const income of [0, -5000, NaN, undefined]) {
+    const result = scottishTrader(income, { expenses: -100, employmentIncome: NaN })
+    assert.equal(result.profit, 0)
+    assert.equal(result.totalBill, 0)
+    assert.equal(result.takeHomeAnnual, 0)
+  }
+  for (let profit = 0; profit <= 300000; profit += 2500) {
+    const result = scottishTrader(profit, { plan: 'plan4', hasPostgraduateLoan: true })
+    assert.ok(result.takeHomeAnnual >= 0 && result.takeHomeAnnual <= profit, `at ${profit}`)
+  }
 })

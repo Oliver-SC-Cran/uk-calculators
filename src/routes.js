@@ -36,19 +36,19 @@ export const routes = [
     path: '/salary-calculator',
     name: 'Take-home pay calculator',
     title: `Take-home pay calculator ${TAX_YEAR}: salary after tax and NI`,
-    description: `Enter your salary to see your take-home pay after income tax and National Insurance for ${TAX_YEAR}. Covers England, Wales and Northern Ireland.`,
+    description: `Enter your salary to see your take-home pay after income tax and National Insurance for ${TAX_YEAR}. Covers the whole UK, with Scottish income tax rates.`,
   },
   {
     path: '/pay-rise-calculator',
     name: 'Pay rise calculator',
     title: `Pay rise calculator ${TAX_YEAR}: how much of a rise you keep`,
-    description: `See how much of a pay rise you keep after income tax, National Insurance, student loan and pension in ${TAX_YEAR}, and whether it crosses a tax threshold.`,
+    description: `See how much of a pay rise you keep after tax, National Insurance, student loan and pension in ${TAX_YEAR}. Includes Scottish income tax rates.`,
   },
   {
     path: '/self-employed-tax-calculator',
     name: 'Self-employed tax calculator',
     title: `Self-employed tax calculator ${TAX_YEAR}: tax, NI and what to save`,
-    description: `Work out income tax, Class 4 National Insurance and student loan on your self-employed profit for ${TAX_YEAR}, with a job alongside if you have one.`,
+    description: `Work out income tax, Class 4 National Insurance and student loan on your self-employed profit for ${TAX_YEAR}. Includes Scottish income tax rates.`,
   },
   {
     path: '/redundancy-calculator',

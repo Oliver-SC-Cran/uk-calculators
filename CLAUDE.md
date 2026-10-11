@@ -11,7 +11,7 @@ UK financial calculators. React 19 + Vite, react-router-dom, plain CSS. Every pa
 
 Run `npm test`, `npm run lint` and `npm run build` before finishing any task. If any of them fails, the task is not finished.
 
-When a calculation changes, add or update tests in `src/lib/calculations.test.js`. Cover the boundaries (each threshold, zero, blank or negative input, very high values), not only a typical case. Each test name says where its expected values came from: `[gov.uk]` for a published example or official calculator result, `[own working]` for values worked out by hand. Prefer `[gov.uk]` values wherever gov.uk publishes one, and never label a value `[gov.uk]` without checking the page.
+When a calculation changes, add or update tests in `src/lib/calculations.test.js`. Cover the boundaries (each threshold, zero, blank or negative input, very high values), not only a typical case. Each test name says where its expected values came from: `[gov.uk]` for a published example or official calculator result, `[gov.scot]` for a figure the Scottish Government publishes, `[own working]` for values worked out by hand. Prefer `[gov.uk]` or `[gov.scot]` values wherever one is published, and never use either label without checking the page.
 
 ## Git workflow
 
@@ -43,6 +43,9 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - `CHILDCARE`, `AUTO_ENROLMENT` and `TAX_CODE_TIMES` in `calculations.js` are used by the guides only. Re-check them on gov.uk each April with the rest
 - The Cash ISA guide describes rules that start on 6 April 2027. Re-check gov.uk and update it when HMRC publishes its guidance for ISA providers, and again in April 2027, when the ISA calculator and its guide change too
 - `src/lib/calculations.js`: every tax figure and all calculation logic
+- Scottish income tax rates are in `SCOTTISH_INCOME_TAX` in `calculations.js`, beside `INCOME_TAX`. `calculateIncomeTax`, `calculateTakeHome`, `calculatePayRise` and `calculateSelfEmployedTax` take a `scottish` option, which is off unless it is passed. The personal allowance, its taper, National Insurance and student loans are the same across the UK, so only the income tax bands change. `src/components/RegionField.jsx` is the "Where you live" step on the three pages that offer it
+- Scotland sets its rates on its own timetable. For 2026/27 the Scottish Budget was on 13 January 2026 and the Scottish Parliament agreed the rates on 19 February 2026. Re-check them each April on gov.uk (`/scottish-income-tax`) and gov.scot, along with the gov.scot link in the take-home guide, which has the tax year in its address. The `[gov.scot]` test uses a table in that year's technical factsheet, so its expected values change every year
+- For relief at source pensions, gov.uk gives the extra relief a Scottish taxpayer can claim as percentages (1%, 22%, 25% and 28%), not as a method. `incomeTaxBands` gets them by raising every band limit except the starter rate one. If HMRC publishes a worked example, add it as a `[gov.uk]` test
 - Stamp duty (SDLT) rates are in `STAMP_DUTY` in `calculations.js`. They are not tied to the tax year, so the page states the date they apply from. The calculator covers England and Northern Ireland only, and its tests are in `src/lib/stampDuty.test.js`
 - `src/lib/selfEmployed.js`: the self-employed tax calculator. Its rates, thresholds and Self Assessment dates are in `SELF_EMPLOYED` in `calculations.js`, and it reuses the income tax and student loan functions there. The dates and the Making Tax Digital thresholds change every year, so re-check them on gov.uk each April. Its tests are in `src/lib/selfEmployed.test.js`
 - `src/lib/parentalPay.js`: the maternity and paternity pay calculator. Rates and limits are in `PARENTAL_PAY` in `calculations.js` and change each April. Dates are plain `YYYY-MM-DD` text and all date sums are done in UTC, so the page renders the same on the server and in any browser. Use `formatDate` from `src/lib/format.js` to show them. Its tests are in `src/lib/parentalPay.test.js`, with expected values from gov.uk's employer calculator
@@ -87,7 +90,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - Do not write "current tax year" or "this year" without the year next to it.
 - When adding or changing a figure, check it against gov.uk or HMRC (nidirect for Northern Ireland) and link the source on the calculator page. Do not rely on memory for a figure.
 - If a known future change affects a calculator (for example the Cash ISA limit from April 2027), say so on the page with its date.
-- State which nations a calculator covers. Scotland has its own income tax bands and Northern Ireland has its own redundancy limits.
+- State which nations a calculator covers. Scotland has its own income tax bands and Northern Ireland has its own redundancy limits. The take-home pay, pay rise and self-employed tax calculators cover Scotland through the "Where you live" step, which starts on England, Wales or Northern Ireland. A new calculator that works out income tax must offer the same step.
 
 ## Design
 

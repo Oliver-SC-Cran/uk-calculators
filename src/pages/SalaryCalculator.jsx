@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
+import RegionField from '../components/RegionField'
 import ResultPanel from '../components/ResultPanel'
 import { useNumberField } from '../components/useNumberField'
 import TakeHomePayGuide from '../guides/TakeHomePayGuide'
@@ -10,8 +11,13 @@ import { formatGBP, percent } from '../lib/format'
 
 export default function SalaryCalculator() {
   const salary = useNumberField('35000', { label: 'Your salary' })
+  const [region, setRegion] = useState('restOfUk')
+  const scottish = region === 'scotland'
 
-  const result = useMemo(() => calculateTakeHome(salary.value), [salary.value])
+  const result = useMemo(
+    () => calculateTakeHome(salary.value, { scottish }),
+    [salary.value, scottish],
+  )
 
   return (
     <CalculatorPage
@@ -21,11 +27,14 @@ export default function SalaryCalculator() {
         <>
           <Steps>
             <NumberField id="salary" hint="For a year, before tax." before="£" field={salary} />
+            <RegionField value={region} onChange={setRegion} />
           </Steps>
 
           <Notice>
-            This uses the rates for England, Wales and Northern Ireland. Scotland has different
-            income tax bands. It assumes no pension contributions, student loan or other deductions.
+            {scottish
+              ? 'This uses Scottish income tax rates. National Insurance is the same across the UK.'
+              : 'This uses the income tax rates for England, Wales and Northern Ireland. Scotland has its own, so choose Scotland above if your main home is there.'}{' '}
+            It assumes no pension contributions, student loan or other deductions.
           </Notice>
         </>
       }
@@ -44,7 +53,7 @@ export default function SalaryCalculator() {
                 <td>{formatGBP(result.grossAnnual)}</td>
               </tr>
               <tr>
-                <th scope="row">Income tax</th>
+                <th scope="row">{scottish ? 'Scottish income tax' : 'Income tax'}</th>
                 <td>{formatGBP(-result.incomeTax || 0)}</td>
               </tr>
               <tr>

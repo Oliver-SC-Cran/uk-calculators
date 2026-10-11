@@ -8,6 +8,7 @@ import {
   calculateStudentLoanRepayment,
   INCOME_TAX,
   MINIMUM_WAGE,
+  SCOTTISH_INCOME_TAX,
 } from './calculations.js'
 
 export const PENSION_TYPES = {
@@ -42,6 +43,9 @@ const atLeastZero = (value) => (Number.isFinite(value) ? Math.max(0, value) : 0)
  *
  * pensionPercent is a percentage of full salary. For relief at source it is
  * the total going into the pension, including the 20% from HMRC.
+ *
+ * scottish uses the Scottish income tax rates. Relief at source is still
+ * claimed by the provider at 20%, whatever rate of Scottish tax is paid.
  */
 export function calculatePayPackage({
   salary,
@@ -50,6 +54,7 @@ export function calculatePayPackage({
   pensionPercent = 0,
   pensionType = 'salarySacrifice',
   weeklyHours = FULL_TIME_HOURS,
+  scottish = false,
 }) {
   const gross = atLeastZero(salary)
   const share = Math.min(atLeastZero(pensionPercent), 100) / 100
@@ -74,14 +79,18 @@ export function calculatePayPackage({
   const taxablePay = isReliefAtSource ? gross : gross - pensionIntoPot
   const adjustedNetIncome = gross - pensionIntoPot
 
-  const { tax: incomeTax, personalAllowanceUsed } = calculateIncomeTax(taxablePay)
+  const {
+    tax: incomeTax,
+    personalAllowanceUsed,
+    topRate: topTaxRate,
+  } = calculateIncomeTax(taxablePay, { scottish })
   const nationalInsurance = calculateNationalInsurance(niablePay)
   const loan = calculateStudentLoanRepayment({ grossAnnual: niablePay, plan, hasPostgraduateLoan })
 
-  // Relief at source only: the tax owed once the wider basic rate band and
-  // the allowance based on adjusted net income are taken into account. The
+  // Relief at source only: the tax owed once the wider bands and the
+  // allowance based on adjusted net income are taken into account. The
   // difference from the payslip is what can be claimed back from HMRC.
-  const taxAfterClaim = calculateIncomeTax(gross, { reliefAtSourceGross }).tax
+  const taxAfterClaim = calculateIncomeTax(gross, { reliefAtSourceGross, scottish }).tax
   const extraReliefToClaim = isReliefAtSource ? Math.max(0, incomeTax - taxAfterClaim) : 0
 
   const takeHomeAnnual = gross - incomeTax - nationalInsurance - loan.totalAnnual - pensionFromPay
@@ -99,6 +108,7 @@ export function calculatePayPackage({
     adjustedNetIncome,
     personalAllowanceUsed,
     incomeTax,
+    topTaxRate,
     nationalInsurance,
     studentLoan: loan.totalAnnual,
     undergradLoanMonthly: loan.undergradMonthly,
@@ -124,10 +134,23 @@ export function calculatePayRise({ currentSalary, newSalary, ...settings }) {
   const rise = change('salary')
   const kept = change('takeHomeAnnual')
 
-  const { basicRateLimit, taperStart, taperFullyGoneAt } = INCOME_TAX
+  const { taperStart, taperFullyGoneAt } = INCOME_TAX
   const warnings = []
 
-  if (crosses(before.taxablePay, after.taxablePay, basicRateLimit)) warnings.push('higher-rate')
+  // The higher rate starts at a lower income in Scotland, which also has an
+  // advanced rate before the taper.
+  const higherRateStartsAbove = settings.scottish
+    ? SCOTTISH_INCOME_TAX.intermediateRateLimit
+    : INCOME_TAX.basicRateLimit
+  if (crosses(before.taxablePay, after.taxablePay, higherRateStartsAbove)) {
+    warnings.push('higher-rate')
+  }
+  if (
+    settings.scottish &&
+    crosses(before.taxablePay, after.taxablePay, SCOTTISH_INCOME_TAX.higherRateLimit)
+  ) {
+    warnings.push('advanced-rate')
+  }
 
   // The taper and the Child Benefit charge both use adjusted net income, which
   // every pension type reduces, including relief at source.

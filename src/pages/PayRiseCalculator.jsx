@@ -2,10 +2,18 @@ import { useMemo, useState } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { Checkbox, NumberField, SelectField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
+import RegionField from '../components/RegionField'
 import ResultPanel from '../components/ResultPanel'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import PayRiseGuide from '../guides/PayRiseGuide'
-import { INCOME_TAX, MINIMUM_WAGE, STUDENT_LOAN, TAX_YEAR } from '../lib/calculations'
+import {
+  INCOME_TAX,
+  MINIMUM_WAGE,
+  NATIONAL_INSURANCE,
+  SCOTTISH_INCOME_TAX,
+  STUDENT_LOAN,
+  TAX_YEAR,
+} from '../lib/calculations'
 import { formatGBP, formatGBPPence, percent } from '../lib/format'
 import {
   calculatePayRise,
@@ -27,9 +35,30 @@ const riseFields = {
   pounds: { label: 'The rise in pounds', hint: 'For a year, before tax.' },
 }
 
-function Warning({ code, result, plan }) {
+function Warning({ code, result, plan, scottish }) {
   const { basicRateLimit, taperStart, taperFullyGoneAt, basicRate, higherRate } = INCOME_TAX
+  const scotland = SCOTTISH_INCOME_TAX
 
+  if (code === 'higher-rate' && scottish) {
+    return (
+      <Notice warning>
+        This rise takes your taxable pay over {formatGBP(scotland.intermediateRateLimit)}. The part
+        above that is taxed at {percent(scotland.higherRate)}, not{' '}
+        {percent(scotland.intermediateRate)}, and National Insurance stays at{' '}
+        {percent(NATIONAL_INSURANCE.mainRate)} up to{' '}
+        {formatGBP(NATIONAL_INSURANCE.upperEarningsLimit)}. The pay below it is taxed as before.
+      </Notice>
+    )
+  }
+  if (code === 'advanced-rate') {
+    return (
+      <Notice warning>
+        This rise takes your taxable pay over {formatGBP(scotland.higherRateLimit)}. The part above
+        that is taxed at {percent(scotland.advancedRate)}, not {percent(scotland.higherRate)}. The
+        pay below it is taxed as before.
+      </Notice>
+    )
+  }
   if (code === 'higher-rate') {
     return (
       <Notice warning>
@@ -111,6 +140,8 @@ export default function PayRiseCalculator() {
   const [plan, setPlan] = useState('none')
   const [hasPostgraduateLoan, setHasPostgraduateLoan] = useState(false)
   const [pensionType, setPensionType] = useState('salarySacrifice')
+  const [region, setRegion] = useState('restOfUk')
+  const scottish = region === 'scotland'
 
   const currentSalary = useNumberField('45000', { label: 'Your current salary' })
   const rise = useNumberField('55000', { label: riseFields[riseType].label })
@@ -159,8 +190,9 @@ export default function PayRiseCalculator() {
         pensionPercent: pension.value,
         pensionType,
         weeklyHours,
+        scottish,
       }),
-    [current, next, plan, hasPostgraduateLoan, pension.value, pensionType, weeklyHours],
+    [current, next, plan, hasPostgraduateLoan, pension.value, pensionType, weeklyHours, scottish],
   )
 
   const { before, after, goesTo } = result
@@ -185,6 +217,7 @@ export default function PayRiseCalculator() {
               before="£"
               field={currentSalary}
             />
+            <RegionField value={region} onChange={setRegion} />
             <SelectField
               id="rise-type"
               label="How to enter the rise"
@@ -254,10 +287,11 @@ export default function PayRiseCalculator() {
           </Steps>
 
           <Notice>
-            This uses the rates for England, Wales and Northern Ireland. Scotland has different
-            income tax bands and is not covered. Your pension is worked out as a percentage of your
-            full salary, and money your employer pays in is left out because it does not change your
-            take-home pay.
+            {scottish
+              ? 'This uses Scottish income tax rates. National Insurance and student loans are the same across the UK.'
+              : 'This uses the income tax rates for England, Wales and Northern Ireland. Scotland has its own, so choose Scotland above if your main home is there.'}{' '}
+            Your pension is worked out as a percentage of your full salary, and money your employer
+            pays in is left out because it does not change your take-home pay.
           </Notice>
         </>
       }
@@ -278,7 +312,7 @@ export default function PayRiseCalculator() {
               <caption>Where the {formatGBP(result.rise)} goes each year</caption>
               <tbody>
                 <tr>
-                  <th scope="row">Income tax</th>
+                  <th scope="row">{scottish ? 'Scottish income tax' : 'Income tax'}</th>
                   <td>{formatGBP(goesTo.incomeTax)}</td>
                 </tr>
                 <tr>
@@ -304,6 +338,12 @@ export default function PayRiseCalculator() {
               <p className="result__note">
                 With relief at source, HMRC adds {formatGBP(after.hmrcTopUp)} a year to your pension
                 on top of the {formatGBP(after.pensionFromPay)} from your pay.{' '}
+                {after.topTaxRate > 0 && after.topTaxRate < INCOME_TAX.basicRate && (
+                  <>
+                    That is {percent(INCOME_TAX.basicRate)} relief, although your top rate of income
+                    tax is {percent(after.topTaxRate)}. You do not pay back the difference.
+                  </>
+                )}
                 {after.extraReliefToClaim > 0 && (
                   <>
                     You can also claim {formatGBP(after.extraReliefToClaim)} a year in extra relief
@@ -316,7 +356,7 @@ export default function PayRiseCalculator() {
 
           {!problem &&
             result.warnings.map((code) => (
-              <Warning key={code} code={code} result={result} plan={plan} />
+              <Warning key={code} code={code} result={result} plan={plan} scottish={scottish} />
             ))}
         </>
       }

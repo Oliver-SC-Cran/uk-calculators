@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { Checkbox, CheckboxField, NumberField, SelectField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
+import RegionField from '../components/RegionField'
 import ResultPanel from '../components/ResultPanel'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import SelfEmployedTaxGuide from '../guides/SelfEmployedTaxGuide'
-import { SELF_EMPLOYED, TAX_YEAR } from '../lib/calculations'
+import { SCOTTISH_INCOME_TAX, SELF_EMPLOYED, TAX_YEAR } from '../lib/calculations'
 import { formatGBP, percent } from '../lib/format'
 import { calculateSelfEmployedTax } from '../lib/selfEmployed'
 
@@ -16,6 +17,8 @@ export default function SelfEmployedTaxCalculator() {
   const [useTradingAllowance, setUseTradingAllowance] = useState(false)
   const [plan, setPlan] = useState('none')
   const [hasPostgraduateLoan, setHasPostgraduateLoan] = useState(false)
+  const [region, setRegion] = useState('restOfUk')
+  const scottish = region === 'scotland'
 
   // Expenses are only asked for when the trading allowance is not used.
   const problem = problemWith(income, ...(useTradingAllowance ? [] : [expenses]), job)
@@ -29,8 +32,17 @@ export default function SelfEmployedTaxCalculator() {
         employmentIncome: job.value,
         plan,
         hasPostgraduateLoan,
+        scottish,
       }),
-    [income.value, expenses.value, useTradingAllowance, job.value, plan, hasPostgraduateLoan],
+    [
+      income.value,
+      expenses.value,
+      useTradingAllowance,
+      job.value,
+      plan,
+      hasPostgraduateLoan,
+      scottish,
+    ],
   )
 
   const { tradingAllowance, payBy, secondPaymentOnAccountBy, nextTaxYear } = SELF_EMPLOYED
@@ -49,6 +61,7 @@ export default function SelfEmployedTaxCalculator() {
               before="£"
               field={income}
             />
+            <RegionField value={region} onChange={setRegion} />
             <CheckboxField
               id="trading-allowance"
               label="Trading allowance"
@@ -93,10 +106,12 @@ export default function SelfEmployedTaxCalculator() {
           </Steps>
 
           <Notice>
-            This uses the rates for England, Wales and Northern Ireland. Scotland has different
-            income tax bands and is not covered. It is for sole traders, assumes your salary is
-            taxed through PAYE on a standard tax code, and does not cover losses, pension
-            contributions or other income such as savings interest or rent.
+            {scottish
+              ? 'This uses Scottish income tax rates. Class 4 National Insurance and student loans are the same across the UK.'
+              : 'This uses the income tax rates for England, Wales and Northern Ireland. Scotland has its own, so choose Scotland above if your main home is there.'}{' '}
+            It is for sole traders, assumes your salary is taxed through PAYE on a standard tax
+            code, and does not cover losses, pension contributions or other income such as savings
+            interest or rent.
           </Notice>
         </>
       }
@@ -117,7 +132,7 @@ export default function SelfEmployedTaxCalculator() {
               <caption>What you owe on your profit</caption>
               <tbody>
                 <tr>
-                  <th scope="row">Income tax</th>
+                  <th scope="row">{scottish ? 'Scottish income tax' : 'Income tax'}</th>
                   <td>{formatGBP(result.incomeTax)}</td>
                 </tr>
                 <tr>
@@ -248,7 +263,11 @@ export default function SelfEmployedTaxCalculator() {
                       <td>{formatGBP(result.allowanceLeftForProfit)}</td>
                     </tr>
                     <tr>
-                      <th scope="row">Basic rate band left for your profit</th>
+                      <th scope="row">
+                        {scottish
+                          ? `Bands below the ${percent(SCOTTISH_INCOME_TAX.higherRate)} rate left for your profit`
+                          : 'Basic rate band left for your profit'}
+                      </th>
                       <td>{formatGBP(result.basicRateBandLeft)}</td>
                     </tr>
                   </tbody>

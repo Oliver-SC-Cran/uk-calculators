@@ -17,6 +17,28 @@ export const INCOME_TAX = {
   additionalRate: 0.45,
 }
 
+// Scottish income tax for 2026/27, paid by people whose main home is in
+// Scotland on earnings, pensions and profits. The Scottish Parliament agreed
+// these rates on 19 February 2026. The personal allowance and its taper are
+// the same across the UK, and so is National Insurance.
+// Sources: https://www.gov.uk/scottish-income-tax
+//          https://www.gov.scot/publications/scottish-income-tax-rates-and-bands/pages/2026-to-2027/
+export const SCOTTISH_INCOME_TAX = {
+  // Each limit is the income up to which that rate applies, for someone with
+  // the full personal allowance.
+  starterRateLimit: 16537, // 19% above the personal allowance, up to this
+  basicRateLimit: 29526, // then 20%
+  intermediateRateLimit: 43662, // then 21%. The higher rate starts above this
+  higherRateLimit: 75000, // then 42%
+  advancedRateLimit: 125140, // then 45%. Above it, 48%
+  starterRate: 0.19,
+  basicRate: 0.2,
+  intermediateRate: 0.21,
+  higherRate: 0.42,
+  advancedRate: 0.45,
+  topRate: 0.48,
+}
+
 export const NATIONAL_INSURANCE = {
   primaryThreshold: 12570, // NI starts here
   upperEarningsLimit: 50270, // NI rate drops from 8% to 2% above here
@@ -50,35 +72,78 @@ export function taperedPersonalAllowance(grossAnnual) {
 }
 
 /**
- * Income tax on UK (non-Scottish) rates: 20% / 40% / 45% bands.
- * The bands are measured on taxable income (income minus the personal
- * allowance). The basic rate band is a fixed width, £37,700 in 2026/27, so
- * when the taper shrinks the allowance, the lost allowance is taxed at the
- * higher rate, not the basic rate.
+ * The income tax bands, measured on taxable income (income minus the personal
+ * allowance). Each rate applies to the slice of taxable income up to `upTo`.
+ *
+ * The bands are fixed widths. The basic rate band is £37,700 wide in 2026/27,
+ * so when the taper shrinks the allowance, the lost allowance is taxed at the
+ * top of the bands, not the bottom. The last limit (£125,140) is not reduced
+ * by the allowance, because there is none left by then.
+ *
+ * reliefAtSource is the gross amount paid into a relief at source pension. It
+ * raises the basic and higher rate limits in England, Wales and Northern
+ * Ireland. In Scotland it raises every limit except the starter rate one,
+ * because income taxed at 19% already gets its relief at 20%. That gives
+ * gov.uk's figures for the extra relief: 20% and 25%, or in Scotland 1%, 22%,
+ * 25% and 28%. gov.uk publishes the percentages, not this method.
+ */
+function incomeTaxBands({ scottish, reliefAtSource }) {
+  const { personalAllowance } = INCOME_TAX
+  if (scottish) {
+    const s = SCOTTISH_INCOME_TAX
+    return [
+      { upTo: s.starterRateLimit - personalAllowance, rate: s.starterRate },
+      { upTo: s.basicRateLimit - personalAllowance + reliefAtSource, rate: s.basicRate },
+      {
+        upTo: s.intermediateRateLimit - personalAllowance + reliefAtSource,
+        rate: s.intermediateRate,
+      },
+      { upTo: s.higherRateLimit - personalAllowance + reliefAtSource, rate: s.higherRate },
+      { upTo: s.advancedRateLimit + reliefAtSource, rate: s.advancedRate },
+      { upTo: Infinity, rate: s.topRate },
+    ]
+  }
+  const { basicRateLimit, higherRateLimit, basicRate, higherRate, additionalRate } = INCOME_TAX
+  return [
+    { upTo: basicRateLimit - personalAllowance + reliefAtSource, rate: basicRate },
+    { upTo: higherRateLimit + reliefAtSource, rate: higherRate },
+    { upTo: Infinity, rate: additionalRate },
+  ]
+}
+
+/**
+ * Income tax for the year. By default this uses the rates for England, Wales
+ * and Northern Ireland (20%, 40% and 45%). With scottish, it uses the six
+ * Scottish rates in SCOTTISH_INCOME_TAX. The personal allowance and its taper
+ * are the same for both.
  *
  * reliefAtSourceGross is the gross amount paid into a relief at source
- * pension (what was paid plus the basic rate relief the provider claimed).
- * It widens the basic rate band and raises the higher rate limit by that
- * amount, and comes off the income used for the allowance taper. That gives
- * the tax someone owes once they have claimed their extra relief.
+ * pension (what was paid plus the 20% relief the provider claimed). It raises
+ * the band limits by that amount, and comes off the income used for the
+ * allowance taper. That gives the tax someone owes once they have claimed
+ * their extra relief.
+ *
+ * topRate is the rate on the last pound, or 0 if no tax is due.
  */
-export function calculateIncomeTax(grossAnnual, { reliefAtSourceGross = 0 } = {}) {
+export function calculateIncomeTax(
+  grossAnnual,
+  { reliefAtSourceGross = 0, scottish = false } = {},
+) {
   const gross = atLeastZero(grossAnnual)
   const reliefAtSource = atLeastZero(reliefAtSourceGross)
   const pa = taperedPersonalAllowance(gross - reliefAtSource)
-  const { personalAllowance, basicRateLimit, higherRateLimit } = INCOME_TAX
-  const { basicRate, higherRate, additionalRate } = INCOME_TAX
-
   const taxable = Math.max(0, gross - pa)
-  const basicBand = basicRateLimit - personalAllowance + reliefAtSource
-  const higherLimit = higherRateLimit + reliefAtSource
-  const inBasicBand = Math.min(taxable, basicBand)
-  const inHigherBand = Math.max(0, Math.min(taxable, higherLimit) - basicBand)
-  const inAdditionalBand = Math.max(0, taxable - higherLimit)
 
-  const tax =
-    inBasicBand * basicRate + inHigherBand * higherRate + inAdditionalBand * additionalRate
-  return { tax, personalAllowanceUsed: pa }
+  let tax = 0
+  let topRate = 0
+  let from = 0
+  for (const band of incomeTaxBands({ scottish, reliefAtSource })) {
+    const inBand = Math.max(0, Math.min(taxable, band.upTo) - from)
+    if (inBand > 0) topRate = band.rate
+    tax += inBand * band.rate
+    from = band.upTo
+  }
+  return { tax, personalAllowanceUsed: pa, topRate }
 }
 
 /** Employee Class 1 National Insurance: 8% then 2%. */
@@ -97,14 +162,12 @@ export function calculateNationalInsurance(grossAnnual) {
 }
 
 /**
- * Full take-home pay breakdown for England, Wales and Northern Ireland rates.
- * NOTE: Scotland has its own 6-band system with different thresholds, which
- * is deliberately not implemented here. Verify the exact 2026/27 Scottish
- * band cut-offs against gov.scot before adding a Scottish mode.
+ * Full take-home pay breakdown. scottish switches income tax to the Scottish
+ * rates. National Insurance is the same either way.
  */
-export function calculateTakeHome(grossAnnual) {
+export function calculateTakeHome(grossAnnual, { scottish = false } = {}) {
   const gross = atLeastZero(grossAnnual)
-  const { tax, personalAllowanceUsed } = calculateIncomeTax(gross)
+  const { tax, personalAllowanceUsed } = calculateIncomeTax(gross, { scottish })
   const ni = calculateNationalInsurance(gross)
   const takeHome = gross - tax - ni
   return {

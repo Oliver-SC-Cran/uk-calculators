@@ -2,16 +2,17 @@ import {
   calculateTakeHome,
   INCOME_TAX,
   NATIONAL_INSURANCE,
+  SCOTTISH_INCOME_TAX,
   taperedPersonalAllowance,
   TAX_YEAR,
   TAX_YEAR_END,
   TAX_YEAR_START,
 } from '../lib/calculations'
-import { formatGBP as gbp, percent } from '../lib/format'
+import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '8 October 2026'
-const LAST_UPDATED_ISO = '2026-10-08'
+const LAST_UPDATED = '11 October 2026'
+const LAST_UPDATED_ISO = '2026-10-11'
 
 export default function TakeHomePayGuide() {
   const {
@@ -44,6 +45,23 @@ export default function TakeHomePayGuide() {
   const on60k = calculateTakeHome(60000)
   const over60k = 60000 - basicRateLimit
 
+  // Scotland: the same allowance and National Insurance, with its own tax bands.
+  const scotland = SCOTTISH_INCOME_TAX
+  const scotOn30k = calculateTakeHome(30000, { scottish: true })
+  const scotOn35k = calculateTakeHome(35000, { scottish: true })
+  const scotOn47k = calculateTakeHome(47000, { scottish: true })
+  const on47k = calculateTakeHome(47000)
+  const scotStarterBand = scotland.starterRateLimit - personalAllowance
+  const scotBasicBand = scotland.basicRateLimit - scotland.starterRateLimit
+  const scot35kAtIntermediate = 35000 - scotland.basicRateLimit
+  const scot47kAtHigher = 47000 - scotland.intermediateRateLimit
+  // In the taper, each extra £100 and the £50 of allowance it removes are both
+  // taxed at the advanced rate.
+  const scotTaperTaxPer100 = (100 + taperLostAllowancePer100) * scotland.advancedRate
+  const overlapKeptPerPound = 1 - scotland.higherRate - mainRate
+  const aboveOverlapKeptPerPound = 1 - scotland.higherRate - upperRate
+  const pence = (share) => `${Math.round(share * 100)}p`
+
   return (
     <article className="guide">
       <h2>How income tax and National Insurance work in {TAX_YEAR}</h2>
@@ -56,8 +74,10 @@ export default function TakeHomePayGuide() {
         into a higher band never reduces what you keep from the pay below it.
       </p>
       <p>
-        The figures here apply in England, Wales and Northern Ireland from {TAX_YEAR_START} to{' '}
-        {TAX_YEAR_END}. Scotland sets its own income tax bands.
+        The figures here are for {TAX_YEAR_START} to {TAX_YEAR_END}. The income tax bands in the
+        next section apply in England, Wales and Northern Ireland. Scotland has its own, which have
+        a section of their own further down. NI and the personal allowance are the same across the
+        UK.
       </p>
 
       <h3>Income tax bands</h3>
@@ -134,6 +154,82 @@ export default function TakeHomePayGuide() {
         is {gbp(on60k.takeHomeAnnual)} a year, or about {gbp(on60k.takeHomeMonthly)} a month.
       </p>
 
+      <h2>If you pay Scottish income tax</h2>
+      <p>
+        You pay Scottish income tax if you live in Scotland. It goes by where your main home is, not
+        where you work or where your employer is based, and it applies to your wages, pension and
+        most other taxable income. Your tax code starts with an S.
+      </p>
+
+      <h3>Scottish income tax bands</h3>
+      <ul>
+        <li>
+          Personal allowance: the first {gbp(personalAllowance)} is tax-free, as in the rest of the
+          UK.
+        </li>
+        <li>
+          Starter rate: {percent(scotland.starterRate)} on income from {gbp(personalAllowance + 1)}{' '}
+          to {gbp(scotland.starterRateLimit)}.
+        </li>
+        <li>
+          Basic rate: {percent(scotland.basicRate)} from {gbp(scotland.starterRateLimit + 1)} to{' '}
+          {gbp(scotland.basicRateLimit)}.
+        </li>
+        <li>
+          Intermediate rate: {percent(scotland.intermediateRate)} from{' '}
+          {gbp(scotland.basicRateLimit + 1)} to {gbp(scotland.intermediateRateLimit)}.
+        </li>
+        <li>
+          Higher rate: {percent(scotland.higherRate)} from {gbp(scotland.intermediateRateLimit + 1)}{' '}
+          to {gbp(scotland.higherRateLimit)}.
+        </li>
+        <li>
+          Advanced rate: {percent(scotland.advancedRate)} from {gbp(scotland.higherRateLimit + 1)}{' '}
+          to {gbp(scotland.advancedRateLimit)}.
+        </li>
+        <li>
+          Top rate: {percent(scotland.topRate)} above {gbp(scotland.advancedRateLimit)}.
+        </li>
+      </ul>
+      <p>
+        The personal allowance is reduced above {gbp(taperStart)} in the same way. In Scotland the
+        lost allowance is taxed at {percent(scotland.advancedRate)}, so each extra £100 between{' '}
+        {gbp(taperStart)} and {gbp(taperFullyGoneAt)} costs {gbpPence(scotTaperTaxPer100)} in income
+        tax.
+      </p>
+
+      <h3>Where higher rate tax and full National Insurance overlap</h3>
+      <p>
+        NI is the same across the UK, so its {percent(mainRate)} rate runs up to{' '}
+        {gbp(upperEarningsLimit)}. Scottish higher rate tax starts earlier, above{' '}
+        {gbp(scotland.intermediateRateLimit)}. Between the two, each extra pound loses{' '}
+        {pence(scotland.higherRate)} in tax and {pence(mainRate)} in NI, which leaves{' '}
+        {pence(overlapKeptPerPound)}. Above {gbp(upperEarningsLimit)}, NI falls to{' '}
+        {percent(upperRate)} and you keep {pence(aboveOverlapKeptPerPound)}.
+      </p>
+
+      <h3>{gbp(35000)} a year in Scotland</h3>
+      <p>
+        {gbp(35000 - personalAllowance)} is taxable. The first {gbp(scotStarterBand)} is taxed at{' '}
+        {percent(scotland.starterRate)}, the next {gbp(scotBasicBand)} at{' '}
+        {percent(scotland.basicRate)} and the last {gbp(scot35kAtIntermediate)} at{' '}
+        {percent(scotland.intermediateRate)}. Income tax comes to {gbp(scotOn35k.incomeTax)}, which
+        is {gbp(scotOn35k.incomeTax - on35k.incomeTax)} more than in the rest of the UK. NI is the
+        same, {gbp(scotOn35k.nationalInsurance)}. Take-home pay is {gbp(scotOn35k.takeHomeAnnual)} a
+        year, or about {gbp(scotOn35k.takeHomeMonthly)} a month.
+      </p>
+
+      <h3>{gbp(47000)} a year in Scotland</h3>
+      <p>
+        This salary is in the range where the two overlap. The {gbp(scot47kAtHigher)} above{' '}
+        {gbp(scotland.intermediateRateLimit)} is taxed at {percent(scotland.higherRate)}, which is{' '}
+        {gbp(scot47kAtHigher * scotland.higherRate)}, and still has {percent(mainRate)} NI taken
+        from it. Income tax comes to {gbp(scotOn47k.incomeTax)}, which is{' '}
+        {gbp(scotOn47k.incomeTax - on47k.incomeTax)} more than in the rest of the UK. NI is{' '}
+        {gbp(scotOn47k.nationalInsurance)}. Take-home pay is {gbp(scotOn47k.takeHomeAnnual)} a year,
+        or about {gbp(scotOn47k.takeHomeMonthly)} a month.
+      </p>
+
       <h2>Common questions</h2>
 
       <h3>
@@ -150,7 +246,8 @@ export default function TakeHomePayGuide() {
       <p>
         On {gbp(30000)} a year you pay {gbp(on30k.incomeTax)} in income tax and{' '}
         {gbp(on30k.nationalInsurance)} in NI. That leaves {gbp(on30k.takeHomeAnnual)} a year, or
-        about {gbp(on30k.takeHomeMonthly)} a month.
+        about {gbp(on30k.takeHomeMonthly)} a month. In Scotland the income tax is{' '}
+        {gbp(scotOn30k.incomeTax)}, which leaves {gbp(scotOn30k.takeHomeAnnual)} a year.
       </p>
 
       <h3>Why is my payslip different from this calculator?</h3>
@@ -162,9 +259,10 @@ export default function TakeHomePayGuide() {
 
       <h3>Is income tax different in Scotland?</h3>
       <p>
-        Yes. Scottish taxpayers pay income tax at rates and bands set by the Scottish Government, so
-        their take-home pay is different. NI is the same across the UK. This calculator does not
-        cover Scottish rates.
+        Yes. Scottish taxpayers pay income tax at rates and bands set by the Scottish Parliament,
+        with six rates in place of three, so their take-home pay is different. NI is the same across
+        the UK. Choose Scotland in the calculator to use the Scottish rates, which are set out in
+        the section above.
       </p>
 
       <h2>Where these figures come from</h2>
@@ -180,6 +278,18 @@ export default function TakeHomePayGuide() {
           rel="noreferrer"
         >
           how much National Insurance you pay
+        </a>
+        . For Scotland, see{' '}
+        <a href="https://www.gov.uk/scottish-income-tax" target="_blank" rel="noreferrer">
+          Income Tax in Scotland
+        </a>{' '}
+        on gov.uk and the Scottish Government's{' '}
+        <a
+          href="https://www.gov.scot/publications/scottish-income-tax-rates-and-bands/pages/2026-to-2027/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          rates and bands for {TAX_YEAR}
         </a>
         .
       </p>
