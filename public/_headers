@@ -1,6 +1,6 @@
 # Response headers for Cloudflare Pages. Pages reads this file and does not
 # serve it. Each line can be up to 2,000 characters and there can be up to 100
-# rules. Until the Vercel project is retired, vercel.json must send the same.
+# rules.
 
 /*
   X-Content-Type-Options: nosniff

@@ -1,7 +1,7 @@
 // Checks on public/_headers, the response headers Cloudflare Pages sends.
 // Run with: npm test
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 
 const read = (file) => readFileSync(new URL(file, import.meta.url), 'utf8')
@@ -44,16 +44,4 @@ test('headers: the Content Security Policy only reports and has no inline script
   assert.equal(headerForEveryPage('Content-Security-Policy'), undefined)
   const scripts = policy.split(';').find((part) => part.trim().startsWith('script-src'))
   assert.doesNotMatch(scripts, /unsafe-inline|unsafe-eval/)
-})
-
-// vercel.json is only here while the site moves from Vercel to Cloudflare
-// Pages. Delete this test with it.
-test('headers: vercel.json sends the same policy while it still exists [own working]', () => {
-  if (!existsSync(new URL('../vercel.json', import.meta.url))) return
-  const everyPage = JSON.parse(read('../vercel.json')).headers.find(
-    (rule) => rule.source === '/(.*)',
-  )
-  for (const { key, value } of everyPage.headers) {
-    assert.equal(headerForEveryPage(key), value, `${key} differs`)
-  }
 })

@@ -94,14 +94,6 @@ export default function Privacy() {
         your IP address and basic details of the request, so that it can deliver the page and
         protect the site from abuse. We do not use this information to identify you.
       </p>
-      <p>
-        We are moving the site to Cloudflare from our previous host, Vercel Inc., in October 2026.
-        Until the move is finished, Vercel may handle your request in the same way, under its own{' '}
-        <a href="https://vercel.com/legal/privacy-notice" target="_blank" rel="noreferrer">
-          privacy notice
-        </a>
-        .
-      </p>
 
       <h2>Transfers outside the UK</h2>
       <p>

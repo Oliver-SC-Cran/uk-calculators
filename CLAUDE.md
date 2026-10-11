@@ -70,8 +70,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - `public/_headers` holds the response headers. Cloudflare Pages reads it and does not serve it. There is no `_redirects` file, because Pages redirects `/about/` and `/about.html` to `/about` by itself, with a 308 (checked on a preview on 11 October 2026).
 - Three things are set in the Cloudflare dashboard, not in this repo: the redirect from `www` to the bare domain (a Bulk Redirect), the redirect from http to https (Always Use HTTPS), and DNS.
 - Keep these Cloudflare settings off for the domain, because they change the HTML or add scripts and cookies that the policies do not describe: Email Address Obfuscation (on by default, and it rewrites the email links), Rocket Loader, Bot Fight Mode, and automatic injection of Web Analytics.
-- The site is moving from Vercel in October 2026. Until the Vercel project is retired, `vercel.json` stays, with `cleanUrls` so that Vercel serves the same flat files, and it must send the same headers as `public/_headers` (`src/headers.test.js` checks this). After that, delete `vercel.json`, the last test in `src/headers.test.js`, the sentence about Vercel in the privacy policy, and this line.
-- Vercel was dropped because its free plan does not allow sites that carry adverts. Check a host's terms for this before moving again.
+- The site moved here from Vercel in October 2026, because Vercel's free plan does not allow sites that carry adverts. Check a host's terms for this before moving again.
 
 ## Writing rules
 
