@@ -1,26 +1,38 @@
 import TextPage from '../components/TextPage'
-import { TAX_YEAR } from '../lib/calculations'
+import { CONTACT_EMAIL, OWNER_NAME, SITE_NAME } from '../routes'
 
+// The wording on this page is the owner's own (11 October 2026). Do not
+// rewrite it. Fix typos only.
 export default function About() {
   return (
     <TextPage>
-      <h1>About this site</h1>
+      <h1>About {SITE_NAME}</h1>
       <p>
-        UK Money Calculators is a small, independently run site with ten calculators for UK pay,
-        tax, savings and property: take-home pay, pay rises, self-employed tax, maternity and
-        paternity pay, redundancy pay, ISA allowance, mortgage overpayments, stamp duty, minimum
-        wage and student loan repayments.
+        Hi, I'm {OWNER_NAME}. I built this site because I found managing money confusing, and the
+        rules keep changing. Tax bands, student loans, pensions, ISA limits: every year something
+        moves, and most of what I found was either too vague or full of jargon. I wanted somewhere
+        that gives a straight answer and shows how it got there, so I made it, hopefully for anyone
+        else who finds it as confusing as I did.
       </p>
+
+      <h2>How the figures are checked</h2>
       <p>
-        The figures are for the {TAX_YEAR} tax year and come from gov.uk, HMRC and nidirect. Under
-        each calculator there is a guide that shows how the result is worked out and links to the
-        source. The figures are checked every April, when the new tax year's rates are confirmed,
-        and whenever a change is announced.
+        Every calculator uses the official rates published on gov.uk. Each one is tested against the
+        worked examples gov.uk publishes, and against the government's own calculators where they
+        exist. When the rules change, the site is updated, and everything is checked again each
+        April for the new tax year.
       </p>
+
+      <h2>What this site isn't</h2>
       <p>
-        This site gives general information only. It is not financial, tax or legal advice. Before
-        making a decision that involves real money or your legal rights, check the official source
-        linked on each calculator or speak to a qualified adviser.
+        It's not financial advice. The calculators give estimates for common situations. If yours is
+        unusual, or a lot of money depends on it, check with HMRC or a qualified adviser.
+      </p>
+
+      <h2>Get in touch</h2>
+      <p>
+        Spotted a mistake, or want a calculator that isn't here? Email{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
       </p>
     </TextPage>
   )

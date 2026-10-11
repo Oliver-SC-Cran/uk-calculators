@@ -135,6 +135,11 @@ export const ISA = {
   cashLimitChangeDate: '6 April 2027',
   cashLimitUnder65AfterChange: 12000,
   cashLimitFullAllowanceAge: 65,
+  // From the same date, the flat-rate charge on interest paid on cash held in a
+  // stocks and shares or innovative finance ISA. The ISA manager pays it.
+  // Source: HMRC's tax information and impact note of 17 September 2026,
+  // https://www.gov.uk/government/publications/reduction-in-the-cash-individual-savings-account-isa-limit
+  cashInterestChargeRateAfterChange: 0.22,
 }
 
 /**
@@ -227,6 +232,30 @@ export function checkMinimumWage({ age, hourlyRate, isApprentice }) {
     weeklyAtMinimum: applicableRate * 37.5,
     annualAtMinimum: applicableRate * 37.5 * 52,
   }
+}
+
+// Used in the guides only. No calculator depends on these.
+// Sources: https://www.gov.uk/tax-free-childcare
+//          https://www.gov.uk/free-childcare-if-working/check-youre-eligible
+//          https://www.gov.uk/workplace-pensions/what-you-your-employer-and-the-government-pay
+export const CHILDCARE = {
+  // Tax-Free Childcare and free childcare for working parents both stop if
+  // either parent expects an adjusted net income over this in the tax year.
+  adjustedNetIncomeLimit: 100000,
+  taxFreeChildcareMaxPerChild: 2000, // the most the government adds in a year
+}
+
+// Source: https://www.gov.uk/tax-codes/how-to-update-your-tax-code and
+//         https://www.gov.uk/tax-codes/emergency-tax-codes
+export const TAX_CODE_TIMES = {
+  newCodeWorkingDays: 15, // HMRC tells you and your employer a new code within this
+  newJobDays: 35, // how long HMRC can take to update a code after you start a job
+}
+
+export const AUTO_ENROLMENT = {
+  totalMinimum: 0.08, // of a band of earnings, from employer and employee together
+  employerMinimum: 0.03,
+  employeeMinimum: 0.05,
 }
 
 export const STUDENT_LOAN = {

@@ -38,6 +38,10 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - `src/pages/`: one component per page
 - `src/guides/`: the written guide shown below each calculator, one component per guide, with shared number formatting in `format.js`. Every figure comes from the constants and functions in `calculations.js`, and each guide has a "Last updated" date to change by hand when its wording or figures change. Every factual claim in a guide must come from a gov.uk or other official page fetched at the time of writing (MoneyHelper for mortgages). If a claim is from memory, say so when reporting the change so it can be checked
 - `src/components/RelatedCalculators.jsx`: the "Related calculators" links at the bottom of each calculator page. Names come from the `name` field in `routes.js`
+- `src/pages/guides/`: the standalone guides at `/guides/<slug>`, and the `/guides` index. These are separate from the guides under each calculator in `src/guides/`. Each one uses `src/components/GuidePage.jsx`, and its entry in `routes.js` has a `guide` field (the heading and link text) and a `summary` (the line under it in lists). The same rules apply as for the calculator guides: figures from `calculations.js`, a "Last updated" date, and every claim from a gov.uk page fetched at the time of writing, with anything from memory flagged. Each is 700 to 1,000 words, ends with a short FAQ and links to the calculators it relates to
+- `src/components/RelatedGuides.jsx`: the "Related guides" links. A calculator page passes `guides` to `CalculatorPage` when a guide fits it, and leaves it out when none does
+- `CHILDCARE`, `AUTO_ENROLMENT` and `TAX_CODE_TIMES` in `calculations.js` are used by the guides only. Re-check them on gov.uk each April with the rest
+- The Cash ISA guide describes rules that start on 6 April 2027. Re-check gov.uk and update it when HMRC publishes its guidance for ISA providers, and again in April 2027, when the ISA calculator and its guide change too
 - `src/lib/calculations.js`: every tax figure and all calculation logic
 - Stamp duty (SDLT) rates are in `STAMP_DUTY` in `calculations.js`. They are not tied to the tax year, so the page states the date they apply from. The calculator covers England and Northern Ireland only, and its tests are in `src/lib/stampDuty.test.js`
 - `src/lib/selfEmployed.js`: the self-employed tax calculator. Its rates, thresholds and Self Assessment dates are in `SELF_EMPLOYED` in `calculations.js`, and it reuses the income tax and student loan functions there. The dates and the Making Tax Digital thresholds change every year, so re-check them on gov.uk each April. Its tests are in `src/lib/selfEmployed.test.js`
@@ -51,6 +55,7 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 `npm run build` renders every route to real HTML: `dist/index.html`, `dist/<route>.html` and `dist/404.html`, plus `dist/sitemap.xml`. The browser then hydrates that HTML, so the calculators work as before.
 
 - To add a page: add it to `src/routes.js` with a unique title and description, then map its path to a component in `src/App.jsx`. Nothing else needs editing. Do not hand-write a sitemap or add a redirect for the page.
+- To add a guide: do the same, with a path under `/guides/` and the `guide` and `summary` fields. The guides index, the homepage section and the sitemap pick it up from `routes.js`. It is built to `dist/guides/<slug>.html`.
 - Titles and descriptions are written for someone searching in the UK: say what the page does, include the tax year where it matters, and take figures from the constants in `calculations.js`.
 - Page components must render the same HTML on the server and in the browser. Do not read `window`, `document`, the date or random values while rendering. Use an effect for those.
 - Pages are flat files (`dist/about.html`, not `dist/about/index.html`) so that addresses have no trailing slash. Cloudflare Pages serves `about.html` at `/about`. It would serve `about/index.html` at `/about/` and redirect `/about` to it, which would send every canonical URL, sitemap entry and internal link through a redirect.
@@ -119,7 +124,8 @@ If a push fails because of login or permissions, stop and say so. Do not try to 
 - Consent is handled by Google's own consent message, published in the AdSense account under Privacy & messaging. The footer's "Cookie settings" link (`CookieSettingsLink.jsx`) reopens it. Do not build a separate cookie banner.
 - `src/pages/Privacy.jsx` and `src/pages/Cookies.jsx` must describe what the site actually loads. If a script, host or cookie changes, update both pages and their "Last updated" dates in the same batch. The cookie list comes from Google's published lists, linked in the file. Re-check them when editing it.
 - `src/pages/Terms.jsx` is the terms of use. It is a plain-English draft that has not been reviewed by a solicitor. Change its "Last updated" date when its wording changes.
-- The site owner is given as the site name only for now (decided 8 October 2026). `SITE_NAME` and `CONTACT_EMAIL` are in `src/routes.js`.
+- The site is run by Oliver Cran, who is named on the About page, in the privacy policy and in the terms (decided 11 October 2026). No postal address is given. `OWNER_NAME`, `SITE_NAME` and `CONTACT_EMAIL` are in `src/routes.js`.
+- The wording of the About page is the owner's own. Do not rewrite it. Fix typos only, and say so if a sentence on it stops being true.
 
 ## Security
 
@@ -153,7 +159,7 @@ Go through these four lists for every batch of changes, and finish the batch wit
 - Accessibility alt text: pages have no content images. The logo is decorative and sits beside the site name. The social image has `og:image:alt`
 - Fix colour contrast: check every new pairing (4.5:1 for text, 3:1 for field edges)
 - Keyboard navigation: skip link, visible focus, and focus moved to the new page
-- Business details: the site name and a contact email only, by the owner's decision of 8 October 2026. Open until the owner's name and address are added
+- Business details: the owner's name (Oliver Cran) and a contact email, on the About page, in the privacy policy and in the terms. The owner closed this item on 11 October 2026. No postal address is given
 - Age consent for kids' data: N/A. No accounts, and the site collects no personal data from anyone
 - Unsubscribe link in emails: N/A. The site sends no emails
 - Licensed fonts and images: Sora and Figtree under the SIL Open Font Licence 1.1. The logo and social image were made for the site

@@ -407,6 +407,11 @@ h2[tabindex='-1']:focus {
   font-size: 1.75rem;
 }
 
+/* A second section on the homepage sits closer to the one above it. */
+.section--after {
+  padding-top: 0;
+}
+
 .group + .group {
   margin-top: var(--space-7);
 }

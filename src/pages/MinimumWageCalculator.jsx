@@ -102,6 +102,7 @@ export default function MinimumWageCalculator() {
         </>
       }
       guide={<MinimumWageGuide />}
+      guides={['/guides/how-to-read-your-payslip']}
       related={['/salary-calculator', '/maternity-pay-calculator', '/redundancy-calculator']}
     />
   )

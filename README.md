@@ -1,6 +1,6 @@
 # UK Money Calculators
 
-The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): ten calculators for UK pay, tax, savings and property, each with a written guide.
+The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): ten calculators for UK pay, tax, savings and property, each with a written guide, plus standalone guides at `/guides`.
 
 - Take-home pay
 - Pay rises
@@ -40,7 +40,7 @@ npm run build
 - React and Vite, with plain CSS in `src/index.css`.
 - `src/lib/calculations.js` holds every rate, threshold and calculation.
 - `src/routes.js` lists every page with its title and description.
-- `src/pages/` has one component per page, and `src/guides/` has the guide shown under each calculator.
+- `src/pages/` has one component per page, and `src/guides/` has the guide shown under each calculator. The standalone guides are in `src/pages/guides/`.
 - `src/components/` has the parts every calculator page shares: the page layout, the numbered input fields and the result panel.
 - The Sora and Figtree fonts are served from the site itself. They come from the `@fontsource-variable` packages.
 - `scripts/prerender.js` turns each page into static HTML at build time.

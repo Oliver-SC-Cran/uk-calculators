@@ -278,6 +278,7 @@ export default function SelfEmployedTaxCalculator() {
         )
       }
       guide={<SelfEmployedTaxGuide />}
+      guides={['/guides/100k-tax-trap']}
       related={['/salary-calculator', '/pay-rise-calculator', '/student-loan-calculator']}
     />
   )

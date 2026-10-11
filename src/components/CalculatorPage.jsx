@@ -1,4 +1,5 @@
 import RelatedCalculators from './RelatedCalculators'
+import RelatedGuides from './RelatedGuides'
 
 /**
  * The layout every calculator page uses: the heading, a line saying which
@@ -11,6 +12,9 @@ import RelatedCalculators from './RelatedCalculators'
  *
  * breakdown is for longer tables that would make the result panel too tall.
  * They sit under the two columns at full width.
+ *
+ * guides is a list of paths to standalone guides that fit this calculator.
+ * Leave it out when none does.
  */
 export default function CalculatorPage({
   title,
@@ -20,6 +24,7 @@ export default function CalculatorPage({
   result,
   breakdown,
   guide,
+  guides,
   related,
 }) {
   return (
@@ -52,6 +57,8 @@ export default function CalculatorPage({
       )}
 
       {guide}
+
+      {guides && <RelatedGuides paths={guides} />}
 
       <RelatedCalculators paths={related} />
     </div>

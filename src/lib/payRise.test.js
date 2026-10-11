@@ -299,3 +299,26 @@ test('pay rise [own working] odd pension inputs', () => {
   const high = pack(1000000, 'salarySacrifice', 10)
   near(high.takeHomeAnnual, 900000 - high.incomeTax - high.nationalInsurance)
 })
+
+test('pay rise [own working] the worked examples in the £100,000 tax trap guide', () => {
+  // A £10,000 rise from £100,000: 40% tax on the rise is £4,000, and losing
+  // £5,000 of allowance costs another £2,000. NI at 2% is £200.
+  const inTrap = calculatePayRise({ currentSalary: 100000, newSalary: 110000 })
+  near(inTrap.goesTo.incomeTax, 6000)
+  near(inTrap.goesTo.nationalInsurance, 200)
+  near(inTrap.kept, 3800)
+  // The same rise below the taper: 40% tax and 2% NI.
+  near(calculatePayRise({ currentSalary: 80000, newSalary: 90000 }).kept, 5800)
+  // £10,000 of a £110,000 salary into a pension by salary sacrifice gives up
+  // the same £3,800 of take-home pay and brings the allowance back.
+  const noPension = calculatePayPackage({ salary: 110000 })
+  const withPension = calculatePayPackage({
+    salary: 110000,
+    pensionPercent: (10000 / 110000) * 100,
+    pensionType: 'salarySacrifice',
+  })
+  near(withPension.pensionIntoPot, 10000)
+  near(withPension.adjustedNetIncome, 100000)
+  assert.equal(withPension.personalAllowanceUsed, 12570)
+  near(noPension.takeHomeAnnual - withPension.takeHomeAnnual, 3800)
+})

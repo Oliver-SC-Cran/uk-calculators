@@ -60,6 +60,7 @@ export default function Layout() {
             <NavLink to={{ pathname: '/', hash: '#calculators' }} end>
               Calculators
             </NavLink>
+            <NavLink to="/guides">Guides</NavLink>
             <NavLink to="/about">About</NavLink>
           </nav>
         </div>

@@ -1,6 +1,6 @@
 import TextPage from '../components/TextPage'
 import { Link } from 'react-router-dom'
-import { CONTACT_EMAIL, SITE_NAME } from '../routes'
+import { CONTACT_EMAIL, OWNER_NAME } from '../routes'
 
 // Change this by hand whenever the policy changes.
 const LAST_UPDATED = '11 October 2026'
@@ -16,7 +16,7 @@ export default function Privacy() {
 
       <h2>Who runs this site</h2>
       <p>
-        This site is run by {SITE_NAME}. We decide how any personal data collected through the site
+        This site is run by {OWNER_NAME}. We decide how any personal data collected through the site
         is used, which makes us the data controller under UK data protection law. You can contact us
         at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
       </p>

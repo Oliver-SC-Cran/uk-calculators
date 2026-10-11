@@ -15,6 +15,10 @@ import About from './pages/About'
 import Privacy from './pages/Privacy'
 import Cookies from './pages/Cookies'
 import Terms from './pages/Terms'
+import Guides from './pages/guides/Guides'
+import TaxTrap from './pages/guides/TaxTrap'
+import Payslip from './pages/guides/Payslip'
+import CashIsaChanges from './pages/guides/CashIsaChanges'
 import NotFound from './pages/NotFound'
 import { routes } from './routes'
 
@@ -31,6 +35,10 @@ const pages = {
   '/maternity-pay-calculator': MaternityPayCalculator,
   '/minimum-wage-calculator': MinimumWageCalculator,
   '/student-loan-calculator': StudentLoanCalculator,
+  '/guides': Guides,
+  '/guides/100k-tax-trap': TaxTrap,
+  '/guides/how-to-read-your-payslip': Payslip,
+  '/guides/cash-isa-changes-april-2027': CashIsaChanges,
   '/about': About,
   '/privacy': Privacy,
   '/cookies': Cookies,

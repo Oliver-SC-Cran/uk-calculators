@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
 import TextPage from '../components/TextPage'
-import { CONTACT_EMAIL, SITE_NAME, SITE_URL } from '../routes'
+import { CONTACT_EMAIL, OWNER_NAME, SITE_URL } from '../routes'
 
 // Change this by hand whenever the terms change.
-const LAST_UPDATED = '10 October 2026'
-const LAST_UPDATED_ISO = '2026-10-10'
+const LAST_UPDATED = '11 October 2026'
+const LAST_UPDATED_ISO = '2026-10-11'
 
 const SITE_DOMAIN = SITE_URL.replace('https://', '')
 
@@ -18,8 +18,8 @@ export default function Terms() {
 
       <h2>About these terms</h2>
       <p>
-        These terms apply to {SITE_DOMAIN}, which is run by {SITE_NAME}. By using the site you agree
-        to them. If you do not agree, please do not use the site.
+        These terms apply to {SITE_DOMAIN}, which is run by {OWNER_NAME}. By using the site you
+        agree to them. If you do not agree, please do not use the site.
       </p>
 
       <h2>Using the site</h2>
@@ -99,7 +99,7 @@ export default function Terms() {
 
       <h2>Copyright</h2>
       <p>
-        The wording, design and code of this site belong to {SITE_NAME}. The official rates and
+        The wording, design and code of this site belong to {OWNER_NAME}. The official rates and
         thresholds come from the sources linked in each guide.
       </p>
 

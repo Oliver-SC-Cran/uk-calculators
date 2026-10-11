@@ -79,6 +79,7 @@ export default function StudentLoanCalculator() {
         </ResultPanel>
       }
       guide={<StudentLoanGuide />}
+      guides={['/guides/how-to-read-your-payslip']}
       related={['/salary-calculator', '/pay-rise-calculator', '/minimum-wage-calculator']}
     />
   )

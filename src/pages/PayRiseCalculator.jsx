@@ -354,6 +354,7 @@ export default function PayRiseCalculator() {
         )
       }
       guide={<PayRiseGuide />}
+      guides={['/guides/100k-tax-trap']}
       related={['/salary-calculator', '/student-loan-calculator', '/minimum-wage-calculator']}
     />
   )

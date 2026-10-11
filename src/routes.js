@@ -3,6 +3,7 @@
 // To add a page: add it here, then map its path to a component in App.jsx.
 
 import {
+  INCOME_TAX,
   ISA,
   MINIMUM_WAGE,
   PARENTAL_PAY,
@@ -13,9 +14,17 @@ import {
 
 export const SITE_URL = 'https://ukmoneycalculators.co.uk'
 export const SITE_NAME = 'UK Money Calculators'
+// The person who runs the site. Named on the About page, in the privacy policy
+// and in the terms.
+export const OWNER_NAME = 'Oliver Cran'
 export const CONTACT_EMAIL = 'hello@ukmoneycalculators.co.uk'
 
 const pounds = (value) => `£${value.toLocaleString('en-GB')}`
+
+// Extra pay in the personal allowance taper is taxed at the higher rate, and
+// each £2 of it removes £1 of allowance, which is then taxed at that rate too.
+const taperRate = `${Math.round(INCOME_TAX.higherRate * 150)}%`
+const standardTaxCode = `${Math.floor(INCOME_TAX.personalAllowance / 10)}L`
 
 export const routes = [
   {
@@ -84,6 +93,34 @@ export const routes = [
     title: `Student loan repayment calculator ${TAX_YEAR}: Plans 1, 2, 4 and 5`,
     description: `Work out your monthly student loan repayment from your salary for ${TAX_YEAR}. Covers Plan 1, Plan 2, Plan 4, Plan 5 and Postgraduate Loans.`,
   },
+  // Guides. `guide` is the heading and link text, and `summary` is the line
+  // shown under it in lists of guides.
+  {
+    path: '/guides',
+    title: 'Guides to UK tax, pay and savings | UK Money Calculators',
+    description: `Plain guides to the rules behind the calculators: the ${pounds(INCOME_TAX.taperStart)} tax trap, how to read your payslip, and the Cash ISA changes from April 2027.`,
+  },
+  {
+    path: '/guides/100k-tax-trap',
+    guide: `The ${pounds(INCOME_TAX.taperStart)} tax trap`,
+    summary: `Why pay between ${pounds(INCOME_TAX.taperStart)} and ${pounds(INCOME_TAX.taperFullyGoneAt)} is taxed at ${taperRate}, and what reduces it.`,
+    title: `The ${pounds(INCOME_TAX.taperStart)} tax trap: why you pay ${taperRate} (${TAX_YEAR})`,
+    description: `Why income between ${pounds(INCOME_TAX.taperStart)} and ${pounds(INCOME_TAX.taperFullyGoneAt)} is taxed at ${taperRate} in ${TAX_YEAR}, what it costs, and how pension contributions and Gift Aid reduce it.`,
+  },
+  {
+    path: '/guides/how-to-read-your-payslip',
+    guide: 'How to read your payslip',
+    summary: `What each line means, what tax code ${standardTaxCode} tells you, and how to spot a mistake.`,
+    title: `How to read your payslip: tax codes and deductions ${TAX_YEAR}`,
+    description: `What each line on a UK payslip means: gross pay, tax code ${standardTaxCode}, income tax, National Insurance, student loan and pension, and how to spot a mistake.`,
+  },
+  {
+    path: '/guides/cash-isa-changes-april-2027',
+    guide: 'Cash ISA changes from April 2027',
+    summary: `The new ${pounds(ISA.cashLimitUnder65AfterChange)} cash limit for under-${ISA.cashLimitFullAllowanceAge}s, what stays the same, and where the rules stand.`,
+    title: `Cash ISA changes from April 2027: the ${pounds(ISA.cashLimitUnder65AfterChange)} limit`,
+    description: `From ${ISA.cashLimitChangeDate}, under-${ISA.cashLimitFullAllowanceAge}s can pay no more than ${pounds(ISA.cashLimitUnder65AfterChange)} a year into cash ISAs. What changes, what stays the same and where the rules stand.`,
+  },
   {
     path: '/about',
     title: 'About UK Money Calculators',
@@ -116,6 +153,9 @@ export const notFoundRoute = {
   title: 'Page not found | UK Money Calculators',
   description: 'That page does not exist. Go back to the homepage to find a calculator.',
 }
+
+/** The standalone guides, in the order they are listed. */
+export const guides = routes.filter((route) => route.guide)
 
 export const canonicalUrl = (route) => SITE_URL + route.path
 

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { TAX_YEAR } from '../lib/calculations'
-import { routes } from '../routes'
+import { guides, routes } from '../routes'
 
 // Every calculator, in the three groups shown on the homepage. Names come from
 // src/routes.js, so they match the page headings and the related links.
@@ -102,6 +102,23 @@ export default function Home() {
             </ul>
           </div>
         ))}
+      </section>
+
+      <section className="wrap section section--after" aria-labelledby="guides-heading">
+        <h2 id="guides-heading">Guides</h2>
+        <ul className="tiles">
+          {guides.map(({ path, guide, summary }) => (
+            <li key={path}>
+              <Link to={path} className="tile">
+                <span className="tile__name">{guide}</span>
+                <span className="tile__desc">{summary}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className="back-link">
+          <Link to="/guides">See all guides</Link>
+        </p>
       </section>
     </>
   )

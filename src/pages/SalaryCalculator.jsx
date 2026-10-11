@@ -64,6 +64,7 @@ export default function SalaryCalculator() {
         </ResultPanel>
       }
       guide={<TakeHomePayGuide />}
+      guides={['/guides/how-to-read-your-payslip']}
       related={[
         '/pay-rise-calculator',
         '/self-employed-tax-calculator',
