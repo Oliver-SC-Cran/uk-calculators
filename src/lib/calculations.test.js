@@ -14,7 +14,6 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
   calculateISAAllowance,
-  calculateMortgageOverpayment,
   calculateRedundancyPay,
   calculateStudentLoanRepayment,
   calculateTakeHome,
@@ -548,108 +547,6 @@ test('student loan [own working] thresholds, rounding and odd inputs', () => {
   assert.equal(loan(60000, 'plan9').totalMonthly, 0)
   assert.equal(loan(-30000, 'plan2', true).totalMonthly, 0)
   assert.equal(loan(NaN, 'plan2', true).totalMonthly, 0)
-})
-
-// ---------------------------------------------------------------------------
-// Mortgage overpayment
-// gov.uk has no mortgage calculator, so everything here is own working. The
-// monthly payments are standard repayment-mortgage figures.
-// ---------------------------------------------------------------------------
-
-const mortgage = (balance, annualRatePercent, remainingYears, monthlyOverpayment = 0) =>
-  calculateMortgageOverpayment({ balance, annualRatePercent, remainingYears, monthlyOverpayment })
-
-test('mortgage [own working] standard monthly payments', () => {
-  near(Math.round(mortgage(200000, 4.5, 25).standardPayment * 100) / 100, 1111.66)
-  near(Math.round(mortgage(100000, 5, 25).standardPayment * 100) / 100, 584.59)
-  near(Math.round(mortgage(150000, 6, 30).standardPayment * 100) / 100, 899.33)
-})
-
-test('mortgage [own working] no overpayment changes nothing', () => {
-  for (const [balance, rate, years] of [
-    [200000, 4.5, 25],
-    [85000, 7.25, 12],
-    [10000000, 3, 40],
-  ]) {
-    const result = mortgage(balance, rate, years, 0)
-    assert.equal(result.newTermMonths, years * 12)
-    assert.equal(result.monthsSaved, 0)
-    assert.ok(result.interestSaved < 0.01, `interest saved was ${result.interestSaved}`)
-  }
-})
-
-test('mortgage [own working] £200 a month extra on £200,000 at 4.5% over 25 years', () => {
-  const result = mortgage(200000, 4.5, 25, 200)
-  near(Math.round(result.newPayment * 100) / 100, 1311.66)
-  // From the loan formula: months = -ln(1 - balance x rate / payment) / ln(1 + rate).
-  const rate = 4.5 / 100 / 12
-  const months = Math.ceil(-Math.log(1 - (200000 * rate) / result.newPayment) / Math.log(1 + rate))
-  assert.equal(months, 227)
-  assert.equal(result.newTermMonths, 227)
-  assert.equal(result.monthsSaved, 73)
-  // Everything paid is either the balance or interest. The last payment is
-  // smaller than the rest, so the total is between 226 and 227 full payments.
-  const totalPaid = 200000 + result.newTotalInterest
-  assert.ok(totalPaid > 226 * result.newPayment && totalPaid <= 227 * result.newPayment)
-  near(result.interestSaved, result.standardTotalInterest - result.newTotalInterest)
-})
-
-test('mortgage [own working] zero interest', () => {
-  const plain = mortgage(120000, 0, 10, 0)
-  assert.equal(plain.standardPayment, 1000)
-  assert.equal(plain.standardTotalInterest, 0)
-  const overpaid = mortgage(120000, 0, 10, 200)
-  assert.equal(overpaid.newTermMonths, 100)
-  assert.equal(overpaid.monthsSaved, 20)
-  assert.equal(overpaid.interestSaved, 0)
-})
-
-test('mortgage [own working] bigger overpayments always save more', () => {
-  let previous = mortgage(200000, 4.5, 25, 0)
-  for (let overpayment = 50; overpayment <= 3000; overpayment += 50) {
-    const result = mortgage(200000, 4.5, 25, overpayment)
-    assert.ok(result.interestSaved > previous.interestSaved, `at ${overpayment}`)
-    assert.ok(result.newTermMonths <= previous.newTermMonths, `at ${overpayment}`)
-    previous = result
-  }
-})
-
-test('mortgage [own working] an overpayment bigger than the balance clears it in a month', () => {
-  const result = mortgage(5000, 6, 10, 10000)
-  assert.equal(result.newTermMonths, 1)
-  near(result.newTotalInterest, 25) // one month of interest: £5,000 at 0.5%
-})
-
-test('mortgage [own working] odd inputs', () => {
-  // Nothing to calculate without a balance and a term.
-  assert.equal(mortgage(0, 4.5, 25, 200), null)
-  assert.equal(mortgage(-1000, 4.5, 25, 200), null)
-  assert.equal(mortgage(NaN, 4.5, 25, 200), null)
-  assert.equal(mortgage(200000, 4.5, 0, 200), null)
-  // A negative overpayment or rate counts as zero.
-  assert.equal(mortgage(200000, 4.5, 25, -500).monthsSaved, 0)
-  assert.equal(mortgage(200000, 4.5, 25, -500).newTermMonths, 300)
-  assert.equal(mortgage(120000, -3, 10, 0).standardPayment, 1000)
-  // A very large mortgage still gives finite numbers.
-  const large = mortgage(10000000, 5.5, 35, 5000)
-  assert.ok(Number.isFinite(large.interestSaved) && large.interestSaved > 0)
-  // A nonsense rate gives no result, not "NaN".
-  assert.equal(mortgage(200000, 1e9, 25, 0), null)
-})
-
-test('mortgage [own working] the worked examples shown in the guide', () => {
-  const summary = (...inputs) => {
-    const result = mortgage(...inputs)
-    return [
-      result.standardPayment,
-      result.newTermMonths,
-      result.monthsSaved,
-      result.interestSaved,
-    ].map(Math.round)
-  }
-  assert.deepEqual(summary(200000, 4.5, 25, 200), [1112, 227, 73, 36280])
-  assert.deepEqual(summary(150000, 5, 20, 100), [990, 205, 35, 14256])
-  assert.deepEqual(summary(300000, 4, 30, 500), [1432, 220, 140, 92414])
 })
 
 test('student loan [gov.uk] the working behind each example matches gov.uk step by step', () => {

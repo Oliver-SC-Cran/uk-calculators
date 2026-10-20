@@ -69,11 +69,17 @@ export const routes = [
     description: `Check how much of your ${pounds(ISA.overallAllowance)} ISA allowance is left for ${TAX_YEAR} across Cash, Stocks and Shares and Lifetime ISAs, and see your ${ISA.lisaBonusRate * 100}% Lifetime ISA bonus.`,
   },
   {
+    path: '/lifetime-isa-calculator',
+    name: 'Lifetime ISA calculator',
+    title: `Lifetime ISA calculator ${TAX_YEAR}: bonus, growth and charges`,
+    description: `Project your Lifetime ISA with the ${ISA.lisaBonusRate * 100}% government bonus, for a first home or for age ${ISA.lisaAccessAge}, and see what the ${ISA.lisaWithdrawalChargeRate * 100}% withdrawal charge would cost.`,
+  },
+  {
     path: '/mortgage-overpayment-calculator',
     name: 'Mortgage overpayment calculator',
-    title: 'Mortgage overpayment calculator: interest and time saved',
+    title: 'Mortgage overpayment calculator: pay off your mortgage early',
     description:
-      'See how much interest you could save, and how many years sooner you could clear your mortgage, by overpaying a set amount each month.',
+      'See how soon you could pay off your mortgage early by overpaying each month or with a lump sum, the interest saved, and how much you can overpay each year.',
   },
   {
     path: '/stamp-duty-calculator',

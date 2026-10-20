@@ -194,6 +194,7 @@ export const ISA = {
   lisaWithdrawalChargeRate: 0.25, // on withdrawals that are not for a first home or after 60
   lisaPropertyCap: 450000, // most a first home can cost
   lisaMonthsBeforePurchase: 12, // months between first payment in and buying
+  lisaTerminalIllnessMonths: 12, // no charge if terminally ill with less than this to live
   // Announced change: regulations laid before Parliament on 14 September 2026.
   cashLimitChangeDate: '6 April 2027',
   cashLimitUnder65AfterChange: 12000,
@@ -383,73 +384,12 @@ export function calculateStudentLoanRepayment({ grossAnnual, plan, hasPostgradua
   }
 }
 
+// The mortgage overpayment calculator is in mortgage.js.
 export const MORTGAGE = {
-  // Many lenders allow this much of the balance to be overpaid each year
-  // without a charge (source: MoneyHelper). It is typical, not a rule.
+  // Many lenders allow this much to be overpaid each year without a charge,
+  // usually during a fixed or discounted deal (source: MoneyHelper). It is
+  // typical, not a rule.
   typicalOverpaymentLimit: 0.1,
-}
-
-/**
- * Mortgage overpayment comparison. Uses the standard amortising-loan
- * formula for the normal monthly payment, then simulates month by month
- * with the extra overpayment added to see how much sooner it's paid off
- * and how much interest that saves.
- */
-export function calculateMortgageOverpayment({
-  balance,
-  annualRatePercent,
-  remainingYears,
-  monthlyOverpayment,
-}) {
-  const monthlyRate = atLeastZero(annualRatePercent) / 100 / 12
-  const totalMonths = Math.round(atLeastZero(remainingYears) * 12)
-  const overpayment = atLeastZero(monthlyOverpayment)
-
-  if (!(balance > 0) || totalMonths <= 0) {
-    return null
-  }
-
-  const standardPayment =
-    monthlyRate === 0
-      ? balance / totalMonths
-      : (balance * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) /
-        (Math.pow(1 + monthlyRate, totalMonths) - 1)
-
-  // Absurd inputs (a rate in the millions of percent) overflow the formula.
-  if (!Number.isFinite(standardPayment)) {
-    return null
-  }
-
-  const standardTotalInterest = standardPayment * totalMonths - balance
-
-  // Simulate with the overpayment added on top of the standard payment. It can
-  // never take longer than the original term, so stop there at the latest.
-  let remaining = balance
-  let month = 0
-  let interestPaid = 0
-  const payment = standardPayment + overpayment
-
-  while (remaining > 0.005 && month < totalMonths) {
-    const interest = remaining * monthlyRate
-    const principal = Math.min(payment - interest, remaining)
-    remaining -= principal
-    interestPaid += interest
-    month += 1
-  }
-
-  const monthsSaved = Math.max(0, totalMonths - month)
-  const interestSaved = Math.max(0, standardTotalInterest - interestPaid)
-
-  return {
-    standardPayment,
-    standardTotalInterest,
-    newPayment: payment,
-    newTotalInterest: interestPaid,
-    newTermMonths: month,
-    originalTermMonths: totalMonths,
-    monthsSaved,
-    interestSaved,
-  }
 }
 
 /**

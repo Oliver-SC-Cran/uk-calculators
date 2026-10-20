@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { TAX_YEAR } from '../lib/calculations'
+import { ISA, TAX_YEAR } from '../lib/calculations'
+import { percent } from '../lib/format'
 import { guides, routes } from '../routes'
 
 // Every calculator, in the three groups shown on the homepage. Names come from
@@ -52,11 +53,15 @@ const groups = [
       },
       {
         path: '/mortgage-overpayment-calculator',
-        description: 'The interest and time a monthly overpayment could save.',
+        description: 'How much sooner you could pay off your mortgage, and the interest saved.',
       },
       {
         path: '/isa-calculator',
         description: `Your allowance left for ${TAX_YEAR} and your Lifetime ISA bonus.`,
+      },
+      {
+        path: '/lifetime-isa-calculator',
+        description: `What the ${percent(ISA.lisaBonusRate)} bonus and growth could add up to, for a first home or later life.`,
       },
     ],
   },

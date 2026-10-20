@@ -116,7 +116,11 @@ export default function ISACalculator() {
       }
       guide={<ISAGuide />}
       guides={['/guides/cash-isa-changes-april-2027']}
-      related={['/mortgage-overpayment-calculator', '/stamp-duty-calculator', '/salary-calculator']}
+      related={[
+        '/lifetime-isa-calculator',
+        '/mortgage-overpayment-calculator',
+        '/stamp-duty-calculator',
+      ]}
     />
   )
 }

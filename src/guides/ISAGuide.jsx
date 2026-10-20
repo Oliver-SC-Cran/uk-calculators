@@ -1,9 +1,10 @@
+import { Link } from 'react-router-dom'
 import { calculateISAAllowance, ISA, TAX_YEAR } from '../lib/calculations'
 import { formatGBP as gbp, percent } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '8 October 2026'
-const LAST_UPDATED_ISO = '2026-10-08'
+const LAST_UPDATED = '20 October 2026'
+const LAST_UPDATED_ISO = '2026-10-20'
 
 export default function ISAGuide() {
   const { overallAllowance, minAge, lisaLimit, lisaBonusRate } = ISA
@@ -73,6 +74,11 @@ export default function ISAGuide() {
         out. That is more than the bonus. Save {gbp(saved)} and the bonus makes it {gbp(pot)}.
         Withdraw it all and the charge is {gbp(charge)}, leaving {gbp(left)}. You get back{' '}
         {gbp(saved - left)} less than you put in.
+      </p>
+      <p>
+        The <Link to="/lifetime-isa-calculator">Lifetime ISA calculator</Link> projects what your
+        payments, the bonus and any growth could add up to by the time you buy a home or reach{' '}
+        {lisaAccessAge}.
       </p>
 
       <h3>The Cash ISA change from April 2027</h3>

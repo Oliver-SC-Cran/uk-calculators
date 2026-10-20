@@ -42,6 +42,16 @@ const shortDate = new Intl.DateTimeFormat('en-GB', {
 /** '2027-03-01' becomes "1 March 2027" */
 export const formatDate = (isoDate) => longDate.format(new Date(`${isoDate}T00:00:00Z`))
 
+const monthAndYear = new Intl.DateTimeFormat('en-GB', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+/** '2045-09' becomes "September 2045" */
+export const formatMonthYear = (yearMonth) =>
+  monthAndYear.format(new Date(`${yearMonth}-01T00:00:00Z`))
+
 /** '2027-03-01' becomes "1 Mar 2027", for tables */
 export const formatDateShort = (isoDate) => shortDate.format(new Date(`${isoDate}T00:00:00Z`))
 

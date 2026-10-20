@@ -816,6 +816,95 @@ h2[tabindex='-1']:focus {
   margin-top: var(--space-4);
 }
 
+/* A line chart (LineChart.jsx). The lines differ by style as well as colour:
+   solid navy for the main line, dashed grey for the one it is compared with. */
+
+.chart {
+  margin: 0;
+}
+
+.chart__title {
+  margin: 0 0 var(--space-3);
+  font-weight: 700;
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  max-width: 32rem;
+  height: auto;
+}
+
+.chart text {
+  font-family: var(--font-body);
+  font-size: 12px;
+  fill: var(--text-soft);
+}
+
+.chart .chart__axis-title {
+  font-weight: 600;
+  fill: var(--navy);
+}
+
+.chart__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart__axis {
+  stroke: var(--field-border);
+  stroke-width: 1;
+}
+
+.chart__line {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart__line--main {
+  stroke: var(--navy);
+  stroke-width: 3;
+}
+
+.chart__line--compare {
+  stroke: var(--field-border);
+  stroke-width: 2.5;
+  stroke-dasharray: 6 5;
+}
+
+.chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9375rem;
+}
+
+.chart__legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chart__key {
+  width: var(--space-6);
+  border-top: 3px solid var(--navy);
+}
+
+.chart__key--compare {
+  border-top: 3px dashed var(--field-border);
+}
+
+.chart__summary {
+  max-width: var(--width-text);
+  margin-top: var(--space-4);
+  font-size: 0.9375rem;
+  color: var(--text-soft);
+}
+
 /* A note about what the calculator assumes. */
 .notice {
   padding: var(--space-4) var(--space-5);

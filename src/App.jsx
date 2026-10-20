@@ -5,6 +5,7 @@ import SalaryCalculator from './pages/SalaryCalculator'
 import PayRiseCalculator from './pages/PayRiseCalculator'
 import RedundancyCalculator from './pages/RedundancyCalculator'
 import ISACalculator from './pages/ISACalculator'
+import LifetimeIsaCalculator from './pages/LifetimeIsaCalculator'
 import MortgageOverpaymentCalculator from './pages/MortgageOverpaymentCalculator'
 import MinimumWageCalculator from './pages/MinimumWageCalculator'
 import StampDutyCalculator from './pages/StampDutyCalculator'
@@ -30,6 +31,7 @@ const pages = {
   '/self-employed-tax-calculator': SelfEmployedTaxCalculator,
   '/redundancy-calculator': RedundancyCalculator,
   '/isa-calculator': ISACalculator,
+  '/lifetime-isa-calculator': LifetimeIsaCalculator,
   '/mortgage-overpayment-calculator': MortgageOverpaymentCalculator,
   '/stamp-duty-calculator': StampDutyCalculator,
   '/maternity-pay-calculator': MaternityPayCalculator,

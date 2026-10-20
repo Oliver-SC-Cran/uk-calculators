@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import GuidePage from '../../components/GuidePage'
 import {
   AUTO_ENROLMENT,
@@ -14,8 +13,8 @@ import {
 import { formatGBP as gbp, formatGBPPence as pence, percent } from '../../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '11 October 2026'
-const LAST_UPDATED_ISO = '2026-10-11'
+const LAST_UPDATED = '20 October 2026'
+const LAST_UPDATED_ISO = '2026-10-20'
 
 const Source = ({ href, children }) => (
   <a href={href} target="_blank" rel="noreferrer">
@@ -93,8 +92,8 @@ export default function Payslip() {
       <h2>An example payslip</h2>
       <p>
         Someone on {gbp(salary)} a year, paid monthly, with a Plan 2 student loan and no pension.
-        These are the yearly figures from our take-home calculator divided by 12, so a real payslip
-        can differ by a few pence.
+        These are our take-home calculator's yearly figures divided by 12, so a real payslip can
+        differ by a few pence.
       </p>
       <table className="result-table result-table--total">
         <tbody>
@@ -121,10 +120,23 @@ export default function Payslip() {
         </tbody>
       </table>
 
+      <h2>The tax period or tax week number</h2>
+      <p>
+        A tax period such as Month 7 or Week 30 counts from the start of the tax year on 6 April,
+        not from January. Tax months run from the 6th of one month to the 5th of the next, so month
+        1 is 6 April to 5 May and month 12 is 6 March to 5 April. Tax weeks start on 6 April, so
+        week 1 is 6 to 12 April, and the day or two left at the end of the year count as week 53.
+      </p>
+      <p>
+        The number comes from the date you are paid: pay on 28 October is in month 7. Your employer
+        reports it to HMRC and, with a normal tax code, uses it to work out tax on your pay for the
+        year so far.
+      </p>
+
       <h2>Your tax code</h2>
       <p>
-        Your employer uses your tax code to work out how much income tax to take. HMRC tells it
-        which code to use.
+        HMRC tells your employer which tax code to use, and the code sets how much income tax is
+        taken.
       </p>
       <p>
         The number is your tax-free pay for the year with the last digit removed. The standard
@@ -133,7 +145,7 @@ export default function Payslip() {
         example, medical insurance worth {gbp(benefit)} leaves {gbp(personalAllowance - benefit)}{' '}
         tax-free and a code of {reducedCode}.
       </p>
-      <p>The letters say how the code was worked out. The common ones are:</p>
+      <p>The common letters are:</p>
       <div className="table-scroll">
         <table className="data-table">
           <thead>
@@ -190,9 +202,8 @@ export default function Payslip() {
       </div>
       <p>
         With an emergency code, tax is worked out on that payday's pay alone, not on your pay for
-        the year so far, so you can pay the wrong amount. It usually happens in a new job before
-        HMRC has your details. It is usually temporary: HMRC can take up to{' '}
-        {TAX_CODE_TIMES.newJobDays} days to update it.
+        the year so far, so you can pay the wrong amount. It usually happens in a new job, and HMRC
+        can take up to {TAX_CODE_TIMES.newJobDays} days to update it.
       </p>
 
       <h2>Income tax and National Insurance</h2>
@@ -210,19 +221,14 @@ export default function Payslip() {
 
       <h2>Student loan and pension</h2>
       <p>
-        Student loan repayments are taken at the same time as tax and National Insurance, and your
-        payslip shows the amount. On Plan 2 you repay {percent(plan2.rate)} of monthly pay over{' '}
-        {gbp(monthlyLoanThreshold(plan2))}. Tell a new employer which plan you are on, and check
-        they have it right.
+        On Plan 2 you repay {percent(plan2.rate)} of monthly pay over{' '}
+        {gbp(monthlyLoanThreshold(plan2))}, and your payslip shows the amount. Tell a new employer
+        which plan you are on.
       </p>
       <p>
         Under automatic enrolment at least {percent(AUTO_ENROLMENT.totalMinimum)} of a band of your
         earnings goes into your pension: at least {percent(AUTO_ENROLMENT.employerMinimum)} from
-        your employer and usually {percent(AUTO_ENROLMENT.employeeMinimum)} from you. With salary
-        sacrifice, tax, National Insurance and student loan are all worked out on a lower salary. If
-        the contribution is taken before income tax, you pay less tax but the same National
-        Insurance. With relief at source it is taken after tax, and your provider claims{' '}
-        {percent(basicRate)} from HMRC.
+        your employer and usually {percent(AUTO_ENROLMENT.employeeMinimum)} from you.
       </p>
 
       <h2>How to spot a mistake</h2>
@@ -232,9 +238,8 @@ export default function Payslip() {
           service or the HMRC app. If they are different, speak to your employer.
         </li>
         <li>
-          If they match but the code does not fit your circumstances, tell HMRC. A wrong code
-          usually means HMRC has missing information. It sends you and your employer the new code
-          within {TAX_CODE_TIMES.newCodeWorkingDays} working days.
+          If they match but the code does not fit your circumstances, tell HMRC. It sends you and
+          your employer the new code within {TAX_CODE_TIMES.newCodeWorkingDays} working days.
         </li>
         <li>
           Look for an emergency code that is still there more than {TAX_CODE_TIMES.newJobDays} days
@@ -247,9 +252,9 @@ export default function Payslip() {
         </li>
       </ul>
       <p>
-        If something looks wrong, speak to your employer first. If you have paid too much tax, the
-        refund normally comes through your pay. For a deduction that should not have been made, Acas
-        can help, and you have the right to go to an employment tribunal.
+        If something looks wrong, speak to your employer first. A tax refund normally comes through
+        your pay. For a deduction that should not have been made, Acas can help, and you can go to
+        an employment tribunal.
       </p>
 
       <h2>Common questions</h2>
@@ -260,19 +265,19 @@ export default function Payslip() {
       <h3>Whose job is it to check my tax?</h3>
       <p>Yours. gov.uk says it is your responsibility to make sure you pay the right amount.</p>
 
-      <h2>Check your own figures</h2>
-      <p>
-        The <Link to="/salary-calculator">take-home pay calculator</Link> works out tax and National
-        Insurance from a salary. The{' '}
-        <Link to="/student-loan-calculator">student loan repayment calculator</Link> shows what each
-        plan takes.
-      </p>
-
       <h2>Where this comes from</h2>
       <p>
         All from gov.uk: <Source href="https://www.gov.uk/payslips">payslips</Source>,{' '}
         <Source href="https://www.gov.uk/guidance/check-if-the-tax-on-your-payslip-is-correct">
           checking your payslip
+        </Source>
+        ,{' '}
+        <Source href="https://www.gov.uk/government/publications/cwg2-further-guide-to-paye-and-national-insurance-contributions/2026-to-2027-employer-further-guide-to-paye-and-national-insurance-contributions">
+          tax weeks and months
+        </Source>
+        ,{' '}
+        <Source href="https://www.gov.uk/guidance/what-payroll-information-to-report-to-hmrc">
+          what employers report
         </Source>
         ,{' '}
         <Source href="https://www.gov.uk/tax-codes/what-your-tax-code-means">
