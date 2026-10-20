@@ -72,8 +72,8 @@ export default function OverpayOrSave() {
       intro={
         <>
           If you have money to spare, you can pay down your mortgage or keep it in savings. This
-          guide compares the two with the {TAX_YEAR} tax rules, works through some examples and sets
-          out what else to weigh up.
+          guide compares the two with the {TAX_YEAR} tax rules, works through examples and sets out
+          what else to weigh up.
         </>
       }
     >
@@ -93,8 +93,8 @@ export default function OverpayOrSave() {
 
       <h2>Tax on savings interest in {TAX_YEAR}</h2>
       <p>
-        Most people can earn some interest without paying tax on it. Your Personal Savings Allowance
-        depends on your income tax band:
+        Most people can earn some interest tax-free. Your Personal Savings Allowance depends on your
+        income tax band:
       </p>
       <ul>
         <li>basic rate: {gbp(personalSavingsAllowance.basic)} of interest a year</li>
@@ -176,7 +176,7 @@ export default function OverpayOrSave() {
         </li>
         <li>
           Getting the money back. Overpayments usually cannot be withdrawn unless you have a
-          flexible or offset mortgage. Savings can.
+          flexible or offset mortgage. Money in an easy-access savings account can.
         </li>
         <li>
           Early repayment charges. Many lenders let you overpay up to{' '}
