@@ -206,6 +206,18 @@ export const ISA = {
   cashInterestChargeRateAfterChange: 0.22,
 }
 
+// The planned First Time Buyer ISA, which will be offered in place of the
+// Lifetime ISA once it is available. Only what gov.uk confirms. Re-check when
+// the government announces the new account's limits, bonus and price cap.
+// Sources: https://www.gov.uk/government/consultations/first-time-buyer-isa-consultation
+//          https://www.gov.uk/government/publications/budget-2025-document/budget-2025-html
+export const LIFETIME_ISA_REFORM = {
+  checkedOn: '20 October 2026',
+  consultationOpened: '22 June 2026',
+  consultationClosed: '18 August 2026',
+  lisaLimitFixedUntil: '5 April 2031', // the £4,000 limit stays the same until then
+}
+
 /**
  * ISA & LISA allowance check for the current tax year.
  * NOTE: from April 2027, the Cash ISA allowance is due to reduce to £12,000 for

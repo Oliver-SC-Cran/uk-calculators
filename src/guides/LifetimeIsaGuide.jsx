@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ISA, TAX_YEAR } from '../lib/calculations'
+import { ISA, LIFETIME_ISA_REFORM, TAX_YEAR } from '../lib/calculations'
 import { formatGBP as gbp, percent } from '../lib/format'
 import { projectLifetimeIsa, withdrawalFor } from '../lib/lifetimeIsa'
 
@@ -115,10 +115,28 @@ export default function LifetimeIsaGuide() {
         {lisaTerminalIllnessMonths} months to live.
       </p>
 
+      <h3>A planned change to Lifetime ISAs</h3>
+      <p>
+        Checked on {LIFETIME_ISA_REFORM.checkedOn}. At Budget 2025 the government announced a new,
+        simpler ISA to help first-time buyers save for a home, now called the First Time Buyer ISA.
+        Once it is available, it will be offered in place of the Lifetime ISA. HM Treasury consulted
+        on it from {LIFETIME_ISA_REFORM.consultationOpened} to{' '}
+        {LIFETIME_ISA_REFORM.consultationClosed}, and says it wants the new account available as
+        soon as practically possible. Its limits, bonus and property price cap will be announced
+        later.
+      </p>
+      <p>
+        Until then you can still open a Lifetime ISA, and anyone who has one can keep paying in
+        under the current rules indefinitely. The Budget also said the {gbp(lisaLimit)} Lifetime ISA
+        limit will stay the same until {LIFETIME_ISA_REFORM.lisaLimitFixedUntil}. The figures in
+        this guide and in the calculator use today's rules.
+      </p>
+
       <h2>Worked examples</h2>
       <p>
-        These come from the calculator above. Growth is a yearly rate after fees, and it is not
-        guaranteed.
+        These come from the calculator above. Growth is a yearly rate after fees. It is not
+        guaranteed: investments can go down as well as up, so you could get back less than you put
+        in.
       </p>
 
       <h3>
@@ -174,14 +192,38 @@ export default function LifetimeIsaGuide() {
         you are both first-time buyers and the purchase meets the other rules.
       </p>
 
+      <h3>What happens to my Lifetime ISA if the rules change?</h3>
+      <p>
+        From what the government has said so far, you can keep your Lifetime ISA and keep paying
+        into it under the current rules indefinitely, including after the new First Time Buyer ISA
+        is available. You can also still open one until then. The details of the new account are
+        still to be announced, so check gov.uk for updates.
+      </p>
+
       <h2>Where these figures come from</h2>
       <p>
         The rules are from{' '}
         <a href="https://www.gov.uk/lifetime-isa" target="_blank" rel="noreferrer">
           Lifetime ISA
         </a>{' '}
-        on gov.uk, including the example of the withdrawal charge. The other figures come from the
-        calculator on this page.
+        on gov.uk, including the example of the withdrawal charge. The planned change is from HM
+        Treasury's{' '}
+        <a
+          href="https://www.gov.uk/government/consultations/first-time-buyer-isa-consultation"
+          target="_blank"
+          rel="noreferrer"
+        >
+          First Time Buyer ISA consultation
+        </a>{' '}
+        and the{' '}
+        <a
+          href="https://www.gov.uk/government/publications/budget-2025-document/budget-2025-html"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Budget 2025 document
+        </a>
+        . The other figures come from the calculator on this page.
       </p>
     </article>
   )

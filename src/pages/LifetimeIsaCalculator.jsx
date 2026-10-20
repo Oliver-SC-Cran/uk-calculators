@@ -5,7 +5,7 @@ import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import LifetimeIsaGuide from '../guides/LifetimeIsaGuide'
-import { ISA, TAX_YEAR } from '../lib/calculations'
+import { ISA, LIFETIME_ISA_REFORM, TAX_YEAR } from '../lib/calculations'
 import { formatGBP, percent } from '../lib/format'
 import { projectLifetimeIsa } from '../lib/lifetimeIsa'
 import { MAX_AGE } from '../lib/validation'
@@ -188,6 +188,10 @@ export default function LifetimeIsaCalculator() {
                 </tr>
               </tbody>
             </table>
+            <p className="result__note">
+              Growth is not guaranteed. Investments can go down as well as up, so you could get back
+              less than you put in.
+            </p>
           </ResultPanel>
 
           {!problem && !cannotOpen && result.overLimit && (
@@ -211,6 +215,22 @@ export default function LifetimeIsaCalculator() {
               Otherwise the {percent(lisaWithdrawalChargeRate)} charge below applies.
             </Notice>
           )}
+
+          <Notice>
+            A planned change, checked on {LIFETIME_ISA_REFORM.checkedOn}: the government is planning
+            a new First Time Buyer ISA, which will be offered in place of the Lifetime ISA once it
+            is available. Its limits, bonus and property price cap will be announced later. Until
+            then you can still open a Lifetime ISA, and anyone who has one can keep paying in under
+            the current rules indefinitely. These figures use today's rules. See the{' '}
+            <a
+              href="https://www.gov.uk/government/consultations/first-time-buyer-isa-consultation"
+              target="_blank"
+              rel="noreferrer"
+            >
+              First Time Buyer ISA consultation
+            </a>{' '}
+            on gov.uk.
+          </Notice>
         </>
       }
       breakdown={
