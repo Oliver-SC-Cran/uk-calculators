@@ -19,6 +19,7 @@ import Terms from './pages/Terms'
 import Guides from './pages/guides/Guides'
 import TaxTrap from './pages/guides/TaxTrap'
 import Payslip from './pages/guides/Payslip'
+import OverpayOrSave from './pages/guides/OverpayOrSave'
 import CashIsaChanges from './pages/guides/CashIsaChanges'
 import NotFound from './pages/NotFound'
 import { routes } from './routes'
@@ -39,6 +40,7 @@ const pages = {
   '/student-loan-calculator': StudentLoanCalculator,
   '/guides': Guides,
   '/guides/100k-tax-trap': TaxTrap,
+  '/guides/overpay-mortgage-or-save': OverpayOrSave,
   '/guides/how-to-read-your-payslip': Payslip,
   '/guides/cash-isa-changes-april-2027': CashIsaChanges,
   '/about': About,

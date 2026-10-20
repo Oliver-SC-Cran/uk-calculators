@@ -115,7 +115,7 @@ export default function ISACalculator() {
         </>
       }
       guide={<ISAGuide />}
-      guides={['/guides/cash-isa-changes-april-2027']}
+      guides={['/guides/cash-isa-changes-april-2027', '/guides/overpay-mortgage-or-save']}
       related={[
         '/lifetime-isa-calculator',
         '/mortgage-overpayment-calculator',

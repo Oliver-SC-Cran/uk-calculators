@@ -39,6 +39,23 @@ export const SCOTTISH_INCOME_TAX = {
   topRate: 0.48,
 }
 
+// Tax on savings interest for 2026/27. Interest above the allowances is taxed
+// at the same rates as other income (INCOME_TAX), and the same across the UK.
+// Interest on cash in an ISA is not taxed.
+// Sources: https://www.gov.uk/apply-tax-free-interest-on-savings
+//          https://www.gov.uk/individual-savings-accounts/how-isas-work
+//          https://www.gov.uk/government/publications/budget-2025-document/budget-2025-html
+export const SAVINGS_TAX = {
+  // The Personal Savings Allowance, by income tax band.
+  personalSavingsAllowance: { basic: 1000, higher: 500, additional: 0 },
+  startingRateForSavings: 5000, // for people whose other income is low
+  startingRateIncomeLimit: 17570, // other income below which the starting rate applies
+  // Announced at Budget 2025: the tax rates on savings income go up by this
+  // much in every band.
+  rateRiseFrom: 'April 2027',
+  rateRise: 0.02,
+}
+
 export const NATIONAL_INSURANCE = {
   primaryThreshold: 12570, // NI starts here
   upperEarningsLimit: 50270, // NI rate drops from 8% to 2% above here

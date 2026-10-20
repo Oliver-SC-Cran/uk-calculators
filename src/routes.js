@@ -114,6 +114,14 @@ export const routes = [
     description: `Why income between ${pounds(INCOME_TAX.taperStart)} and ${pounds(INCOME_TAX.taperFullyGoneAt)} is taxed at ${taperRate} in ${TAX_YEAR}, what it costs, and how pension contributions and Gift Aid reduce it.`,
   },
   {
+    path: '/guides/overpay-mortgage-or-save',
+    guide: 'Should I overpay my mortgage or save?',
+    summary:
+      'How the interest saved by overpaying compares with savings interest after tax, with worked examples.',
+    title: `Should I overpay my mortgage or save? ${TAX_YEAR} tax rules`,
+    description: `Compare overpaying your mortgage with saving: interest saved against savings interest after tax and the Personal Savings Allowance, with ${TAX_YEAR} examples.`,
+  },
+  {
     path: '/guides/how-to-read-your-payslip',
     guide: 'How to read your payslip',
     summary: `What each line means, what tax code ${standardTaxCode} tells you, and how to spot a mistake.`,

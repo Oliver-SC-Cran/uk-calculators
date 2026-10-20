@@ -412,6 +412,7 @@ export default function MortgageOverpaymentCalculator() {
         )
       }
       guide={<MortgageOverpaymentGuide />}
+      guides={['/guides/overpay-mortgage-or-save']}
       related={['/stamp-duty-calculator', '/isa-calculator', '/lifetime-isa-calculator']}
     />
   )

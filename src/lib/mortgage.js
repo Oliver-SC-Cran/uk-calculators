@@ -82,6 +82,8 @@ export function calculateMortgageOverpayment({
         startBalance: left,
         allowance: limit === null ? null : left * limit,
         overpaid: 0,
+        interest: 0,
+        standardInterest: 0,
       })
     }
     const thisYear = years[years.length - 1]
@@ -98,12 +100,14 @@ export function calculateMortgageOverpayment({
       const payment = Math.min(newPayment, left + interest)
       left = left + interest - payment
       interestPaid += interest
+      thisYear.interest += interest
       paymentsMade = month
       thisYear.overpaid += Math.max(0, payment - standardPayment)
     }
 
     if (standardLeft > PAID_OFF) {
       const interest = standardLeft * monthlyRate
+      thisYear.standardInterest += interest
       standardLeft = standardLeft + interest - Math.min(standardPayment, standardLeft + interest)
     }
 

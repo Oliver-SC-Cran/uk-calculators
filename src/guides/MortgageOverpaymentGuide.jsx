@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { MORTGAGE } from '../lib/calculations'
 import { formatGBP as gbp, percent, yearsAndMonths } from '../lib/format'
 import { calculateMortgageOverpayment } from '../lib/mortgage'
@@ -195,7 +196,10 @@ export default function MortgageOverpaymentGuide() {
       <h3>Is it better to overpay or to save?</h3>
       <p>
         It depends on the rates. If a savings account pays more than your mortgage charges, the
-        savings earn more than the overpayment would save, and you can still get at the money.
+        savings earn more than the overpayment would save, and you can still get at the money. The
+        guide{' '}
+        <Link to="/guides/overpay-mortgage-or-save">should I overpay my mortgage or save?</Link>{' '}
+        compares the two after tax.
       </p>
 
       <h3>Will I be charged for overpaying?</h3>
