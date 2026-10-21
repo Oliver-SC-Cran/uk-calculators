@@ -3,7 +3,7 @@ import CalculatorPage from '../components/CalculatorPage'
 import { NumberField, SelectField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import RegionField from '../components/RegionField'
-import { incomeTaxLabel, REGIONS, REST_OF_UK_NOTE, STUDENT_LOAN_PLANS } from '../components/choices'
+import { REGIONS, REST_OF_UK_NOTE, STUDENT_LOAN_PLANS } from '../components/choices'
 import ResultPanel from '../components/ResultPanel'
 import StudentLoanPlanField from '../components/StudentLoanPlanField'
 import {
@@ -26,6 +26,7 @@ import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, formatGBPPence, percent } from '../lib/format'
 import { MONEY, PERCENTAGE } from '../lib/validation'
 import { calculatePayRise, newSalaryFrom, PENSION_TYPES, riseEnteredAs } from '../lib/payRise'
+import { incomeTaxLabel } from '../lib/incomeTax'
 
 // The label and hint for the rise, for each way of entering it.
 const riseFields = {

@@ -5,6 +5,7 @@
 
 import { atLeastZero } from './numbers.js'
 import { MORTGAGE } from './rates/mortgage.js'
+import { add, info, part, subtract, total } from './working.js'
 
 // Less than half a penny left counts as paid off.
 const PAID_OFF = 0.005
@@ -138,5 +139,28 @@ export function calculateMortgageOverpayment({
     years,
     firstYearAllowance: years[0].allowance,
     yearsOverAllowance,
+    working: [
+      part(
+        'Interest you could save',
+        [
+          add('Interest without overpaying', standardTotalInterest),
+          subtract('Interest with your overpayments', interestPaid),
+        ],
+        total('Interest saved', Math.max(0, standardTotalInterest - interestPaid), {
+          rounding: 'notBelowZero',
+        }),
+      ),
+      part('Your normal monthly payment', [
+        info('What you owe', balance),
+        info('Interest rate a month', monthlyRate, { unit: 'percent' }),
+        info('Monthly payments left', totalMonths, { unit: 'number' }),
+        info('Normal monthly payment', standardPayment, { unit: 'gbpPence' }),
+      ]),
+      part('Your overpayments', [
+        info('Extra each month', overpayment),
+        info('Lump sum used', lumpSumPaid),
+        info('Months sooner it is paid off', totalMonths - paymentsMade, { unit: 'months' }),
+      ]),
+    ],
   }
 }

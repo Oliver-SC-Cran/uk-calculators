@@ -4,6 +4,7 @@
 import { atLeastZero } from './numbers.js'
 import { STUDENT_LOAN_RATES } from './rates/studentLoans.js'
 import { forTaxYear } from './rates/taxYear.js'
+import { add, info, part, total } from './working.js'
 
 /**
  * One month's repayment on one loan, the way gov.uk works it out for someone
@@ -33,6 +34,27 @@ export function studentLoanWorking(grossAnnual, plan) {
   }
 }
 
+/** One loan's monthly repayment, step by step, for the working. */
+function loanPart(grossAnnual, plan) {
+  const steps = studentLoanWorking(grossAnnual, plan)
+  // Not rounded to the penny, so that it always rounds down to the repayment.
+  const beforeRounding = (Math.round(steps.over * 100) * Math.round(plan.rate * 100)) / 10000
+  return part(
+    plan.label,
+    [
+      info('Pay a month', steps.monthlyPay, { unit: 'gbpPence' }),
+      info('Threshold a month, rounded down to the pound', steps.monthlyThreshold),
+      info('Pay over the threshold', steps.over, { unit: 'gbpPence' }),
+      add('Repayment before rounding', beforeRounding, {
+        unit: 'gbpPence',
+        rate: plan.rate,
+        on: steps.over,
+      }),
+    ],
+    total('Repayment a month, rounded down to the pound', steps.repayment, { rounding: 'down' }),
+  )
+}
+
 const monthlyLoanRepayment = (grossAnnual, plan) => studentLoanWorking(grossAnnual, plan).repayment
 
 /**
@@ -55,6 +77,18 @@ export function calculateStudentLoanRepayment({ grossAnnual, plan, hasPostgradua
     postgradMonthly,
     totalMonthly,
     totalAnnual: totalMonthly * 12,
+    working: [
+      part(
+        'Student loan repayment',
+        [
+          undergradPlan && add(undergradPlan.label, undergradMonthly),
+          hasPostgraduateLoan && add(loans.postgraduate.label, postgradMonthly),
+        ],
+        total('Total a month', totalMonthly),
+      ),
+      undergradPlan && loanPart(gross, undergradPlan),
+      hasPostgraduateLoan && loanPart(gross, loans.postgraduate),
+    ].filter(Boolean),
   }
 }
 

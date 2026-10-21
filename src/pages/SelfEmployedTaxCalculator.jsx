@@ -3,7 +3,7 @@ import CalculatorPage from '../components/CalculatorPage'
 import { CheckboxField, NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import RegionField from '../components/RegionField'
-import { incomeTaxLabel, REGIONS, REST_OF_UK_NOTE, STUDENT_LOAN_PLANS } from '../components/choices'
+import { REGIONS, REST_OF_UK_NOTE, STUDENT_LOAN_PLANS } from '../components/choices'
 import ResultPanel from '../components/ResultPanel'
 import StudentLoanPlanField from '../components/StudentLoanPlanField'
 import {
@@ -20,6 +20,7 @@ import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, percent } from '../lib/format'
 import { MONEY } from '../lib/validation'
 import { calculateSelfEmployedTax } from '../lib/selfEmployed'
+import { incomeTaxLabel } from '../lib/incomeTax'
 
 export default function SelfEmployedTaxCalculator() {
   const state = useCalculatorState({

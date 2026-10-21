@@ -9,9 +9,6 @@ export const REGIONS = {
 /** The values of the student loan plan step (StudentLoanPlanField.jsx). */
 export const STUDENT_LOAN_PLANS = ['none', 'plan1', 'plan2', 'plan4', 'plan5']
 
-/** The name of the income tax line in a result table. */
-export const incomeTaxLabel = (scottish) => (scottish ? 'Scottish income tax' : 'Income tax')
-
 /**
  * How each page's notice starts when England, Wales or Northern Ireland is
  * chosen. The sentence for Scotland is on each page, because it names what

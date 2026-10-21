@@ -2,15 +2,16 @@
 // student loan functions with Class 4 National Insurance. Its rates and
 // Self Assessment dates are in rates/selfEmployed.js, by tax year.
 
-import { calculateIncomeTax } from './incomeTax.js'
+import { calculateIncomeTax, incomeTaxLabel } from './incomeTax.js'
 import { atLeastZero } from './numbers.js'
 import { INCOME_TAX_RATES } from './rates/incomeTax.js'
 import { SELF_EMPLOYED_RATES } from './rates/selfEmployed.js'
 import { forTaxYear } from './rates/taxYear.js'
 import { calculateStudentLoanForYear, calculateStudentLoanRepayment } from './studentLoans.js'
+import { add, info, part, subtract, total } from './working.js'
 
-/** Class 4 National Insurance on self-employed profit: 6% then 2%. */
-export function calculateClass4NationalInsurance(profit, { taxYear } = {}) {
+/** The two slices of profit Class 4 National Insurance is charged on. */
+function class4Slices(profit, taxYear) {
   const { lowerProfitsLimit, upperProfitsLimit, mainRate, upperRate } = forTaxYear(
     SELF_EMPLOYED_RATES,
     taxYear,
@@ -18,7 +19,16 @@ export function calculateClass4NationalInsurance(profit, { taxYear } = {}) {
   const amount = atLeastZero(profit)
   const inMainBand = Math.max(0, Math.min(amount, upperProfitsLimit) - lowerProfitsLimit)
   const aboveUpperLimit = Math.max(0, amount - upperProfitsLimit)
-  return inMainBand * mainRate + aboveUpperLimit * upperRate
+  return [
+    { name: 'Profit between the lower and upper profits limits', rate: mainRate, on: inMainBand },
+    { name: 'Profit above the upper profits limit', rate: upperRate, on: aboveUpperLimit },
+  ]
+}
+
+/** Class 4 National Insurance on self-employed profit: 6% then 2%. */
+export function calculateClass4NationalInsurance(profit, { taxYear } = {}) {
+  const [main, upper] = class4Slices(profit, taxYear)
+  return main.on * main.rate + upper.on * upper.rate
 }
 
 /**
@@ -136,5 +146,54 @@ export function calculateSelfEmployedTax({
     tradingAllowanceWouldBeBetter:
       !useTradingAllowance && turnover > 0 && atLeastZero(expenses) < tradingAllowance,
     belowSmallProfitsThreshold: profit < class2.smallProfitsThreshold,
+    working: [
+      part(
+        'Tax to pay on your self-employed profit',
+        [
+          add(incomeTaxLabel(scottish), incomeTax),
+          add('Class 4 National Insurance', class4),
+          add('Student loan', studentLoan),
+        ],
+        total('Total tax bill', totalBill),
+      ),
+      part(
+        'Your profit',
+        [
+          add('Self-employed income', turnover),
+          subtract(useTradingAllowance ? 'Trading allowance' : 'Allowable expenses', deducted),
+        ],
+        total('Profit', profit),
+      ),
+      part(
+        `${incomeTaxLabel(scottish)} on your profit`,
+        [
+          add('On your salary and profit together', taxOnEverything.tax),
+          subtract('On your salary alone, taken through PAYE', taxOnJob.tax),
+        ],
+        total(`${incomeTaxLabel(scottish)} on your profit`, incomeTax),
+      ),
+      part(
+        'Class 4 National Insurance',
+        class4Slices(profit, taxYear)
+          .filter((slice) => slice.on > 0)
+          .map((slice) =>
+            add(slice.name, slice.on * slice.rate, { rate: slice.rate, on: slice.on }),
+          ),
+        total('Class 4 National Insurance', class4),
+      ),
+      part(
+        'Student loan on your profit',
+        [
+          add('On your salary and profit for the year', loanForYear),
+          subtract('Already taken through your salary', loanThroughJob),
+        ],
+        total('Student loan on your profit', studentLoan, { rounding: 'notBelowZero' }),
+      ),
+      part('Payments on account', [
+        info('Income tax and Class 4 for the year', billForPaymentsOnAccount),
+        info('Share of all tax taken through your pay', shareDeductedAtSource, { unit: 'percent' }),
+        info('Each payment on account', paymentOnAccount),
+      ]),
+    ],
   }
 }

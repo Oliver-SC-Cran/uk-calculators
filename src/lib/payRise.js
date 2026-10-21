@@ -2,12 +2,13 @@
 // Insurance and student loan functions in incomeTax.js and studentLoans.js,
 // and contains no tax logic of its own.
 
-import { calculateIncomeTax, calculateNationalInsurance } from './incomeTax.js'
+import { calculateIncomeTax, calculateNationalInsurance, incomeTaxLabel } from './incomeTax.js'
 import { atLeastZero } from './numbers.js'
 import { INCOME_TAX_RATES } from './rates/incomeTax.js'
 import { FULL_TIME_HOURS, MINIMUM_WAGE_RATES } from './rates/minimumWage.js'
 import { forTaxYear } from './rates/taxYear.js'
 import { calculateStudentLoanRepayment } from './studentLoans.js'
+import { add, info, part, subtract, total } from './working.js'
 
 export const PENSION_TYPES = {
   salarySacrifice: 'Salary sacrifice',
@@ -107,6 +108,26 @@ export function calculatePayPackage({
     extraReliefToClaim,
     takeHomeAnnual,
     takeHomeMonthly: takeHomeAnnual / 12,
+    working: [
+      part(
+        'Take-home pay',
+        [
+          add('Salary', gross),
+          subtract(incomeTaxLabel(scottish), incomeTax),
+          subtract('National Insurance', nationalInsurance),
+          subtract('Student loan', loan.totalAnnual),
+          subtract('Pension paid from your pay', pensionFromPay),
+        ],
+        total('Take-home pay a year', takeHomeAnnual),
+      ),
+      part('Your pension', [
+        info('Paid into your pension', pensionIntoPot),
+        isReliefAtSource && info('Basic rate relief HMRC adds', hmrcTopUp),
+        info('Pay income tax is worked out on', taxablePay),
+        info('Pay National Insurance and student loan are worked out on', niablePay),
+        isReliefAtSource && info('Extra relief to claim from HMRC', extraReliefToClaim),
+      ]),
+    ],
   }
 }
 
@@ -211,5 +232,20 @@ export function calculatePayRise({ currentSalary, newSalary, ...settings }) {
     pensionIntoPotChange: change('pensionIntoPot'),
     extraReliefChange: change('extraReliefToClaim'),
     warnings,
+    working: [
+      part(
+        'What you keep of the rise',
+        [
+          add('Your rise', rise),
+          subtract(incomeTaxLabel(settings.scottish), change('incomeTax')),
+          subtract('National Insurance', change('nationalInsurance')),
+          subtract('Student loan', change('studentLoan')),
+          subtract('Pension paid from your pay', change('pensionFromPay')),
+        ],
+        total('You keep, a year', kept),
+      ),
+      { ...before.working[0], title: 'Take-home pay now' },
+      { ...after.working[0], title: 'Take-home pay after the rise' },
+    ],
   }
 }

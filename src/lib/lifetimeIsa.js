@@ -4,6 +4,7 @@
 import { atLeastZero } from './numbers.js'
 import { ISA_RATES } from './rates/isa.js'
 import { forTaxYear } from './rates/taxYear.js'
+import { add, part, subtract, total } from './working.js'
 
 /**
  * A projection of a Lifetime ISA up to a goal: buying a first home at
@@ -75,6 +76,7 @@ export function projectLifetimeIsa({
   const putIn = already + paidIn
   const charge = value * lisaWithdrawalChargeRate
   const afterCharge = value - charge
+  const growth = value - already - paidIn - bonus
 
   return {
     goalAge,
@@ -83,7 +85,7 @@ export function projectLifetimeIsa({
     lastPayingAge: payingYears > 0 ? startAge + payingYears : null,
     paidIn,
     bonus,
-    growth: value - already - paidIn - bonus,
+    growth,
     value,
     overLimit,
     tooYoung,
@@ -97,6 +99,26 @@ export function projectLifetimeIsa({
       // Positive when you would get back less than you put in.
       shortfall: putIn - afterCharge,
     },
+    working: [
+      part(
+        'Projected value',
+        [
+          already > 0 && add('Already in your Lifetime ISA', already),
+          add('You pay in', paidIn),
+          add('Government bonus', bonus, { rate: lisaBonusRate, on: paidIn }),
+          add('Growth', growth),
+        ],
+        total('Projected value', value),
+      ),
+      part(
+        'If you took it all out for another reason',
+        [
+          add('Projected value', value),
+          subtract('Withdrawal charge', charge, { rate: lisaWithdrawalChargeRate, on: value }),
+        ],
+        total('You would get', afterCharge),
+      ),
+    ],
   }
 }
 

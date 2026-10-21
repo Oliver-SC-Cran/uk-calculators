@@ -9,6 +9,7 @@ import { addDays, DAY, parseIsoDate, toIsoDate } from './dates.js'
 import { atLeastZero } from './numbers.js'
 import { PARENTAL_PAY_RATES } from './rates/parentalPay.js'
 import { forTaxYear } from './rates/taxYear.js'
+import { add, info, part, total } from './working.js'
 
 /** HMRC rounds statutory pay up to the next penny. */
 const roundUpToPenny = (amount) => Math.ceil(amount * 100 - 1e-6) / 100
@@ -65,6 +66,35 @@ function reasonsNotQualifying({ earnings, workedContinuously, rates }) {
   if (earnings < rates.lowerEarningsLimit) reasons.push('earnings')
   return reasons
 }
+
+const pence = { unit: 'gbpPence' }
+
+/** Why someone does not qualify, for the working. */
+const whyNotPart = ({ earnings, workedContinuously, rates }) =>
+  part('Why you do not qualify', [
+    info('Average weekly earnings', earnings, pence),
+    info('The least they can be', rates.lowerEarningsLimit, pence),
+    info('Worked for your employer for long enough', Boolean(workedContinuously), {
+      unit: 'yesNo',
+    }),
+  ])
+
+/** How the weekly amounts were worked out, for the working. */
+const weeklyAmountsPart = ({ earnings, higherWeekly, standardWeekly, rates }) =>
+  part('Weekly amounts', [
+    info('Average weekly earnings', earnings, pence),
+    info('Share of them, rounded up to the penny', higherWeekly, {
+      ...pence,
+      rate: rates.earningsShare,
+      on: earnings,
+    }),
+    info('The flat weekly rate', rates.weeklyRate, pence),
+    info('Weekly pay, the lower of those two', standardWeekly, pence),
+  ])
+
+/** Some weeks of pay at one weekly amount, in whole pence. */
+const weeksAt = (label, count, each) =>
+  add(label, (Math.round(each * 100) * count) / 100, { ...pence, count, each })
 
 /** The flat rate, or 90% of earnings if that is lower. */
 const cappedWeeklyPay = (earnings, rates) =>
@@ -135,6 +165,37 @@ export function calculateMaternityPay({
     allowanceMayApply,
     allowanceWeekly,
     allowanceTotal: Math.round(allowanceWeekly * 100 * maternityAllowance.payWeeks) / 100,
+    working: qualifies
+      ? [
+          part(
+            'Statutory Maternity Pay',
+            [
+              weeksAt('The first weeks', maternity.higherRateWeeks, higherWeekly),
+              weeksAt('The weeks after that', standardWeeks, standardWeekly),
+            ],
+            total('Total, before tax', totalPence / 100, pence),
+          ),
+          weeklyAmountsPart({ earnings, higherWeekly, standardWeekly, rates }),
+        ]
+      : [
+          whyNotPart({ earnings, workedContinuously, rates }),
+          allowanceMayApply &&
+            part(
+              'Maternity Allowance you might get instead',
+              [
+                weeksAt(
+                  'Weeks of Maternity Allowance',
+                  maternityAllowance.payWeeks,
+                  allowanceWeekly,
+                ),
+              ],
+              total(
+                'Total',
+                Math.round(allowanceWeekly * 100 * maternityAllowance.payWeeks) / 100,
+                pence,
+              ),
+            ),
+        ].filter(Boolean),
   }
 }
 
@@ -164,5 +225,20 @@ export function calculatePaternityPay({
     total: Math.round(weekly * 100 * paternity.payWeeks) / 100,
     // Leave cannot start before the birth and must end within 52 weeks of it.
     leaveMustEndBy: addDays(dueDate, paternity.leaveMustEndWithinWeeks * 7),
+    working: qualifies
+      ? [
+          part(
+            'Statutory Paternity Pay',
+            [weeksAt('Weeks of paternity pay', paternity.payWeeks, weekly)],
+            total('Total, before tax', Math.round(weekly * 100 * paternity.payWeeks) / 100, pence),
+          ),
+          weeklyAmountsPart({
+            earnings,
+            higherWeekly: roundUpToPenny(earnings * rates.earningsShare),
+            standardWeekly: weekly,
+            rates,
+          }),
+        ]
+      : [whyNotPart({ earnings, workedContinuously, rates })],
   }
 }

@@ -4,6 +4,7 @@
 import { atLeastZero } from './numbers.js'
 import { STAMP_DUTY_RATES } from './rates/stampDuty.js'
 import { forTaxYear } from './rates/taxYear.js'
+import { add, info, part, total } from './working.js'
 
 /**
  * Stamp duty for one residential purchase by an individual.
@@ -66,5 +67,24 @@ export function calculateStampDuty({
     // Buying an additional property or as a non-resident, but under the minimum price.
     surchargeWaived:
       amount > 0 && (buyerType === 'additional' || Boolean(nonResident)) && !surchargesApply,
+    working: [
+      part(
+        'Stamp duty',
+        breakdown.map((slice) =>
+          add('Tax on this part of the price', slice.tax, {
+            rate: slice.rate,
+            on: slice.amountInBand,
+            from: slice.from,
+            to: slice.to,
+          }),
+        ),
+        total('Stamp duty, rounded down to the pound', tax, { rounding: 'down' }),
+      ),
+      part('Rates used', [
+        info('The price', amount),
+        reliefApplies && info('First-time buyer rates apply up to', firstTimeBuyer.maxPrice),
+        surcharge > 0 && info('Added to the rate on every part', surcharge, { unit: 'percent' }),
+      ]),
+    ],
   }
 }

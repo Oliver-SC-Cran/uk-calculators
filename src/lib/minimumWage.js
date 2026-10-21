@@ -3,6 +3,7 @@
 import { atLeastZero } from './numbers.js'
 import { FULL_TIME_HOURS, MINIMUM_WAGE_RATES } from './rates/minimumWage.js'
 import { forTaxYear } from './rates/taxYear.js'
+import { add, info, part, subtract, total } from './working.js'
 
 /**
  * Works out which statutory minimum wage band applies and whether the
@@ -16,7 +17,16 @@ export function checkMinimumWage({ age, hourlyRate, isApprentice, taxYear }) {
   )
 
   if (!(age >= minAge)) {
-    return { entitled: false, minAge }
+    return {
+      entitled: false,
+      minAge,
+      working: [
+        part('Who the minimum wage covers', [
+          Number.isFinite(age) && info('Your age', age, { unit: 'years' }),
+          info('School leaving age, usually', minAge, { unit: 'years' }),
+        ]),
+      ],
+    }
   }
 
   let applicableRate
@@ -39,6 +49,10 @@ export function checkMinimumWage({ age, hourlyRate, isApprentice, taxYear }) {
   const shortfallPence =
     Math.round(applicableRate * 100) - Math.round(atLeastZero(hourlyRate) * 100)
   const shortfall = Math.max(0, shortfallPence) / 100
+  const pay = atLeastZero(hourlyRate)
+  const weeklyAtMinimum = applicableRate * FULL_TIME_HOURS
+  const annualAtMinimum = applicableRate * FULL_TIME_HOURS * 52
+  const pence = { unit: 'gbpPence' }
 
   return {
     entitled: true,
@@ -46,7 +60,38 @@ export function checkMinimumWage({ age, hourlyRate, isApprentice, taxYear }) {
     bandLabel,
     shortfall,
     isUnderpaid: shortfall > 0,
-    weeklyAtMinimum: applicableRate * FULL_TIME_HOURS,
-    annualAtMinimum: applicableRate * FULL_TIME_HOURS * 52,
+    weeklyAtMinimum,
+    annualAtMinimum,
+    working: [
+      part(
+        'Your legal minimum',
+        [info('Your age', age, { unit: 'years' }), add(bandLabel, applicableRate, pence)],
+        total('Legal minimum an hour', applicableRate, pence),
+      ),
+      part(
+        'Your pay against the minimum',
+        [
+          add('Legal minimum an hour', applicableRate, pence),
+          subtract('Your hourly pay', pay, pence),
+        ],
+        total('Below the minimum by, an hour', shortfall, { ...pence, rounding: 'notBelowZero' }),
+      ),
+      part(
+        'The minimum for a full-time week',
+        [
+          add('Hours a week at the minimum', weeklyAtMinimum, {
+            ...pence,
+            count: FULL_TIME_HOURS,
+            each: applicableRate,
+          }),
+        ],
+        total('The minimum a week', weeklyAtMinimum, pence),
+      ),
+      part(
+        'The minimum over a year',
+        [add('Weeks in a year', annualAtMinimum, { ...pence, count: 52, each: weeklyAtMinimum })],
+        total('The minimum a year', annualAtMinimum, pence),
+      ),
+    ],
   }
 }
