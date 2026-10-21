@@ -1,63 +1,25 @@
+import { createElement, use } from 'react'
 import { Route, BrowserRouter, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
-import Home from './pages/Home'
-import SalaryCalculator from './pages/SalaryCalculator'
-import PayRiseCalculator from './pages/PayRiseCalculator'
-import RedundancyCalculator from './pages/RedundancyCalculator'
-import ISACalculator from './pages/ISACalculator'
-import LifetimeIsaCalculator from './pages/LifetimeIsaCalculator'
-import MortgageOverpaymentCalculator from './pages/MortgageOverpaymentCalculator'
-import MinimumWageCalculator from './pages/MinimumWageCalculator'
-import StampDutyCalculator from './pages/StampDutyCalculator'
-import MaternityPayCalculator from './pages/MaternityPayCalculator'
-import SelfEmployedTaxCalculator from './pages/SelfEmployedTaxCalculator'
-import StudentLoanCalculator from './pages/StudentLoanCalculator'
-import About from './pages/About'
-import Privacy from './pages/Privacy'
-import Cookies from './pages/Cookies'
-import Terms from './pages/Terms'
-import Guides from './pages/guides/Guides'
-import TaxTrap from './pages/guides/TaxTrap'
-import Payslip from './pages/guides/Payslip'
-import OverpayOrSave from './pages/guides/OverpayOrSave'
-import CashIsaChanges from './pages/guides/CashIsaChanges'
-import NotFound from './pages/NotFound'
-import { routes } from './routes'
+import { pageToShow } from './pageLoader'
+import { notFoundRoute, routes } from './routes'
 
-// Every path in src/routes.js needs a component here.
-const pages = {
-  '/': Home,
-  '/salary-calculator': SalaryCalculator,
-  '/pay-rise-calculator': PayRiseCalculator,
-  '/self-employed-tax-calculator': SelfEmployedTaxCalculator,
-  '/redundancy-calculator': RedundancyCalculator,
-  '/isa-calculator': ISACalculator,
-  '/lifetime-isa-calculator': LifetimeIsaCalculator,
-  '/mortgage-overpayment-calculator': MortgageOverpaymentCalculator,
-  '/stamp-duty-calculator': StampDutyCalculator,
-  '/maternity-pay-calculator': MaternityPayCalculator,
-  '/minimum-wage-calculator': MinimumWageCalculator,
-  '/student-loan-calculator': StudentLoanCalculator,
-  '/guides': Guides,
-  '/guides/100k-tax-trap': TaxTrap,
-  '/guides/overpay-mortgage-or-save': OverpayOrSave,
-  '/guides/how-to-read-your-payslip': Payslip,
-  '/guides/cash-isa-changes-april-2027': CashIsaChanges,
-  '/about': About,
-  '/privacy': Privacy,
-  '/cookies': Cookies,
-  '/terms': Terms,
+// The page for a path, from its own file (see src/pageLoader.js). The
+// component for each path is loaded once and kept, so it is the same one every
+// time this renders.
+function Page({ path }) {
+  return createElement(use(pageToShow(path)))
 }
 
+// Each path's component file is listed in src/pageFiles.js.
 export function AppRoutes() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        {routes.map(({ path }) => {
-          const Page = pages[path] ?? NotFound
-          return <Route key={path} path={path} element={<Page />} />
-        })}
-        <Route path="*" element={<NotFound />} />
+        {routes.map(({ path }) => (
+          <Route key={path} path={path} element={<Page path={path} />} />
+        ))}
+        <Route path="*" element={<Page path={notFoundRoute.path} />} />
       </Route>
     </Routes>
   )

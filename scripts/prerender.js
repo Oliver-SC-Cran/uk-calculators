@@ -10,7 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const dist = path.join(root, 'dist')
 const ssrDir = path.join(root, 'dist-ssr')
 
-const { render, routes, notFoundRoute, canonicalUrl } = await import(
+const { render, routes, notFoundRoute, canonicalUrl, pageFiles } = await import(
   pathToFileURL(path.join(ssrDir, 'entry-server.js')).href
 )
 
@@ -23,7 +23,7 @@ function replaceTag(html, pattern, replacement) {
   return html.replace(pattern, () => replacement)
 }
 
-function buildPage(template, route, { indexable }) {
+async function buildPage(template, route, { indexable }) {
   const title = escapeHtml(route.title)
   const description = escapeHtml(route.description)
   const url = canonicalUrl(route)
@@ -58,11 +58,12 @@ function buildPage(template, route, { indexable }) {
     indexable ? `\n    <meta property="og:url" content="${url}" />` : '',
   )
   html = replaceTag(html, /\s*<!-- The tags below.*?-->/s, '')
-  const headTags = indexable ? [...fontPreloads, adSenseTag] : fontPreloads
+  const pageTags = [...fontPreloads, ...preloadsFor(route.path)]
+  const headTags = indexable ? [...pageTags, adSenseTag] : pageTags
   html = replaceTag(html, /\n {2}<\/head>/, `\n    ${headTags.join('\n    ')}\n  </head>`)
   html = replaceTag(html, /\n {2}<\/body>/, `\n    ${analyticsTag}\n  </body>`)
 
-  const body = render(route.path)
+  const body = await render(route.path)
   const isNotFoundPage = body.includes('Page not found')
   if (indexable === isNotFoundPage) {
     throw new Error(`${route.path} rendered the wrong page. Check the pages map in src/App.jsx.`)
@@ -105,6 +106,29 @@ const fontPreloads = ['sora', 'figtree'].map((font) => {
   return `<link rel="preload" href="/assets/${file}" as="font" type="font/woff2" crossorigin />`
 })
 
+// Each page has its own JavaScript file (see src/pageLoader.js), and that file may
+// use files shared with other pages. Vite lists them in its manifest. Each
+// page asks for them in its head, so they load alongside the main file rather
+// than after it. The manifest is then deleted, so it is not published.
+const manifestDir = path.join(dist, '.vite')
+const manifest = JSON.parse(await readFile(path.join(manifestDir, 'manifest.json'), 'utf8'))
+await rm(manifestDir, { recursive: true, force: true })
+
+function preloadsFor(routePath) {
+  const files = []
+  const visit = (key) => {
+    // index.html is the main file, which the page already loads.
+    if (key === 'index.html') return
+    const chunk = manifest[key]
+    if (!chunk) throw new Error(`Vite built no file for ${key}. Check src/pageFiles.js.`)
+    if (files.includes(chunk.file)) return
+    files.push(chunk.file)
+    for (const next of chunk.imports ?? []) visit(next)
+  }
+  visit(`src/pages/${pageFiles[routePath]}.jsx`)
+  return files.map((file) => `<link rel="modulepreload" crossorigin href="/${file}" />`)
+}
+
 const template = await readFile(path.join(dist, 'index.html'), 'utf8')
 
 for (const route of routes) {
@@ -113,14 +137,14 @@ for (const route of routes) {
   // "/about/" and redirect "/about" there, which is not the address we use.
   const file = path.join(dist, route.path === '/' ? 'index.html' : `${route.path}.html`)
   await mkdir(path.dirname(file), { recursive: true })
-  await writeFile(file, buildPage(template, route, { indexable: true }))
+  await writeFile(file, await buildPage(template, route, { indexable: true }))
 }
 
 // Cloudflare Pages serves dist/404.html, with a 404 status, for any URL that
 // has no file. Without it, Pages would answer every unknown URL with the homepage.
 await writeFile(
   path.join(dist, '404.html'),
-  buildPage(template, notFoundRoute, { indexable: false }),
+  await buildPage(template, notFoundRoute, { indexable: false }),
 )
 
 const sitemap = [

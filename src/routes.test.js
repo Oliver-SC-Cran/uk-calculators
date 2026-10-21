@@ -1,6 +1,8 @@
 // Checks on the page list in routes.js. Run with: npm test
 import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
 import { test } from 'node:test'
+import { pageFiles } from './pageFiles.js'
 import { canonicalUrl, findRoute, notFoundRoute, routes } from './routes.js'
 
 test('routes: every page has its own title and description', () => {
@@ -27,4 +29,18 @@ test('routes: canonical URLs use the live domain with no trailing slash', () => 
   )
   assert.equal(findRoute('/isa-calculator/').path, '/isa-calculator')
   assert.equal(findRoute('/nope'), notFoundRoute)
+})
+
+test('routes: every page, and the 404 page, has its own file in src/pages', () => {
+  for (const { path } of [...routes, notFoundRoute]) {
+    const file = pageFiles[path]
+    assert.ok(file, `${path} needs a line in src/pageFiles.js`)
+    const url = new URL(`./pages/${file}.jsx`, import.meta.url)
+    assert.ok(existsSync(url), `src/pages/${file}.jsx is missing`)
+  }
+  assert.equal(
+    Object.keys(pageFiles).length,
+    routes.length + 1,
+    'src/pageFiles.js lists a page not in routes.js',
+  )
 })
