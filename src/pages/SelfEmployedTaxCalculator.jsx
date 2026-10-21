@@ -1,27 +1,41 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { CheckboxField, NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import RegionField from '../components/RegionField'
-import { incomeTaxLabel, REST_OF_UK_NOTE } from '../components/regionText'
+import { incomeTaxLabel, REGIONS, REST_OF_UK_NOTE, STUDENT_LOAN_PLANS } from '../components/choices'
 import ResultPanel from '../components/ResultPanel'
 import StudentLoanPlanField from '../components/StudentLoanPlanField'
-import { problemWith, useNumberField } from '../components/useNumberField'
+import {
+  checkboxInput,
+  choiceInput,
+  numberInput,
+  problemWith,
+  useCalculatorState,
+} from '../components/useCalculatorState'
 import SelfEmployedTaxGuide from '../guides/SelfEmployedTaxGuide'
 import { SCOTTISH_INCOME_TAX } from '../lib/rates/incomeTax'
 import { SELF_EMPLOYED } from '../lib/rates/selfEmployed'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, percent } from '../lib/format'
+import { MONEY } from '../lib/validation'
 import { calculateSelfEmployedTax } from '../lib/selfEmployed'
 
 export default function SelfEmployedTaxCalculator() {
-  const income = useNumberField('35000', { label: 'Your self-employed income' })
-  const expenses = useNumberField('5000', { label: 'Your allowable expenses', optional: true })
-  const job = useNumberField('', { label: 'Your salary from a job', optional: true })
-  const [useTradingAllowance, setUseTradingAllowance] = useState(false)
-  const [plan, setPlan] = useState('none')
-  const [hasPostgraduateLoan, setHasPostgraduateLoan] = useState(false)
-  const [region, setRegion] = useState('restOfUk')
+  const state = useCalculatorState({
+    income: numberInput('35000', { label: 'Your self-employed income', ...MONEY }),
+    expenses: numberInput('5000', { label: 'Your allowable expenses', ...MONEY, optional: true }),
+    job: numberInput('', { label: 'Your salary from a job', ...MONEY, optional: true }),
+    useTradingAllowance: checkboxInput(false),
+    plan: choiceInput('none', STUDENT_LOAN_PLANS),
+    hasPostgraduateLoan: checkboxInput(false),
+    region: choiceInput('restOfUk', Object.keys(REGIONS)),
+  })
+  const { income, expenses, job } = state
+  const useTradingAllowance = state.useTradingAllowance.value
+  const plan = state.plan.value
+  const hasPostgraduateLoan = state.hasPostgraduateLoan.value
+  const region = state.region.value
   const scottish = region === 'scotland'
 
   // Expenses are only asked for when the trading allowance is not used.
@@ -65,12 +79,12 @@ export default function SelfEmployedTaxCalculator() {
               before="£"
               field={income}
             />
-            <RegionField value={region} onChange={setRegion} />
+            <RegionField value={region} onChange={state.region.set} />
             <CheckboxField
               id="trading-allowance"
               label="Trading allowance"
               checked={useTradingAllowance}
-              onChange={setUseTradingAllowance}
+              onChange={state.useTradingAllowance.set}
             >
               Use the {formatGBP(tradingAllowance)} trading allowance instead of my actual expenses
             </CheckboxField>
@@ -92,9 +106,9 @@ export default function SelfEmployedTaxCalculator() {
             />
             <StudentLoanPlanField
               plan={plan}
-              onPlanChange={setPlan}
+              onPlanChange={state.plan.set}
               hasPostgraduateLoan={hasPostgraduateLoan}
-              onPostgraduateChange={setHasPostgraduateLoan}
+              onPostgraduateChange={state.hasPostgraduateLoan.set}
             />
           </Steps>
 

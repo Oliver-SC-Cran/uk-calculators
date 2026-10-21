@@ -1,19 +1,31 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
 import StudentLoanPlanField from '../components/StudentLoanPlanField'
-import { useNumberField } from '../components/useNumberField'
+import { STUDENT_LOAN_PLANS } from '../components/choices'
+import {
+  checkboxInput,
+  choiceInput,
+  numberInput,
+  useCalculatorState,
+} from '../components/useCalculatorState'
 import StudentLoanGuide from '../guides/StudentLoanGuide'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { calculateStudentLoanRepayment } from '../lib/studentLoans'
 import { formatGBP } from '../lib/format'
+import { MONEY } from '../lib/validation'
 
 export default function StudentLoanCalculator() {
-  const salary = useNumberField('30000', { label: 'Your salary' })
-  const [plan, setPlan] = useState('plan2')
-  const [hasPostgraduateLoan, setHasPostgraduateLoan] = useState(false)
+  const state = useCalculatorState({
+    salary: numberInput('30000', { label: 'Your salary', ...MONEY }),
+    plan: choiceInput('plan2', STUDENT_LOAN_PLANS),
+    hasPostgraduateLoan: checkboxInput(false),
+  })
+  const { salary } = state
+  const plan = state.plan.value
+  const hasPostgraduateLoan = state.hasPostgraduateLoan.value
 
   const result = useMemo(
     () => calculateStudentLoanRepayment({ grossAnnual: salary.value, plan, hasPostgraduateLoan }),
@@ -31,9 +43,9 @@ export default function StudentLoanCalculator() {
             <StudentLoanPlanField
               hint="Choose 'No undergraduate loan' if you only have a Postgraduate Loan."
               plan={plan}
-              onPlanChange={setPlan}
+              onPlanChange={state.plan.set}
               hasPostgraduateLoan={hasPostgraduateLoan}
-              onPostgraduateChange={setHasPostgraduateLoan}
+              onPostgraduateChange={state.hasPostgraduateLoan.set}
             />
           </Steps>
 

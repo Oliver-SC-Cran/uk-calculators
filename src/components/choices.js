@@ -1,4 +1,13 @@
-// Words that change with the "Where you live" step (RegionField.jsx).
+// The options the shared steps offer, and the words that go with them.
+
+/** The "Where you live" step (RegionField.jsx). */
+export const REGIONS = {
+  restOfUk: 'England, Wales or Northern Ireland',
+  scotland: 'Scotland',
+}
+
+/** The values of the student loan plan step (StudentLoanPlanField.jsx). */
+export const STUDENT_LOAN_PLANS = ['none', 'plan1', 'plan2', 'plan4', 'plan5']
 
 /** The name of the income tax line in a result table. */
 export const incomeTaxLabel = (scottish) => (scottish ? 'Scottish income tax' : 'Income tax')

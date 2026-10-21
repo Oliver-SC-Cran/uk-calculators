@@ -1,15 +1,20 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { NumberField, SelectField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
-import { problemWith, useNumberField } from '../components/useNumberField'
+import {
+  choiceInput,
+  numberInput,
+  problemWith,
+  useCalculatorState,
+} from '../components/useCalculatorState'
 import LifetimeIsaGuide from '../guides/LifetimeIsaGuide'
 import { ISA, LIFETIME_ISA_REFORM } from '../lib/rates/isa'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, percent } from '../lib/format'
 import { contributionAs, projectLifetimeIsa } from '../lib/lifetimeIsa'
-import { MAX_AGE } from '../lib/validation'
+import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
 const amountFields = {
   monthly: { label: 'The amount you pay in each month' },
@@ -21,29 +26,38 @@ export default function LifetimeIsaCalculator() {
   const { lisaMaxContributionAge, lisaAccessAge, lisaWithdrawalChargeRate } = ISA
   const { lisaPropertyCap, lisaMonthsBeforePurchase, lisaTerminalIllnessMonths } = ISA
 
-  const [frequency, setFrequency] = useState('monthly')
-  const [goal, setGoal] = useState('home')
-
-  const age = useNumberField('30', { label: 'Your age', whole: true, max: MAX_AGE })
-  const balance = useNumberField('', {
-    label: 'Already in your Lifetime ISA',
-    name: 'what is already in your Lifetime ISA',
-    optional: true,
+  const state = useCalculatorState({
+    frequency: choiceInput('monthly', Object.keys(amountFields)),
+    goal: choiceInput('home', ['home', 'retirement']),
+    age: numberInput('30', { label: 'Your age', ...WHOLE_YEARS }),
+    balance: numberInput('', {
+      label: 'Already in your Lifetime ISA',
+      name: 'what is already in your Lifetime ISA',
+      ...MONEY,
+      optional: true,
+    }),
+    // The label says how often the amount is paid in.
+    amount: numberInput('200', (fields) => ({
+      label: amountFields[fields.frequency.value].label,
+      ...MONEY,
+    })),
+    growth: numberInput('4', {
+      label: 'Expected growth each year',
+      name: 'the expected growth',
+      max: 50,
+      optional: true,
+    }),
+    // At least a year older than the age entered above.
+    purchaseAge: numberInput('35', (fields) => ({
+      label: 'Your age when you buy',
+      name: 'your age when you buy',
+      ...WHOLE_YEARS,
+      min: fields.age.valid ? fields.age.value + 1 : 0,
+    })),
   })
-  const amount = useNumberField('200', { label: amountFields[frequency].label })
-  const growth = useNumberField('4', {
-    label: 'Expected growth each year',
-    name: 'the expected growth',
-    max: 50,
-    optional: true,
-  })
-  const purchaseAge = useNumberField('35', {
-    label: 'Your age when you buy',
-    name: 'your age when you buy',
-    whole: true,
-    min: age.valid ? age.value + 1 : 0,
-    max: MAX_AGE,
-  })
+  const { age, balance, amount, growth, purchaseAge } = state
+  const frequency = state.frequency.value
+  const goal = state.goal.value
 
   const isHome = goal === 'home'
   const problem = problemWith(age, balance, amount, growth, ...(isHome ? [purchaseAge] : []))
@@ -53,7 +67,7 @@ export default function LifetimeIsaCalculator() {
     if (amount.valid && next !== frequency) {
       amount.setText(String(contributionAs(next, amount.value)))
     }
-    setFrequency(next)
+    state.frequency.set(next)
   }
 
   const result = useMemo(
@@ -122,7 +136,12 @@ export default function LifetimeIsaCalculator() {
               optional
               field={growth}
             />
-            <SelectField id="goal" label="What you are saving for" value={goal} onChange={setGoal}>
+            <SelectField
+              id="goal"
+              label="What you are saving for"
+              value={goal}
+              onChange={state.goal.set}
+            >
               <option value="home">Your first home</option>
               <option value="retirement">{`Later life, from ${lisaAccessAge}`}</option>
             </SelectField>

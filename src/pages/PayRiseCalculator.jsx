@@ -1,12 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { NumberField, SelectField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import RegionField from '../components/RegionField'
-import { incomeTaxLabel, REST_OF_UK_NOTE } from '../components/regionText'
+import { incomeTaxLabel, REGIONS, REST_OF_UK_NOTE, STUDENT_LOAN_PLANS } from '../components/choices'
 import ResultPanel from '../components/ResultPanel'
 import StudentLoanPlanField from '../components/StudentLoanPlanField'
-import { problemWith, useNumberField } from '../components/useNumberField'
+import {
+  checkboxInput,
+  choiceInput,
+  numberInput,
+  problemWith,
+  useCalculatorState,
+} from '../components/useCalculatorState'
 import PayRiseGuide from '../guides/PayRiseGuide'
 import {
   CHILD_BENEFIT_CHARGE,
@@ -18,6 +24,7 @@ import { FULL_TIME_HOURS, MINIMUM_WAGE } from '../lib/rates/minimumWage'
 import { STUDENT_LOAN } from '../lib/rates/studentLoans'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, formatGBPPence, percent } from '../lib/format'
+import { MONEY, PERCENTAGE } from '../lib/validation'
 import { calculatePayRise, newSalaryFrom, PENSION_TYPES, riseEnteredAs } from '../lib/payRise'
 
 // The label and hint for the rise, for each way of entering it.
@@ -128,25 +135,33 @@ function Warning({ code, result, plan, scottish }) {
 }
 
 export default function PayRiseCalculator() {
-  const [riseType, setRiseType] = useState('newSalary')
-  const [plan, setPlan] = useState('none')
-  const [hasPostgraduateLoan, setHasPostgraduateLoan] = useState(false)
-  const [pensionType, setPensionType] = useState('salarySacrifice')
-  const [region, setRegion] = useState('restOfUk')
+  const state = useCalculatorState({
+    riseType: choiceInput('newSalary', Object.keys(riseFields)),
+    plan: choiceInput('none', STUDENT_LOAN_PLANS),
+    hasPostgraduateLoan: checkboxInput(false),
+    pensionType: choiceInput('salarySacrifice', Object.keys(PENSION_TYPES)),
+    region: choiceInput('restOfUk', Object.keys(REGIONS)),
+    currentSalary: numberInput('45000', { label: 'Your current salary', ...MONEY }),
+    // The label says how the rise is entered.
+    rise: numberInput('55000', (fields) => ({ label: riseFields[fields.riseType.value].label })),
+    pension: numberInput('5', {
+      label: 'Your pension contribution',
+      ...PERCENTAGE,
+      optional: true,
+    }),
+    hours: numberInput(String(FULL_TIME_HOURS), {
+      label: 'The hours you work a week',
+      min: 1,
+      max: 168,
+    }),
+  })
+  const { currentSalary, rise, pension, hours } = state
+  const riseType = state.riseType.value
+  const plan = state.plan.value
+  const hasPostgraduateLoan = state.hasPostgraduateLoan.value
+  const pensionType = state.pensionType.value
+  const region = state.region.value
   const scottish = region === 'scotland'
-
-  const currentSalary = useNumberField('45000', { label: 'Your current salary' })
-  const rise = useNumberField('55000', { label: riseFields[riseType].label })
-  const pension = useNumberField('5', {
-    label: 'Your pension contribution',
-    max: 100,
-    optional: true,
-  })
-  const hours = useNumberField(String(FULL_TIME_HOURS), {
-    label: 'The hours you work a week',
-    min: 1,
-    max: 168,
-  })
 
   const isSalarySacrifice = pensionType === 'salarySacrifice'
   const problem = problemWith(currentSalary, rise, pension, ...(isSalarySacrifice ? [hours] : []))
@@ -157,7 +172,7 @@ export default function PayRiseCalculator() {
   // Keep the same rise when switching how it is entered, so a new salary of
   // £55,000 does not turn into a rise of 55,000%.
   const changeRiseType = (type) => {
-    setRiseType(type)
+    state.riseType.set(type)
     rise.setText(String(riseEnteredAs(type, current, next)))
   }
 
@@ -202,7 +217,7 @@ export default function PayRiseCalculator() {
               before="£"
               field={currentSalary}
             />
-            <RegionField value={region} onChange={setRegion} />
+            <RegionField value={region} onChange={state.region.set} />
             <SelectField
               id="rise-type"
               label="How to enter the rise"
@@ -223,9 +238,9 @@ export default function PayRiseCalculator() {
             />
             <StudentLoanPlanField
               plan={plan}
-              onPlanChange={setPlan}
+              onPlanChange={state.plan.set}
               hasPostgraduateLoan={hasPostgraduateLoan}
-              onPostgraduateChange={setHasPostgraduateLoan}
+              onPostgraduateChange={state.hasPostgraduateLoan.set}
             />
             <NumberField
               id="pension-percent"
@@ -241,7 +256,7 @@ export default function PayRiseCalculator() {
               label="How your pension is taken"
               hint="The guide below explains the three types."
               value={pensionType}
-              onChange={setPensionType}
+              onChange={state.pensionType.set}
             >
               {Object.entries(PENSION_TYPES).map(([value, label]) => (
                 <option key={value} value={value}>

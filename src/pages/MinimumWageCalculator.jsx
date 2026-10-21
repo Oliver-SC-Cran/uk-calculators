@@ -1,19 +1,28 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { CheckboxField, NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
-import { problemWith, useNumberField } from '../components/useNumberField'
+import {
+  checkboxInput,
+  numberInput,
+  problemWith,
+  useCalculatorState,
+} from '../components/useCalculatorState'
 import MinimumWageGuide from '../guides/MinimumWageGuide'
 import { checkMinimumWage } from '../lib/minimumWage'
 import { FULL_TIME_HOURS, MINIMUM_WAGE } from '../lib/rates/minimumWage'
 import { formatGBPPence } from '../lib/format'
-import { MAX_AGE } from '../lib/validation'
+import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
 export default function MinimumWageCalculator() {
-  const age = useNumberField('22', { label: 'Your age', whole: true, max: MAX_AGE })
-  const hourlyRate = useNumberField('11.50', { label: 'Your hourly pay' })
-  const [isApprentice, setIsApprentice] = useState(false)
+  const state = useCalculatorState({
+    age: numberInput('22', { label: 'Your age', ...WHOLE_YEARS }),
+    hourlyRate: numberInput('11.50', { label: 'Your hourly pay', ...MONEY }),
+    isApprentice: checkboxInput(false),
+  })
+  const { age, hourlyRate } = state
+  const isApprentice = state.isApprentice.value
 
   const problem = problemWith(age, hourlyRate)
 
@@ -44,7 +53,7 @@ export default function MinimumWageCalculator() {
               id="apprentice"
               label="Apprenticeships"
               checked={isApprentice}
-              onChange={setIsApprentice}
+              onChange={state.isApprentice.set}
             >
               I'm an apprentice under 19, or 19 or over and in the first year of my apprenticeship
             </CheckboxField>

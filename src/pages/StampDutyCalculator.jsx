@@ -1,18 +1,30 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { CheckboxField, NumberField, SelectField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
-import { problemWith, useNumberField } from '../components/useNumberField'
+import {
+  checkboxInput,
+  choiceInput,
+  numberInput,
+  problemWith,
+  useCalculatorState,
+} from '../components/useCalculatorState'
 import StampDutyGuide from '../guides/StampDutyGuide'
 import { STAMP_DUTY } from '../lib/rates/stampDuty'
 import { calculateStampDuty } from '../lib/stampDuty'
 import { formatGBP, percent } from '../lib/format'
+import { MONEY } from '../lib/validation'
 
 export default function StampDutyCalculator() {
-  const price = useNumberField('300000', { label: 'The property price' })
-  const [buyerType, setBuyerType] = useState('homeMover')
-  const [nonResident, setNonResident] = useState(false)
+  const state = useCalculatorState({
+    price: numberInput('300000', { label: 'The property price', ...MONEY }),
+    buyerType: choiceInput('homeMover', ['homeMover', 'firstTimeBuyer', 'additional']),
+    nonResident: checkboxInput(false),
+  })
+  const { price } = state
+  const buyerType = state.buyerType.value
+  const nonResident = state.nonResident.value
 
   const problem = problemWith(price)
 
@@ -33,7 +45,7 @@ export default function StampDutyCalculator() {
               id="buyer-type"
               label="What you are buying"
               value={buyerType}
-              onChange={setBuyerType}
+              onChange={state.buyerType.set}
             >
               <option value="homeMover">My next home (I am selling my current one)</option>
               <option value="firstTimeBuyer">My first home</option>
@@ -43,7 +55,7 @@ export default function StampDutyCalculator() {
               id="non-resident"
               label="UK residence"
               checked={nonResident}
-              onChange={setNonResident}
+              onChange={state.nonResident.set}
             >
               I am not a UK resident (in the UK for fewer than {STAMP_DUTY.nonResidentDays} days in
               the 12 months before buying)

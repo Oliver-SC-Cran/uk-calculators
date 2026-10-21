@@ -1,15 +1,21 @@
-import { useMemo, useState, useSyncExternalStore } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { DateField, NumberField, Steps } from '../components/Fields'
 import LineChart from '../components/LineChart'
 import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
-import { problemWith, useNumberField } from '../components/useNumberField'
+import {
+  dateInput,
+  numberInput,
+  problemWith,
+  useCalculatorState,
+} from '../components/useCalculatorState'
 import MortgageOverpaymentGuide from '../guides/MortgageOverpaymentGuide'
 import { monthAfter } from '../lib/dates'
 import { MORTGAGE } from '../lib/rates/mortgage'
 import { formatGBP, formatMonthYear, percent, yearsAndMonths } from '../lib/format'
 import { calculateMortgageOverpayment } from '../lib/mortgage'
+import { MONEY, PERCENTAGE } from '../lib/validation'
 
 // Today as 'YYYY-MM-DD', in the visitor's own time zone.
 function today() {
@@ -46,40 +52,45 @@ function balanceLines(result, balance) {
 }
 
 export default function MortgageOverpaymentCalculator() {
-  const balance = useNumberField('200000', { label: 'What you still owe', min: 1 })
-  const rate = useNumberField('4.5', { label: 'Your interest rate', max: 100 })
-  const years = useNumberField('25', { label: 'The years left on your mortgage', min: 1, max: 50 })
-  const overpayment = useNumberField('200', {
-    label: 'The extra you pay each month',
-    optional: true,
+  const state = useCalculatorState({
+    balance: numberInput('200000', { label: 'What you still owe', ...MONEY, min: 1 }),
+    rate: numberInput('4.5', { label: 'Your interest rate', ...PERCENTAGE }),
+    years: numberInput('25', { label: 'The years left on your mortgage', min: 1, max: 50 }),
+    overpayment: numberInput('200', {
+      label: 'The extra you pay each month',
+      ...MONEY,
+      optional: true,
+    }),
+    lumpSum: numberInput('', { label: 'A one-off lump sum', ...MONEY, optional: true }),
+    lumpSumYear: numberInput('1', {
+      label: 'The year you pay it',
+      name: 'the year you pay the lump sum',
+      min: 1,
+      max: 50,
+      whole: true,
+    }),
+    // null until the visitor picks a date. Until then the start date is today.
+    startDate: dateInput(null, { label: 'Start date', optional: true }),
+    limit: numberInput(String(MORTGAGE.typicalOverpaymentLimit * 100), {
+      label: "Your lender's yearly overpayment limit",
+      name: 'the yearly overpayment limit',
+      ...PERCENTAGE,
+      optional: true,
+    }),
+    dealYears: numberInput('5', {
+      label: 'Years left on your fixed or discounted deal',
+      name: 'the years left on your deal',
+      max: 50,
+      optional: true,
+    }),
   })
-  const lumpSum = useNumberField('', { label: 'A one-off lump sum', optional: true })
-  const lumpSumYear = useNumberField('1', {
-    label: 'The year you pay it',
-    name: 'the year you pay the lump sum',
-    min: 1,
-    max: 50,
-    whole: true,
-  })
-  const limit = useNumberField(String(MORTGAGE.typicalOverpaymentLimit * 100), {
-    label: "Your lender's yearly overpayment limit",
-    name: 'the yearly overpayment limit',
-    max: 100,
-    optional: true,
-  })
-  const dealYears = useNumberField('5', {
-    label: 'Years left on your fixed or discounted deal',
-    name: 'the years left on your deal',
-    max: 50,
-    optional: true,
-  })
+  const { balance, rate, years, overpayment, lumpSum, lumpSumYear, limit, dealYears } = state
 
   // The date can only be read in the browser. The page is built with no date,
   // and React fills in today once it has loaded. A date the visitor picks
   // takes over from then on.
   const todayInBrowser = useSyncExternalStore(neverChanges, today, () => '')
-  const [chosenDate, setStartDate] = useState(null)
-  const startDate = chosenDate ?? todayInBrowser
+  const startDate = state.startDate.text ?? todayInBrowser
 
   const hasLumpSum = lumpSum.valid && lumpSum.value > 0
   const hasLimit = limit.valid && !limit.isBlank
@@ -200,7 +211,7 @@ export default function MortgageOverpaymentCalculator() {
               hint="Usually today. Your first payment is a month after this."
               optional
               value={startDate}
-              onChange={setStartDate}
+              onChange={state.startDate.setText}
             />
             <NumberField
               id="limit"

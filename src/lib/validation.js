@@ -2,6 +2,8 @@
 // saying what to enter instead. Used by every calculator page, so bad input is
 // never quietly treated as zero.
 
+import { parseIsoDate } from './dates.js'
+
 const plain = (value) => value.toLocaleString('en-GB', { maximumFractionDigits: 2 })
 
 /** "Enter a number between 0 and 100." or "Enter a whole number that is 0 or more." */
@@ -44,3 +46,27 @@ export function parseNumber(
 // The oldest age any field accepts. It is only there to catch typing mistakes.
 // It is not a rule from gov.uk.
 export const MAX_AGE = 120
+
+// Rules for the kinds of number the calculators ask for, to spread into a
+// field's rules beside its label: { label: 'Your age', ...WHOLE_YEARS }.
+/** An amount in pounds and pence, £0 or more. */
+export const MONEY = { min: 0 }
+/** A percentage from 0 to 100. A trailing % is allowed. */
+export const PERCENTAGE = { min: 0, max: 100 }
+/** An age, or full years of service, in whole years. */
+export const WHOLE_YEARS = { min: 0, max: MAX_AGE, whole: true }
+
+/**
+ * Reads a date from a date field. A date field gives 'YYYY-MM-DD' text, or ''
+ * when it is blank or the date is not finished.
+ *
+ * Returns { value, error }. value is the 'YYYY-MM-DD' text when it is a real
+ * date, and null otherwise. A field that is needed asks for the date by name
+ * whether it is blank or not a real date: "Enter the date the baby is due."
+ */
+export function parseDate(text, { name = 'a date', optional = false } = {}) {
+  const typed = String(text ?? '').trim()
+  if (typed === '' && optional) return { value: null, error: null }
+  if (parseIsoDate(typed) === null) return { value: null, error: `Enter ${name}.` }
+  return { value: typed, error: null }
+}

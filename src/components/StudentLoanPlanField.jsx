@@ -1,7 +1,9 @@
 import { STUDENT_LOAN } from '../lib/rates/studentLoans'
+import { STUDENT_LOAN_PLANS } from './choices'
 import { Checkbox, SelectField } from './Fields'
 
-const PLANS = ['plan1', 'plan2', 'plan4', 'plan5']
+// Every plan but 'none', which has its own wording.
+const PLANS = STUDENT_LOAN_PLANS.filter((plan) => plan !== 'none')
 
 /**
  * The step that asks which student loan someone has. A Postgraduate Loan is

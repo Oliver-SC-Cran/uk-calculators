@@ -3,19 +3,21 @@ import CalculatorPage from '../components/CalculatorPage'
 import { NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
-import { problemWith, useNumberField } from '../components/useNumberField'
+import { numberInput, problemWith, useCalculatorState } from '../components/useCalculatorState'
 import ISAGuide from '../guides/ISAGuide'
 import { calculateISAAllowance } from '../lib/isa'
 import { ISA } from '../lib/rates/isa'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, percent } from '../lib/format'
-import { MAX_AGE } from '../lib/validation'
+import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
 export default function ISACalculator() {
-  const age = useNumberField('28', { label: 'Your age', whole: true, max: MAX_AGE })
-  const cashISA = useNumberField('5000', { label: 'Cash ISA', optional: true })
-  const stocksISA = useNumberField('5000', { label: 'Stocks and Shares ISA', optional: true })
-  const lisa = useNumberField('4000', { label: 'Lifetime ISA', optional: true })
+  const { age, cashISA, stocksISA, lisa } = useCalculatorState({
+    age: numberInput('28', { label: 'Your age', ...WHOLE_YEARS }),
+    cashISA: numberInput('5000', { label: 'Cash ISA', ...MONEY, optional: true }),
+    stocksISA: numberInput('5000', { label: 'Stocks and Shares ISA', ...MONEY, optional: true }),
+    lisa: numberInput('4000', { label: 'Lifetime ISA', ...MONEY, optional: true }),
+  })
 
   const problem = problemWith(age, cashISA, stocksISA, lisa)
 

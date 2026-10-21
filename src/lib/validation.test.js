@@ -1,7 +1,7 @@
 // Tests for the input checks in validation.js. Run with: npm test
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { parseNumber } from './validation.js'
+import { MAX_AGE, MONEY, parseDate, parseNumber, PERCENTAGE, WHOLE_YEARS } from './validation.js'
 
 test('parseNumber: plain numbers are read as they are [own working]', () => {
   assert.deepEqual(parseNumber('35000'), { value: 35000, error: null })
@@ -74,5 +74,50 @@ test('parseNumber: very high values are read, and large limits are written with 
   assert.equal(
     parseNumber('5', { min: 1000, max: 2000000 }).error,
     'Enter a number between 1,000 and 2,000,000.',
+  )
+})
+
+test('parseDate: a real date is read as it is [own working]', () => {
+  assert.deepEqual(parseDate('2027-03-01'), { value: '2027-03-01', error: null })
+  assert.deepEqual(parseDate('2028-02-29'), { value: '2028-02-29', error: null })
+})
+
+test('parseDate: a date that is needed asks for it by name when blank or not real [own working]', () => {
+  const name = 'the date the baby is due'
+  assert.deepEqual(parseDate('', { name }), {
+    value: null,
+    error: 'Enter the date the baby is due.',
+  })
+  assert.equal(parseDate('2026-02-29', { name }).error, 'Enter the date the baby is due.')
+  assert.equal(parseDate('2027-13-01', { name }).error, 'Enter the date the baby is due.')
+  assert.equal(parseDate('1 March 2027', { name }).error, 'Enter the date the baby is due.')
+  assert.equal(parseDate(null, { name }).error, 'Enter the date the baby is due.')
+})
+
+test('parseDate: an optional date can be left blank [own working]', () => {
+  assert.deepEqual(parseDate('', { optional: true }), { value: null, error: null })
+  assert.deepEqual(parseDate(null, { optional: true }), { value: null, error: null })
+  assert.equal(parseDate('2026-02-29', { optional: true, name: 'a date' }).error, 'Enter a date.')
+})
+
+test('rule sets: money, percentages and whole years [own working]', () => {
+  assert.equal(parseNumber('£35,000', { name: 'x', ...MONEY }).value, 35000)
+  assert.equal(
+    parseNumber('-1', { name: 'x', ...MONEY }).error,
+    'Enter a number that is 0 or more.',
+  )
+  assert.equal(parseNumber('5%', { name: 'x', ...PERCENTAGE }).value, 5)
+  assert.equal(
+    parseNumber('101', { name: 'x', ...PERCENTAGE }).error,
+    'Enter a number between 0 and 100.',
+  )
+  assert.equal(parseNumber('45', { name: 'x', ...WHOLE_YEARS }).value, 45)
+  assert.equal(
+    parseNumber('4.5', { name: 'x', ...WHOLE_YEARS }).error,
+    'Enter a whole number between 0 and 120.',
+  )
+  assert.equal(
+    parseNumber(String(MAX_AGE + 1), { name: 'x', ...WHOLE_YEARS }).error,
+    'Enter a whole number between 0 and 120.',
   )
 })

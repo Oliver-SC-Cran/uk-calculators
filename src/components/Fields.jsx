@@ -47,7 +47,7 @@ function Field({ number, id, label, hint, optional, error, size, isGroup, childr
 }
 
 /**
- * A number input. field comes from useNumberField, which also holds the label.
+ * A number input. field comes from useCalculatorState, which also holds the label.
  * before and after are short bits of text shown inside the box, such as £ or %.
  */
 export function NumberField({ field, before, after, decimal, size = 'medium', below, ...rest }) {

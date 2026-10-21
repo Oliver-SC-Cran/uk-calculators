@@ -1,19 +1,24 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import RegionField from '../components/RegionField'
-import { incomeTaxLabel, REST_OF_UK_NOTE } from '../components/regionText'
+import { incomeTaxLabel, REGIONS, REST_OF_UK_NOTE } from '../components/choices'
 import ResultPanel from '../components/ResultPanel'
-import { useNumberField } from '../components/useNumberField'
+import { choiceInput, numberInput, useCalculatorState } from '../components/useCalculatorState'
 import TakeHomePayGuide from '../guides/TakeHomePayGuide'
 import { calculateTakeHome } from '../lib/incomeTax'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, percent } from '../lib/format'
+import { MONEY } from '../lib/validation'
 
 export default function SalaryCalculator() {
-  const salary = useNumberField('35000', { label: 'Your salary' })
-  const [region, setRegion] = useState('restOfUk')
+  const state = useCalculatorState({
+    salary: numberInput('35000', { label: 'Your salary', ...MONEY }),
+    region: choiceInput('restOfUk', Object.keys(REGIONS)),
+  })
+  const { salary } = state
+  const region = state.region.value
   const scottish = region === 'scotland'
 
   const result = useMemo(
@@ -29,7 +34,7 @@ export default function SalaryCalculator() {
         <>
           <Steps>
             <NumberField id="salary" hint="For a year, before tax." before="£" field={salary} />
-            <RegionField value={region} onChange={setRegion} />
+            <RegionField value={region} onChange={state.region.set} />
           </Steps>
 
           <Notice>

@@ -1,9 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { CheckboxField, DateField, NumberField, SelectField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
-import { problemWith, useNumberField } from '../components/useNumberField'
+import {
+  checkboxInput,
+  choiceInput,
+  dateInput,
+  numberInput,
+  problemWith,
+  useCalculatorState,
+} from '../components/useCalculatorState'
 import MaternityPayGuide from '../guides/MaternityPayGuide'
 import { PARENTAL_PAY } from '../lib/rates/parentalPay'
 import { formatDate, formatDateShort, formatGBPPence } from '../lib/format'
@@ -12,14 +19,13 @@ import {
   calculateMaternityPay,
   calculatePaternityPay,
 } from '../lib/parentalPay'
+import { MONEY } from '../lib/validation'
 
 const payLabels = {
   weekly: 'Your average weekly pay',
   monthly: 'Your monthly pay',
   annual: 'Your yearly salary',
 }
-
-const DUE_DATE_NEEDED = 'Enter the date the baby is due.'
 
 function WhyNot({ result }) {
   const { lowerEarningsLimit, continuousWeeks } = PARENTAL_PAY
@@ -67,13 +73,23 @@ function KeyDates({ result, children }) {
 }
 
 export default function MaternityPayCalculator() {
-  const [payType, setPayType] = useState('maternity')
-  // A fixed date, so the page is the same wherever and whenever it is built.
-  const [dueDate, setDueDate] = useState('2027-03-01')
-  const [leaveStart, setLeaveStart] = useState('')
-  const [payPeriod, setPayPeriod] = useState('annual')
-  const [workedContinuously, setWorkedContinuously] = useState(true)
-  const pay = useNumberField('30000', { label: payLabels[payPeriod] })
+  const state = useCalculatorState({
+    payType: choiceInput('maternity', ['maternity', 'paternity']),
+    // A fixed date, so the page is the same wherever and whenever it is built.
+    dueDate: dateInput('2027-03-01', { label: 'The date the baby is due' }),
+    leaveStart: dateInput('', { label: 'The date maternity pay starts', optional: true }),
+    payPeriod: choiceInput('annual', Object.keys(payLabels)),
+    workedContinuously: checkboxInput(true),
+    // The label says how the pay is entered.
+    pay: numberInput('30000', (fields) => ({ label: payLabels[fields.payPeriod.value], ...MONEY })),
+  })
+  const { pay } = state
+  const due = state.dueDate
+  const payType = state.payType.value
+  const dueDate = due.text
+  const leaveStart = state.leaveStart.text
+  const payPeriod = state.payPeriod.value
+  const workedContinuously = state.workedContinuously.value
 
   const earnings = averageWeeklyEarnings({ amount: pay.value, period: payPeriod })
   const isMaternity = payType === 'maternity'
@@ -85,8 +101,8 @@ export default function MaternityPayCalculator() {
       : calculatePaternityPay(inputs)
   }, [isMaternity, dueDate, leaveStart, earnings, workedContinuously])
 
-  // The calculation returns nothing when the due date is missing or not a real date.
-  const due = { valid: result !== null, isBlank: true, problem: DUE_DATE_NEEDED }
+  // The calculation returns nothing when the due date is missing or not a
+  // real date, and the due date field then says so.
   const problem = problemWith(due, pay)
 
   const { maternity, paternity, maternityAllowance, weeklyRate, ratesFrom } = PARENTAL_PAY
@@ -105,7 +121,7 @@ export default function MaternityPayCalculator() {
               id="pay-type"
               label="The pay you want to work out"
               value={payType}
-              onChange={setPayType}
+              onChange={state.payType.set}
             >
               <option value="maternity">Statutory Maternity Pay</option>
               <option value="paternity">Statutory Paternity Pay</option>
@@ -114,8 +130,8 @@ export default function MaternityPayCalculator() {
               id="due-date"
               label="The date the baby is due"
               value={dueDate}
-              onChange={setDueDate}
-              error={due.valid ? null : DUE_DATE_NEEDED}
+              onChange={due.setText}
+              error={due.error}
             />
             {isMaternity && (
               <DateField
@@ -124,14 +140,14 @@ export default function MaternityPayCalculator() {
                 hint="Leave it blank to use the due date."
                 optional
                 value={leaveStart}
-                onChange={setLeaveStart}
+                onChange={state.leaveStart.setText}
               />
             )}
             <SelectField
               id="pay-period"
               label="How to enter your pay"
               value={payPeriod}
-              onChange={setPayPeriod}
+              onChange={state.payPeriod.set}
             >
               <option value="annual">Yearly salary</option>
               <option value="monthly">Monthly pay</option>
@@ -148,7 +164,7 @@ export default function MaternityPayCalculator() {
               id="worked-continuously"
               label="Your time with your employer"
               checked={workedContinuously}
-              onChange={setWorkedContinuously}
+              onChange={state.workedContinuously.set}
             >
               {result
                 ? `I have worked for my employer continuously since ${formatDate(result.employedSince)} or earlier (at least ${PARENTAL_PAY.continuousWeeks} weeks by the qualifying week)`

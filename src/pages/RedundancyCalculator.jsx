@@ -1,24 +1,29 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
 import { NumberField, SelectField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
-import { problemWith, useNumberField } from '../components/useNumberField'
+import {
+  choiceInput,
+  numberInput,
+  problemWith,
+  useCalculatorState,
+} from '../components/useCalculatorState'
 import RedundancyGuide from '../guides/RedundancyGuide'
 import { TAX_YEAR_START } from '../lib/rates/taxYear'
 import { calculateRedundancyPay } from '../lib/redundancy'
 import { formatGBP } from '../lib/format'
-import { MAX_AGE } from '../lib/validation'
+import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
 export default function RedundancyCalculator() {
-  const age = useNumberField('45', { label: 'Your age', whole: true, max: MAX_AGE })
-  const years = useNumberField('10', {
-    label: 'Your years with your employer',
-    whole: true,
-    max: MAX_AGE,
+  const state = useCalculatorState({
+    age: numberInput('45', { label: 'Your age', ...WHOLE_YEARS }),
+    years: numberInput('10', { label: 'Your years with your employer', ...WHOLE_YEARS }),
+    weeklyPay: numberInput('600', { label: 'Your weekly pay', ...MONEY }),
+    region: choiceInput('GB', ['GB', 'NI']),
   })
-  const weeklyPay = useNumberField('600', { label: 'Your weekly pay' })
-  const [region, setRegion] = useState('GB')
+  const { age, years, weeklyPay } = state
+  const region = state.region.value
 
   const problem = problemWith(age, years, weeklyPay)
 
@@ -65,7 +70,7 @@ export default function RedundancyCalculator() {
               label="Where in the UK"
               hint="Northern Ireland has its own weekly pay limit."
               value={region}
-              onChange={setRegion}
+              onChange={state.region.set}
             >
               <option value="GB">England, Scotland or Wales</option>
               <option value="NI">Northern Ireland</option>

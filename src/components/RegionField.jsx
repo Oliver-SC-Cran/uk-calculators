@@ -1,9 +1,5 @@
+import { REGIONS } from './choices'
 import { SelectField } from './Fields'
-
-const REGIONS = {
-  restOfUk: 'England, Wales or Northern Ireland',
-  scotland: 'Scotland',
-}
 
 /**
  * The step that asks which income tax rates apply. Scottish income tax goes by
