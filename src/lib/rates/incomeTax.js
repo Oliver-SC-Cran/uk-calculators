@@ -15,6 +15,7 @@ export const INCOME_TAX_RATES = {
       higherRateLimit: 125140, // income up to this is taxed at 40%; above it, 45%
       taperStart: 100000, // personal allowance starts reducing above this income
       taperFullyGoneAt: 125140,
+      taperAllowanceLostPerPound: 0.5, // £1 of allowance goes for every £2 of income above taperStart
       basicRate: 0.2,
       higherRate: 0.4,
       additionalRate: 0.45,

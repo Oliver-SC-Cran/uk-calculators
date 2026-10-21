@@ -9,6 +9,7 @@ import { PARENTAL_PAY } from './lib/rates/parentalPay.js'
 import { REDUNDANCY } from './lib/rates/redundancy.js'
 import { STAMP_DUTY } from './lib/rates/stampDuty.js'
 import { TAX_YEAR } from './lib/rates/taxYear.js'
+import { taxCodeFor } from './lib/taxCode.js'
 
 export const SITE_URL = 'https://ukmoneycalculators.co.uk'
 export const SITE_NAME = 'UK Money Calculators'
@@ -21,8 +22,9 @@ const pounds = (value) => `£${value.toLocaleString('en-GB')}`
 
 // Extra pay in the personal allowance taper is taxed at the higher rate, and
 // each £2 of it removes £1 of allowance, which is then taxed at that rate too.
-const taperRate = `${Math.round(INCOME_TAX.higherRate * 150)}%`
-const standardTaxCode = `${Math.floor(INCOME_TAX.personalAllowance / 10)}L`
+const { higherRate, taperAllowanceLostPerPound, personalAllowance } = INCOME_TAX
+const taperRate = `${Math.round(higherRate * (1 + taperAllowanceLostPerPound) * 100)}%`
+const standardTaxCode = taxCodeFor(personalAllowance)
 
 export const routes = [
   {

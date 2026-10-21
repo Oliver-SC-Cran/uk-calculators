@@ -6,18 +6,11 @@ import { STUDENT_LOAN } from '../../lib/rates/studentLoans'
 import { TAX_YEAR } from '../../lib/rates/taxYear'
 import { calculateStudentLoanRepayment, monthlyLoanThreshold } from '../../lib/studentLoans'
 import { formatGBP as gbp, formatGBPPence as pence, percent } from '../../lib/format'
+import Source from '../../components/Source'
+import { taxCodeFor } from '../../lib/taxCode'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '20 October 2026'
-const LAST_UPDATED_ISO = '2026-10-20'
-
-const Source = ({ href, children }) => (
-  <a href={href} target="_blank" rel="noreferrer">
-    {children}
-  </a>
-)
-
-const taxCodeFor = (taxFreeAmount) => `${Math.floor(taxFreeAmount / 10)}L`
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-20'
 
 export default function Payslip() {
   const { personalAllowance, basicRate, higherRate, additionalRate } = INCOME_TAX
@@ -52,7 +45,6 @@ export default function Payslip() {
     <GuidePage
       path="/guides/how-to-read-your-payslip"
       updated={LAST_UPDATED}
-      updatedIso={LAST_UPDATED_ISO}
       calculators={['/salary-calculator', '/student-loan-calculator', '/pay-rise-calculator']}
       intro={
         <>

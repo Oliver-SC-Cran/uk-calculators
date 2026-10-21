@@ -3,6 +3,7 @@ import CalculatorPage from '../components/CalculatorPage'
 import { NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import RegionField from '../components/RegionField'
+import { incomeTaxLabel, REST_OF_UK_NOTE } from '../components/regionText'
 import ResultPanel from '../components/ResultPanel'
 import { useNumberField } from '../components/useNumberField'
 import TakeHomePayGuide from '../guides/TakeHomePayGuide'
@@ -34,7 +35,7 @@ export default function SalaryCalculator() {
           <Notice>
             {scottish
               ? 'This uses Scottish income tax rates. National Insurance is the same across the UK.'
-              : 'This uses the income tax rates for England, Wales and Northern Ireland. Scotland has its own, so choose Scotland above if your main home is there.'}{' '}
+              : REST_OF_UK_NOTE}{' '}
             It assumes no pension contributions, student loan or other deductions.
           </Notice>
         </>
@@ -54,7 +55,7 @@ export default function SalaryCalculator() {
                 <td>{formatGBP(result.grossAnnual)}</td>
               </tr>
               <tr>
-                <th scope="row">{scottish ? 'Scottish income tax' : 'Income tax'}</th>
+                <th scope="row">{incomeTaxLabel(scottish)}</th>
                 <td>{formatGBP(-result.incomeTax || 0)}</td>
               </tr>
               <tr>

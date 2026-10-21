@@ -6,7 +6,7 @@ import ResultPanel from '../components/ResultPanel'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import MinimumWageGuide from '../guides/MinimumWageGuide'
 import { checkMinimumWage } from '../lib/minimumWage'
-import { MINIMUM_WAGE } from '../lib/rates/minimumWage'
+import { FULL_TIME_HOURS, MINIMUM_WAGE } from '../lib/rates/minimumWage'
 import { formatGBPPence } from '../lib/format'
 import { MAX_AGE } from '../lib/validation'
 
@@ -73,7 +73,7 @@ export default function MinimumWageCalculator() {
                     <td>{formatGBPPence(hourlyRate.value)}</td>
                   </tr>
                   <tr>
-                    <th scope="row">The minimum at 37.5 hours a week</th>
+                    <th scope="row">{`The minimum at ${FULL_TIME_HOURS} hours a week`}</th>
                     <td>{formatGBPPence(result.weeklyAtMinimum)}</td>
                   </tr>
                   <tr>

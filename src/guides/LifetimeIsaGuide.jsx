@@ -3,10 +3,10 @@ import { ISA, LIFETIME_ISA_REFORM } from '../lib/rates/isa'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../lib/format'
 import { projectLifetimeIsa, withdrawalFor } from '../lib/lifetimeIsa'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '20 October 2026'
-const LAST_UPDATED_ISO = '2026-10-20'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-20'
 
 export default function LifetimeIsaGuide() {
   const { overallAllowance, lisaLimit, lisaBonusRate, lisaMinOpenAge, lisaMaxOpenAge } = ISA
@@ -38,11 +38,7 @@ export default function LifetimeIsaGuide() {
   const laterCash = projectLifetimeIsa({ ...later, growthPercent: 0 })
 
   return (
-    <article className="guide">
-      <h2>How a Lifetime ISA works in {TAX_YEAR}</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide heading={<>How a Lifetime ISA works in {TAX_YEAR}</>} updated={LAST_UPDATED}>
       <p>
         A Lifetime ISA is a savings account for buying your first home or for later life. The
         government adds a {percent(lisaBonusRate)} bonus to what you pay in. In return, you pay a{' '}
@@ -226,6 +222,6 @@ export default function LifetimeIsaGuide() {
         </a>
         . The other figures come from the calculator on this page.
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

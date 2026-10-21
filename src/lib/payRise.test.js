@@ -15,7 +15,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { calculateIncomeTax, calculateTakeHome } from './incomeTax.js'
-import { calculatePayPackage, calculatePayRise } from './payRise.js'
+import { calculatePayPackage, calculatePayRise, newSalaryFrom, riseEnteredAs } from './payRise.js'
 
 const near = (actual, expected, message) =>
   assert.ok(
@@ -525,4 +525,28 @@ test('Scottish pay rise [own working] the pieces always add up to the rise', () 
       assert.ok(kept > 0 && kept < total, `${from} to ${to}: kept ${kept}`)
     }
   }
+})
+
+// ---------------------------------------------------------------------------
+// Entering the rise three ways
+// ---------------------------------------------------------------------------
+
+test('pay rise [own working] a rise entered as a new salary, a percentage or pounds', () => {
+  near(newSalaryFrom(45000, 'newSalary', 55000), 55000)
+  near(newSalaryFrom(45000, 'percent', 10), 49500)
+  near(newSalaryFrom(45000, 'pounds', 2000), 47000)
+  near(newSalaryFrom(45000, 'percent', 0), 45000)
+})
+
+test('pay rise [own working] switching how the rise is entered keeps the same rise', () => {
+  // £45,000 to £55,000 is a rise of £10,000, or 22.2222% to four places.
+  assert.equal(riseEnteredAs('newSalary', 45000, 55000), 55000)
+  assert.equal(riseEnteredAs('pounds', 45000, 55000), 10000)
+  assert.equal(riseEnteredAs('percent', 45000, 55000), 22.2222)
+  // Switching back from the percentage gives the same whole pounds.
+  assert.equal(riseEnteredAs('newSalary', 45000, newSalaryFrom(45000, 'percent', 22.2222)), 55000)
+  // With no current salary there is no percentage to show.
+  assert.equal(riseEnteredAs('percent', 0, 30000), 0)
+  // Amounts are whole pounds.
+  assert.equal(riseEnteredAs('pounds', 45000, 49500.4), 4500)
 })

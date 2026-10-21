@@ -18,6 +18,7 @@ import { checkMinimumWage } from './minimumWage.js'
 import { STUDENT_LOAN } from './rates/studentLoans.js'
 import { calculateRedundancyPay } from './redundancy.js'
 import { calculateStudentLoanRepayment, studentLoanWorking } from './studentLoans.js'
+import { taxCodeFor } from './taxCode.js'
 
 const near = (actual, expected, message) =>
   assert.ok(
@@ -572,4 +573,10 @@ test('student loan [gov.uk] the working behind each example matches gov.uk step 
       )
     }
   }
+})
+
+test('tax code [own working] the code is the tax-free amount divided by 10, with L', () => {
+  assert.equal(taxCodeFor(12570), '1257L')
+  assert.equal(taxCodeFor(11000), '1100L')
+  assert.equal(taxCodeFor(12579), '1257L')
 })

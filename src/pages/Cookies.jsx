@@ -1,9 +1,9 @@
 import TextPage from '../components/TextPage'
 import { Link } from 'react-router-dom'
+import LastUpdated from '../components/LastUpdated'
 
 // Change this by hand whenever the policy or the cookie list changes.
-const LAST_UPDATED = '11 October 2026'
-const LAST_UPDATED_ISO = '2026-10-11'
+const LAST_UPDATED = '2026-10-11'
 
 // Names, purposes and durations as Google publishes them at
 // https://business.safety.google/adscookies/ and
@@ -127,9 +127,7 @@ export default function Cookies() {
   return (
     <TextPage>
       <h1>Cookie policy</h1>
-      <p className="prose__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+      <LastUpdated date={LAST_UPDATED} className="prose__updated" />
       <p>
         Cookies are small files a website saves in your browser. This page lists the ones that may
         be set when you use this site. The <Link to="/privacy">privacy policy</Link> explains how

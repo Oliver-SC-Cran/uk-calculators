@@ -1,7 +1,7 @@
 // The minimum wage checker. Its rates are in rates/minimumWage.js, by tax year.
 
 import { atLeastZero } from './numbers.js'
-import { MINIMUM_WAGE_RATES } from './rates/minimumWage.js'
+import { FULL_TIME_HOURS, MINIMUM_WAGE_RATES } from './rates/minimumWage.js'
 import { forTaxYear } from './rates/taxYear.js'
 
 /**
@@ -46,7 +46,7 @@ export function checkMinimumWage({ age, hourlyRate, isApprentice, taxYear }) {
     bandLabel,
     shortfall,
     isUnderpaid: shortfall > 0,
-    weeklyAtMinimum: applicableRate * 37.5,
-    annualAtMinimum: applicableRate * 37.5 * 52,
+    weeklyAtMinimum: applicableRate * FULL_TIME_HOURS,
+    annualAtMinimum: applicableRate * FULL_TIME_HOURS * 52,
   }
 }

@@ -4,10 +4,10 @@ import { STUDENT_LOAN } from '../lib/rates/studentLoans'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 import { calculateSelfEmployedTax } from '../lib/selfEmployed'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '11 October 2026'
-const LAST_UPDATED_ISO = '2026-10-11'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-11'
 
 export default function SelfEmployedTaxGuide() {
   const { personalAllowance, basicRateLimit, higherRateLimit } = INCOME_TAX
@@ -26,11 +26,10 @@ export default function SelfEmployedTaxGuide() {
   const scotEx1 = calculateSelfEmployedTax({ income: 30000, scottish: true })
 
   return (
-    <article className="guide">
-      <h2>How tax works when you are self-employed in {TAX_YEAR}</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide
+      heading={<>How tax works when you are self-employed in {TAX_YEAR}</>}
+      updated={LAST_UPDATED}
+    >
       <p>
         As a sole trader you pay tax on your profit, which is your income minus your allowable
         expenses. Nobody takes it off for you. You report it on a Self Assessment tax return and pay
@@ -231,6 +230,6 @@ export default function SelfEmployedTaxGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

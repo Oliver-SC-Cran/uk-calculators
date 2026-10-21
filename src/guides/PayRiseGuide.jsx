@@ -9,10 +9,10 @@ import { STUDENT_LOAN } from '../lib/rates/studentLoans'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../lib/format'
 import { calculatePayRise } from '../lib/payRise'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '11 October 2026'
-const LAST_UPDATED_ISO = '2026-10-11'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-11'
 
 // 0.72 becomes 72p, and 0.305 becomes 30.5p
 const pence = (share) => `${Number((share * 100).toFixed(1))}p`
@@ -54,11 +54,10 @@ export default function PayRiseGuide() {
   const scotEx2Elsewhere = calculatePayRise({ currentSalary: 45000, newSalary: 49000 })
 
   return (
-    <article className="guide">
-      <h2>How much of a pay rise you keep in {TAX_YEAR}</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide
+      heading={<>How much of a pay rise you keep in {TAX_YEAR}</>}
+      updated={LAST_UPDATED}
+    >
       <p>
         A pay rise is taxed at your top rate, not your average rate. The extra money sits on top of
         what you already earn, so it meets the highest tax band you have reached. That is why you
@@ -325,6 +324,6 @@ export default function PayRiseGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

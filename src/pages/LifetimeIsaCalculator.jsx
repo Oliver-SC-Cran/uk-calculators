@@ -8,7 +8,7 @@ import LifetimeIsaGuide from '../guides/LifetimeIsaGuide'
 import { ISA, LIFETIME_ISA_REFORM } from '../lib/rates/isa'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, percent } from '../lib/format'
-import { projectLifetimeIsa } from '../lib/lifetimeIsa'
+import { contributionAs, projectLifetimeIsa } from '../lib/lifetimeIsa'
 import { MAX_AGE } from '../lib/validation'
 
 const amountFields = {
@@ -51,8 +51,7 @@ export default function LifetimeIsaCalculator() {
   // Keep the same amount when switching between monthly and yearly.
   const changeFrequency = (next) => {
     if (amount.valid && next !== frequency) {
-      const converted = next === 'yearly' ? amount.value * 12 : amount.value / 12
-      amount.setText(String(Math.round(converted * 100) / 100))
+      amount.setText(String(contributionAs(next, amount.value)))
     }
     setFrequency(next)
   }

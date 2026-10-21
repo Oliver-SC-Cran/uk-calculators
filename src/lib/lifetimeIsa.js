@@ -101,6 +101,15 @@ export function projectLifetimeIsa({
 }
 
 /**
+ * A regular payment written for the other frequency, to the penny, for when
+ * someone switches between paying in each month and once a year.
+ */
+export function contributionAs(frequency, amount) {
+  const converted = frequency === 'yearly' ? amount * 12 : amount / 12
+  return Math.round(converted * 100) / 100
+}
+
+/**
  * How much to take out to be left with a sum in cash after the 25% charge.
  * gov.uk: "Withdrawing £160 means you pay a 25% withdrawal charge of £40 and
  * receive £120 in cash".

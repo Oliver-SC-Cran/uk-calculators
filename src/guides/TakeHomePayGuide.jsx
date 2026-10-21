@@ -2,10 +2,11 @@ import { calculateTakeHome, taperedPersonalAllowance } from '../lib/incomeTax'
 import { INCOME_TAX, NATIONAL_INSURANCE, SCOTTISH_INCOME_TAX } from '../lib/rates/incomeTax'
 import { TAX_YEAR, TAX_YEAR_END, TAX_YEAR_START } from '../lib/rates/taxYear'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
+import CalculatorGuide from '../components/CalculatorGuide'
+import { taxCodeFor } from '../lib/taxCode'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '11 October 2026'
-const LAST_UPDATED_ISO = '2026-10-11'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-11'
 
 export default function TakeHomePayGuide() {
   const {
@@ -21,13 +22,13 @@ export default function TakeHomePayGuide() {
   const { primaryThreshold, upperEarningsLimit, mainRate, upperRate } = NATIONAL_INSURANCE
 
   const basicBand = basicRateLimit - personalAllowance
-  const standardTaxCode = `${Math.floor(personalAllowance / 10)}L`
+  const standardTaxCode = taxCodeFor(personalAllowance)
 
   // The taper: each extra £100 is taxed at the higher rate, and removes the
   // allowance from another £50, which is then taxed at the higher rate too.
   const taperExample = taperStart + 10000
   const taperTaxPer100 = 100 * higherRate
-  const taperLostAllowancePer100 = 50
+  const taperLostAllowancePer100 = 100 * INCOME_TAX.taperAllowanceLostPerPound
   const taperExtraTaxPer100 = taperLostAllowancePer100 * higherRate
   const taperTotalTaxPer100 = taperTaxPer100 + taperExtraTaxPer100
   const taperKeptPer100 = 100 - taperTotalTaxPer100 - 100 * upperRate
@@ -56,11 +57,10 @@ export default function TakeHomePayGuide() {
   const pence = (share) => `${Math.round(share * 100)}p`
 
   return (
-    <article className="guide">
-      <h2>How income tax and National Insurance work in {TAX_YEAR}</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide
+      heading={<>How income tax and National Insurance work in {TAX_YEAR}</>}
+      updated={LAST_UPDATED}
+    >
       <p>
         Two things come out of most pay packets: income tax and National Insurance (NI). Both are
         charged in bands, so each rate only applies to the slice of pay inside that band. Moving
@@ -286,6 +286,6 @@ export default function TakeHomePayGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 import { MORTGAGE } from '../lib/rates/mortgage'
 import { formatGBP as gbp, percent, yearsAndMonths } from '../lib/format'
 import { calculateMortgageOverpayment } from '../lib/mortgage'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '20 October 2026'
-const LAST_UPDATED_ISO = '2026-10-20'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-20'
 
 const example = (balance, annualRatePercent, remainingYears, extra = {}) => ({
   balance,
@@ -41,11 +41,7 @@ export default function MortgageOverpaymentGuide() {
   const ex3ShareOfBalance = (ex3.monthlyOverpayment * 12) / ex3.balance
 
   return (
-    <article className="guide">
-      <h2>How mortgage overpayments work</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide heading={<>How mortgage overpayments work</>} updated={LAST_UPDATED}>
       <p>
         Overpaying means paying more than your required monthly payment, either a set amount each
         month or a one-off lump sum. The extra comes straight off what you owe, so less interest is
@@ -244,6 +240,6 @@ export default function MortgageOverpaymentGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

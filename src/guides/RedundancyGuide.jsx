@@ -2,10 +2,10 @@ import { REDUNDANCY } from '../lib/rates/redundancy'
 import { TAX_YEAR, TAX_YEAR_START } from '../lib/rates/taxYear'
 import { calculateRedundancyPay } from '../lib/redundancy'
 import { formatGBP as gbp } from '../lib/format'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '8 October 2026'
-const LAST_UPDATED_ISO = '2026-10-08'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-08'
 
 export default function RedundancyGuide() {
   const { weeklyPayCapGB, weeklyPayCapNI, maxYearsCounted, minYearsToQualify } = REDUNDANCY
@@ -20,11 +20,10 @@ export default function RedundancyGuide() {
   const example3 = calculateRedundancyPay({ age: 58, yearsOfService: 25, weeklyPay: 900 })
 
   return (
-    <article className="guide">
-      <h2>How statutory redundancy pay works in {TAX_YEAR}</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide
+      heading={<>How statutory redundancy pay works in {TAX_YEAR}</>}
+      updated={LAST_UPDATED}
+    >
       <p>
         Statutory redundancy pay is the legal minimum your employer must pay when your job is made
         redundant. Your contract or a company scheme may give you more. It cannot give you less.
@@ -155,6 +154,6 @@ export default function RedundancyGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

@@ -3,10 +3,10 @@ import { calculateISAAllowance } from '../lib/isa'
 import { ISA } from '../lib/rates/isa'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../lib/format'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '20 October 2026'
-const LAST_UPDATED_ISO = '2026-10-20'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-20'
 
 export default function ISAGuide() {
   const { overallAllowance, minAge, lisaLimit, lisaBonusRate } = ISA
@@ -27,11 +27,10 @@ export default function ISAGuide() {
   const overLisa = calculateISAAllowance({ cashISA: 0, stocksISA: 0, lisa: 6000, age: 25 })
 
   return (
-    <article className="guide">
-      <h2>How the ISA allowance works in {TAX_YEAR}</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide
+      heading={<>How the ISA allowance works in {TAX_YEAR}</>}
+      updated={LAST_UPDATED}
+    >
       <p>
         An ISA is a savings or investment account where you pay no tax on the interest, income or
         gains. In {TAX_YEAR} you can pay in up to {gbp(overallAllowance)} across all your ISAs. You
@@ -163,6 +162,6 @@ export default function ISAGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

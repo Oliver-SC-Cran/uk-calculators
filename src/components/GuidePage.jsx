@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { findRoute } from '../routes'
+import LastUpdated from './LastUpdated'
 import RelatedCalculators from './RelatedCalculators'
 import TextPage from './TextPage'
 
@@ -8,19 +9,16 @@ import TextPage from './TextPage'
  * introduction, the date it was last updated, the guide itself, then the
  * calculators it relates to.
  *
- * updated is the date as shown ("11 October 2026") and updatedIso the same
- * date for machines ("2026-10-11"). Change both by hand when the wording or
- * the figures change.
+ * updated is a 'YYYY-MM-DD' date. Change it by hand when the wording or the
+ * figures change.
  */
-export default function GuidePage({ path, intro, updated, updatedIso, calculators, children }) {
+export default function GuidePage({ path, intro, updated, calculators, children }) {
   return (
     <TextPage>
       <article>
         <h1>{findRoute(path).guide}</h1>
         <p className="lede">{intro}</p>
-        <p className="prose__updated">
-          Last updated: <time dateTime={updatedIso}>{updated}</time>
-        </p>
+        <LastUpdated date={updated} className="prose__updated" />
         {children}
       </article>
 

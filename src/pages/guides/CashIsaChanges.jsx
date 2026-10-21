@@ -4,16 +4,10 @@ import { ISA } from '../../lib/rates/isa'
 import { SELF_EMPLOYED } from '../../lib/rates/selfEmployed'
 import { TAX_YEAR, TAX_YEAR_END } from '../../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../../lib/format'
+import Source from '../../components/Source'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '11 October 2026'
-const LAST_UPDATED_ISO = '2026-10-11'
-
-const Source = ({ href, children }) => (
-  <a href={href} target="_blank" rel="noreferrer">
-    {children}
-  </a>
-)
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-11'
 
 export default function CashIsaChanges() {
   const { overallAllowance, lisaLimit, cashLimitChangeDate } = ISA
@@ -30,7 +24,6 @@ export default function CashIsaChanges() {
     <GuidePage
       path="/guides/cash-isa-changes-april-2027"
       updated={LAST_UPDATED}
-      updatedIso={LAST_UPDATED_ISO}
       calculators={['/isa-calculator', '/mortgage-overpayment-calculator', '/salary-calculator']}
       intro={
         <>

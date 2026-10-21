@@ -12,16 +12,10 @@ import {
   savingsInterestAfterTax,
   TAX_BANDS,
 } from '../../lib/overpayOrSave'
+import Source from '../../components/Source'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '20 October 2026'
-const LAST_UPDATED_ISO = '2026-10-20'
-
-const Source = ({ href, children }) => (
-  <a href={href} target="_blank" rel="noreferrer">
-    {children}
-  </a>
-)
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-20'
 
 // "4.5" rather than "4.50", for rates worked out here.
 const rate = (value) => `${Math.round(value * 100) / 100}%`
@@ -66,7 +60,6 @@ export default function OverpayOrSave() {
     <GuidePage
       path="/guides/overpay-mortgage-or-save"
       updated={LAST_UPDATED}
-      updatedIso={LAST_UPDATED_ISO}
       calculators={[
         '/mortgage-overpayment-calculator',
         '/isa-calculator',

@@ -6,10 +6,10 @@ import {
   studentLoanWorking,
 } from '../lib/studentLoans'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '8 October 2026'
-const LAST_UPDATED_ISO = '2026-10-08'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-08'
 
 export default function StudentLoanGuide() {
   const { plan1, plan2, plan4, plan5, postgraduate } = STUDENT_LOAN
@@ -34,11 +34,10 @@ export default function StudentLoanGuide() {
   const ex3Result = calculateStudentLoanRepayment({ grossAnnual: 40000, plan: 'plan5' })
 
   return (
-    <article className="guide">
-      <h2>How student loan repayments work in {TAX_YEAR}</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide
+      heading={<>How student loan repayments work in {TAX_YEAR}</>}
+      updated={LAST_UPDATED}
+    >
       <p>
         You repay a student loan out of your pay once you earn more than a threshold. What you repay
         depends on your income, not on how much you owe. Bonuses and overtime count as income.
@@ -195,6 +194,6 @@ export default function StudentLoanGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

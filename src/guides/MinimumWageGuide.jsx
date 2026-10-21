@@ -1,10 +1,10 @@
 import { checkMinimumWage } from '../lib/minimumWage'
 import { MINIMUM_WAGE } from '../lib/rates/minimumWage'
 import { formatGBP as gbp, formatGBPPence as gbpPence } from '../lib/format'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '8 October 2026'
-const LAST_UPDATED_ISO = '2026-10-08'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-08'
 
 export default function MinimumWageGuide() {
   const { effectiveFrom, nationalLivingWage, age18to20, under18, apprentice, minAge } = MINIMUM_WAGE
@@ -29,11 +29,10 @@ export default function MinimumWageGuide() {
   const ex3Hourly = ex3Pay / ex3WorkedHours
 
   return (
-    <article className="guide">
-      <h2>How the minimum wage works from April {year}</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide
+      heading={<>How the minimum wage works from April {year}</>}
+      updated={LAST_UPDATED}
+    >
       <p>
         Almost every worker in the UK must be paid at least a minimum hourly rate. The rate depends
         on your age and whether you are an apprentice. It applies however you are paid, including by
@@ -170,6 +169,6 @@ export default function MinimumWageGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

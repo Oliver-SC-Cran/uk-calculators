@@ -10,7 +10,7 @@ import { MORTGAGE } from './rates/mortgage.js'
 const PAID_OFF = 0.005
 
 /** The standard monthly payment on a repayment mortgage. */
-export function standardMonthlyPayment(balance, monthlyRate, months) {
+function standardMonthlyPayment(balance, monthlyRate, months) {
   if (monthlyRate === 0) return balance / months
   const growth = Math.pow(1 + monthlyRate, months)
   return (balance * monthlyRate * growth) / (growth - 1)

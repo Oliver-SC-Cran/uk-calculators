@@ -1,10 +1,10 @@
 import { STAMP_DUTY } from '../lib/rates/stampDuty'
 import { calculateStampDuty } from '../lib/stampDuty'
 import { formatGBP as gbp, percent } from '../lib/format'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '9 October 2026'
-const LAST_UPDATED_ISO = '2026-10-09'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-09'
 
 export default function StampDutyGuide() {
   const { bands, firstTimeBuyer, ratesFrom } = STAMP_DUTY
@@ -32,11 +32,10 @@ export default function StampDutyGuide() {
   })
 
   return (
-    <article className="guide">
-      <h2>How stamp duty works in England and Northern Ireland</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide
+      heading={<>How stamp duty works in England and Northern Ireland</>}
+      updated={LAST_UPDATED}
+    >
       <p>
         Stamp Duty Land Tax (SDLT) is a tax on buying property or land. It is charged in slices, so
         each rate only applies to the part of the price inside that band. These rates have applied
@@ -195,6 +194,6 @@ export default function StampDutyGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

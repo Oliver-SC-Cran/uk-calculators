@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
-import { Checkbox, NumberField, SelectField, Steps } from '../components/Fields'
+import { NumberField, SelectField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import RegionField from '../components/RegionField'
+import { incomeTaxLabel, REST_OF_UK_NOTE } from '../components/regionText'
 import ResultPanel from '../components/ResultPanel'
+import StudentLoanPlanField from '../components/StudentLoanPlanField'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import PayRiseGuide from '../guides/PayRiseGuide'
 import {
@@ -16,13 +18,7 @@ import { FULL_TIME_HOURS, MINIMUM_WAGE } from '../lib/rates/minimumWage'
 import { STUDENT_LOAN } from '../lib/rates/studentLoans'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, formatGBPPence, percent } from '../lib/format'
-import { calculatePayRise, PENSION_TYPES } from '../lib/payRise'
-
-function newSalaryFrom(current, riseType, riseAmount) {
-  if (riseType === 'percent') return current * (1 + riseAmount / 100)
-  if (riseType === 'pounds') return current + riseAmount
-  return riseAmount
-}
+import { calculatePayRise, newSalaryFrom, PENSION_TYPES, riseEnteredAs } from '../lib/payRise'
 
 // The label and hint for the rise, for each way of entering it.
 const riseFields = {
@@ -161,15 +157,8 @@ export default function PayRiseCalculator() {
   // Keep the same rise when switching how it is entered, so a new salary of
   // £55,000 does not turn into a rise of 55,000%.
   const changeRiseType = (type) => {
-    // Whole pounds for amounts, and enough decimal places on a percentage
-    // that switching back gives the same number of pounds.
-    const amounts = {
-      newSalary: Math.round(next),
-      percent: current > 0 ? Number((((next - current) / current) * 100).toFixed(4)) : 0,
-      pounds: Math.round(next - current),
-    }
     setRiseType(type)
-    rise.setText(String(amounts[type]))
+    rise.setText(String(riseEnteredAs(type, current, next)))
   }
 
   // The hours only matter for salary sacrifice. When that step is hidden, a
@@ -232,23 +221,12 @@ export default function PayRiseCalculator() {
               decimal={riseType === 'percent'}
               field={rise}
             />
-            <SelectField
-              id="plan"
-              label="Your student loan plan"
-              value={plan}
-              onChange={setPlan}
-              below={
-                <Checkbox checked={hasPostgraduateLoan} onChange={setHasPostgraduateLoan}>
-                  I also have a Postgraduate Loan (Master's or Doctoral)
-                </Checkbox>
-              }
-            >
-              <option value="none">No undergraduate loan</option>
-              <option value="plan1">Plan 1</option>
-              <option value="plan2">Plan 2</option>
-              <option value="plan4">Plan 4 (Scotland)</option>
-              <option value="plan5">Plan 5</option>
-            </SelectField>
+            <StudentLoanPlanField
+              plan={plan}
+              onPlanChange={setPlan}
+              hasPostgraduateLoan={hasPostgraduateLoan}
+              onPostgraduateChange={setHasPostgraduateLoan}
+            />
             <NumberField
               id="pension-percent"
               hint="The percentage of your salary that goes in. Leave it blank if you do not pay into a pension."
@@ -285,7 +263,7 @@ export default function PayRiseCalculator() {
           <Notice>
             {scottish
               ? 'This uses Scottish income tax rates. National Insurance and student loans are the same across the UK.'
-              : 'This uses the income tax rates for England, Wales and Northern Ireland. Scotland has its own, so choose Scotland above if your main home is there.'}{' '}
+              : REST_OF_UK_NOTE}{' '}
             Your pension is worked out as a percentage of your full salary, and money your employer
             pays in is left out because it does not change your take-home pay.
           </Notice>
@@ -308,7 +286,7 @@ export default function PayRiseCalculator() {
               <caption>Where the {formatGBP(result.rise)} goes each year</caption>
               <tbody>
                 <tr>
-                  <th scope="row">{scottish ? 'Scottish income tax' : 'Income tax'}</th>
+                  <th scope="row">{incomeTaxLabel(scottish)}</th>
                   <td>{formatGBP(goesTo.incomeTax)}</td>
                 </tr>
                 <tr>

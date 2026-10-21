@@ -8,7 +8,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { projectLifetimeIsa, withdrawalFor } from './lifetimeIsa.js'
+import { contributionAs, projectLifetimeIsa, withdrawalFor } from './lifetimeIsa.js'
 
 const near = (actual, expected, message) =>
   assert.ok(
@@ -195,4 +195,12 @@ test('Lifetime ISA [own working] the worked examples in the guide', () => {
   const later = { age: 25, contribution: 4000, frequency: 'yearly', goal: 'retirement' }
   assert.deepEqual(pounds({ ...later, growthPercent: 4 }), [100000, 25000, 195560, 320560])
   assert.deepEqual(pounds({ ...later, growthPercent: 0 }), [100000, 25000, 0, 125000])
+})
+
+test('Lifetime ISA [own working] switching between monthly and yearly keeps the same amount', () => {
+  assert.equal(contributionAs('yearly', 200), 2400)
+  assert.equal(contributionAs('monthly', 2400), 200)
+  // £4,000 a year is £333.33 a month, to the penny.
+  assert.equal(contributionAs('monthly', 4000), 333.33)
+  assert.equal(contributionAs('yearly', 333.34), 4000.08)
 })

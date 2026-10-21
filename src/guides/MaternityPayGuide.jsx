@@ -5,10 +5,10 @@ import {
   calculateMaternityPay,
   calculatePaternityPay,
 } from '../lib/parentalPay'
+import CalculatorGuide from '../components/CalculatorGuide'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '10 October 2026'
-const LAST_UPDATED_ISO = '2026-10-10'
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-10'
 
 const EXAMPLE_DUE_DATE = '2027-03-01'
 
@@ -35,11 +35,10 @@ export default function MaternityPayGuide() {
   })
 
   return (
-    <article className="guide">
-      <h2>How statutory maternity and paternity pay work</h2>
-      <p className="guide__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+    <CalculatorGuide
+      heading={<>How statutory maternity and paternity pay work</>}
+      updated={LAST_UPDATED}
+    >
       <p>
         Statutory Maternity Pay (SMP) and Statutory Paternity Pay (SPP) are the legal minimum your
         employer must pay while you are off. These are the rates from {ratesFrom}. Tax and National
@@ -180,6 +179,6 @@ export default function MaternityPayGuide() {
         </a>
         .
       </p>
-    </article>
+    </CalculatorGuide>
   )
 }

@@ -6,16 +6,10 @@ import { STUDENT_LOAN } from '../../lib/rates/studentLoans'
 import { TAX_YEAR } from '../../lib/rates/taxYear'
 import { formatGBP as gbp, formatGBPPence, percent } from '../../lib/format'
 import { calculatePayPackage, calculatePayRise } from '../../lib/payRise'
+import Source from '../../components/Source'
 
-// Change these by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '11 October 2026'
-const LAST_UPDATED_ISO = '2026-10-11'
-
-const Source = ({ href, children }) => (
-  <a href={href} target="_blank" rel="noreferrer">
-    {children}
-  </a>
-)
+// Change this by hand whenever the wording or the figures in this guide change.
+const LAST_UPDATED = '2026-10-11'
 
 export default function TaxTrap() {
   const { personalAllowance, taperStart, taperFullyGoneAt } = INCOME_TAX
@@ -24,7 +18,7 @@ export default function TaxTrap() {
 
   // Each extra £100 is taxed at the higher rate and also removes £50 of
   // allowance, which is then taxed at the higher rate too.
-  const lostAllowancePer100 = 50
+  const lostAllowancePer100 = 100 * INCOME_TAX.taperAllowanceLostPerPound
   const taxPer100 = 100 * higherRate
   const extraTaxPer100 = lostAllowancePer100 * higherRate
   const taperRate = (taxPer100 + extraTaxPer100) / 100
@@ -61,7 +55,6 @@ export default function TaxTrap() {
     <GuidePage
       path="/guides/100k-tax-trap"
       updated={LAST_UPDATED}
-      updatedIso={LAST_UPDATED_ISO}
       calculators={['/pay-rise-calculator', '/salary-calculator', '/self-employed-tax-calculator']}
       intro={
         <>

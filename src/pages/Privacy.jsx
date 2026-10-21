@@ -1,18 +1,16 @@
 import TextPage from '../components/TextPage'
 import { Link } from 'react-router-dom'
 import { CONTACT_EMAIL, OWNER_NAME } from '../routes'
+import LastUpdated from '../components/LastUpdated'
 
 // Change this by hand whenever the policy changes.
-const LAST_UPDATED = '11 October 2026'
-const LAST_UPDATED_ISO = '2026-10-11'
+const LAST_UPDATED = '2026-10-11'
 
 export default function Privacy() {
   return (
     <TextPage>
       <h1>Privacy policy</h1>
-      <p className="prose__updated">
-        Last updated: <time dateTime={LAST_UPDATED_ISO}>{LAST_UPDATED}</time>
-      </p>
+      <LastUpdated date={LAST_UPDATED} className="prose__updated" />
 
       <h2>Who runs this site</h2>
       <p>

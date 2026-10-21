@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
-import { Checkbox, NumberField, SelectField, Steps } from '../components/Fields'
+import { NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
+import StudentLoanPlanField from '../components/StudentLoanPlanField'
 import { useNumberField } from '../components/useNumberField'
 import StudentLoanGuide from '../guides/StudentLoanGuide'
 import { TAX_YEAR } from '../lib/rates/taxYear'
@@ -27,24 +28,13 @@ export default function StudentLoanCalculator() {
         <>
           <Steps>
             <NumberField id="salary" hint="For a year, before tax." before="£" field={salary} />
-            <SelectField
-              id="plan"
-              label="Your student loan plan"
+            <StudentLoanPlanField
               hint="Choose 'No undergraduate loan' if you only have a Postgraduate Loan."
-              value={plan}
-              onChange={setPlan}
-              below={
-                <Checkbox checked={hasPostgraduateLoan} onChange={setHasPostgraduateLoan}>
-                  I also have a Postgraduate Loan (Master's or Doctoral)
-                </Checkbox>
-              }
-            >
-              <option value="none">No undergraduate loan</option>
-              <option value="plan1">Plan 1</option>
-              <option value="plan2">Plan 2</option>
-              <option value="plan4">Plan 4 (Scotland)</option>
-              <option value="plan5">Plan 5</option>
-            </SelectField>
+              plan={plan}
+              onPlanChange={setPlan}
+              hasPostgraduateLoan={hasPostgraduateLoan}
+              onPostgraduateChange={setHasPostgraduateLoan}
+            />
           </Steps>
 
           <Notice>

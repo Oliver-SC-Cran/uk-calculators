@@ -11,9 +11,12 @@ import { forTaxYear } from './rates/taxYear.js'
  * income above the taper start (£100,000), until it reaches £0.
  */
 export function taperedPersonalAllowance(grossAnnual, { taxYear } = {}) {
-  const { personalAllowance, taperStart } = forTaxYear(INCOME_TAX_RATES, taxYear).incomeTax
+  const { personalAllowance, taperStart, taperAllowanceLostPerPound } = forTaxYear(
+    INCOME_TAX_RATES,
+    taxYear,
+  ).incomeTax
   if (grossAnnual <= taperStart) return personalAllowance
-  const reduction = Math.floor((grossAnnual - taperStart) / 2)
+  const reduction = Math.floor((grossAnnual - taperStart) * taperAllowanceLostPerPound)
   return Math.max(0, personalAllowance - reduction)
 }
 

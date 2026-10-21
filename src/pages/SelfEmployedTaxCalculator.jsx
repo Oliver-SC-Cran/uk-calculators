@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import CalculatorPage from '../components/CalculatorPage'
-import { Checkbox, CheckboxField, NumberField, SelectField, Steps } from '../components/Fields'
+import { CheckboxField, NumberField, Steps } from '../components/Fields'
 import Notice from '../components/Notice'
 import RegionField from '../components/RegionField'
+import { incomeTaxLabel, REST_OF_UK_NOTE } from '../components/regionText'
 import ResultPanel from '../components/ResultPanel'
+import StudentLoanPlanField from '../components/StudentLoanPlanField'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import SelfEmployedTaxGuide from '../guides/SelfEmployedTaxGuide'
 import { SCOTTISH_INCOME_TAX } from '../lib/rates/incomeTax'
@@ -88,29 +90,18 @@ export default function SelfEmployedTaxCalculator() {
               optional
               field={job}
             />
-            <SelectField
-              id="plan"
-              label="Your student loan plan"
-              value={plan}
-              onChange={setPlan}
-              below={
-                <Checkbox checked={hasPostgraduateLoan} onChange={setHasPostgraduateLoan}>
-                  I also have a Postgraduate Loan (Master's or Doctoral)
-                </Checkbox>
-              }
-            >
-              <option value="none">No undergraduate loan</option>
-              <option value="plan1">Plan 1</option>
-              <option value="plan2">Plan 2</option>
-              <option value="plan4">Plan 4 (Scotland)</option>
-              <option value="plan5">Plan 5</option>
-            </SelectField>
+            <StudentLoanPlanField
+              plan={plan}
+              onPlanChange={setPlan}
+              hasPostgraduateLoan={hasPostgraduateLoan}
+              onPostgraduateChange={setHasPostgraduateLoan}
+            />
           </Steps>
 
           <Notice>
             {scottish
               ? 'This uses Scottish income tax rates. Class 4 National Insurance and student loans are the same across the UK.'
-              : 'This uses the income tax rates for England, Wales and Northern Ireland. Scotland has its own, so choose Scotland above if your main home is there.'}{' '}
+              : REST_OF_UK_NOTE}{' '}
             It is for sole traders, assumes your salary is taxed through PAYE on a standard tax
             code, and does not cover losses, pension contributions or other income such as savings
             interest or rent.
@@ -134,7 +125,7 @@ export default function SelfEmployedTaxCalculator() {
               <caption>What you owe on your profit</caption>
               <tbody>
                 <tr>
-                  <th scope="row">{scottish ? 'Scottish income tax' : 'Income tax'}</th>
+                  <th scope="row">{incomeTaxLabel(scottish)}</th>
                   <td>{formatGBP(result.incomeTax)}</td>
                 </tr>
                 <tr>

@@ -110,6 +110,29 @@ export function calculatePayPackage({
   }
 }
 
+/**
+ * The new salary from a rise entered one of three ways: as the new salary
+ * itself ('newSalary'), as a percentage ('percent') or in pounds ('pounds').
+ */
+export function newSalaryFrom(current, riseType, riseAmount) {
+  if (riseType === 'percent') return current * (1 + riseAmount / 100)
+  if (riseType === 'pounds') return current + riseAmount
+  return riseAmount
+}
+
+/**
+ * The same rise written another way, for when someone switches how they enter
+ * it. Whole pounds for amounts, and enough decimal places on a percentage that
+ * switching back gives the same number of pounds.
+ */
+export function riseEnteredAs(riseType, current, next) {
+  if (riseType === 'percent') {
+    return current > 0 ? Number((((next - current) / current) * 100).toFixed(4)) : 0
+  }
+  if (riseType === 'pounds') return Math.round(next - current)
+  return Math.round(next)
+}
+
 const crosses = (before, after, threshold) => before <= threshold && after > threshold
 
 /**
