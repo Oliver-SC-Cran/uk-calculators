@@ -19,6 +19,23 @@ export const INCOME_TAX_RATES = {
       basicRate: 0.2,
       higherRate: 0.4,
       additionalRate: 0.45,
+      // Payroll can take no more than half of someone's pay in tax on any pay
+      // day. gov.uk states it for K codes, and HMRC's employer guide says it
+      // applies to every tax code. Only a K code can reach it.
+      // Sources: https://www.gov.uk/tax-codes/k-in-your-tax-code
+      //          https://www.gov.uk/government/publications/cwg2-further-guide-to-paye-and-national-insurance-contributions/2026-to-2027-employer-further-guide-to-paye-and-national-insurance-contributions
+      maxShareOfPayTaken: 0.5,
+    },
+
+    // The Welsh rates of income tax, paid by people whose main home is in
+    // Wales. Their tax code starts with C. The bands and the Personal
+    // Allowance are the same as in England and Northern Ireland, and in
+    // 2026/27 the rates are too.
+    // Source: https://www.gov.uk/welsh-income-tax
+    welshIncomeTax: {
+      basicRate: 0.2,
+      higherRate: 0.4,
+      additionalRate: 0.45,
     },
 
     // Scottish income tax, paid by people whose main home is in Scotland on
@@ -49,6 +66,13 @@ export const INCOME_TAX_RATES = {
       upperEarningsLimit: 50270, // NI rate drops from 8% to 2% above here
       mainRate: 0.08,
       upperRate: 0.02,
+      // Payroll works NI out on each pay day on its own, with these thresholds
+      // for the pay period, not the yearly ones.
+      // Source: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027
+      byPayPeriod: {
+        weekly: { primaryThreshold: 242, upperEarningsLimit: 967 },
+        monthly: { primaryThreshold: 1048, upperEarningsLimit: 4189 },
+      },
     },
 
     // Tax on savings interest. Interest above the allowances is taxed at the
@@ -99,6 +123,7 @@ export const INCOME_TAX_RATES = {
 const current = forTaxYear(INCOME_TAX_RATES)
 export const INCOME_TAX = current.incomeTax
 export const SCOTTISH_INCOME_TAX = current.scottishIncomeTax
+export const WELSH_INCOME_TAX = current.welshIncomeTax
 export const NATIONAL_INSURANCE = current.nationalInsurance
 export const SAVINGS_TAX = current.savingsTax
 export const CHILD_BENEFIT_CHARGE = current.childBenefitCharge

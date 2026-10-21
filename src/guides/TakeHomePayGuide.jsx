@@ -1,12 +1,18 @@
-import { calculateTakeHome, taperedPersonalAllowance } from '../lib/incomeTax'
+import { taperedPersonalAllowance } from '../lib/incomeTax'
 import { INCOME_TAX, NATIONAL_INSURANCE, SCOTTISH_INCOME_TAX } from '../lib/rates/incomeTax'
 import { TAX_YEAR, TAX_YEAR_END, TAX_YEAR_START } from '../lib/rates/taxYear'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 import CalculatorGuide from '../components/CalculatorGuide'
+import Source from '../components/Source'
+import { calculateTakeHomePay } from '../lib/takeHome'
 import { taxCodeFor } from '../lib/taxCode'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-11'
+const LAST_UPDATED = '2026-10-21'
+
+// The calculator's own sums, for someone paid monthly with no tax code,
+// pension or student loan, so the examples match what the calculator shows.
+const takeHome = (pay, scottish = false) => calculateTakeHomePay({ pay, scottish })
 
 export default function TakeHomePayGuide() {
   const {
@@ -33,18 +39,28 @@ export default function TakeHomePayGuide() {
   const taperTotalTaxPer100 = taperTaxPer100 + taperExtraTaxPer100
   const taperKeptPer100 = 100 - taperTotalTaxPer100 - 100 * upperRate
 
-  const on25k = calculateTakeHome(25000)
-  const on30k = calculateTakeHome(30000)
-  const on35k = calculateTakeHome(35000)
-  const on60k = calculateTakeHome(60000)
+  const monthly = NATIONAL_INSURANCE.byPayPeriod.monthly
+  const weekly = NATIONAL_INSURANCE.byPayPeriod.weekly
+
+  const on25k = takeHome(25000)
+  const on30k = takeHome(30000)
+  const on35k = takeHome(35000)
+  const on60k = takeHome(60000)
   const over60k = 60000 - basicRateLimit
+
+  // gov.uk's own example of a reduced code: medical insurance worth £1,570.
+  const benefit = 1570
+  const reducedCode = taxCodeFor(personalAllowance - benefit)
+
+  // A bonus on £35,000, paid monthly.
+  const bonusExample = calculateTakeHomePay({ pay: 35000, bonus: 5000 }).bonus
 
   // Scotland: the same allowance and National Insurance, with its own tax bands.
   const scotland = SCOTTISH_INCOME_TAX
-  const scotOn30k = calculateTakeHome(30000, { scottish: true })
-  const scotOn35k = calculateTakeHome(35000, { scottish: true })
-  const scotOn47k = calculateTakeHome(47000, { scottish: true })
-  const on47k = calculateTakeHome(47000)
+  const scotOn30k = takeHome(30000, true)
+  const scotOn35k = takeHome(35000, true)
+  const scotOn47k = takeHome(47000, true)
+  const on47k = takeHome(47000)
   const scotStarterBand = scotland.starterRateLimit - personalAllowance
   const scotBasicBand = scotland.basicRateLimit - scotland.starterRateLimit
   const scot35kAtIntermediate = 35000 - scotland.basicRateLimit
@@ -92,10 +108,13 @@ export default function TakeHomePayGuide() {
       <h3>National Insurance</h3>
       <p>
         Employees pay NI at {percent(mainRate)} on earnings between {gbp(primaryThreshold)} and{' '}
-        {gbp(upperEarningsLimit)} a year, and {percent(upperRate)} on anything above that. NI is
-        worked out on each payslip, not over the whole year. If your pay changes from month to
-        month, the total can differ a little from an annual estimate. You stop paying NI when you
-        reach State Pension age.
+        {gbp(upperEarningsLimit)} a year, and {percent(upperRate)} on anything above that. Payroll
+        works NI out on each payday on its own, with thresholds for the pay period:{' '}
+        {gbp(monthly.primaryThreshold)} and {gbp(monthly.upperEarningsLimit)} a month, or{' '}
+        {gbp(weekly.primaryThreshold)} and {gbp(weekly.upperEarningsLimit)} a week. Those are
+        rounded to the pound, so a year of monthly NI can differ by a few pence from a sum on the
+        yearly figures. If your pay changes from month to month, the difference can be larger. You
+        stop paying NI when you reach State Pension age.
       </p>
 
       <h3>The personal allowance taper above {gbp(taperStart)}</h3>
@@ -116,8 +135,9 @@ export default function TakeHomePayGuide() {
 
       <h2>Worked examples</h2>
       <p>
-        Each example assumes one job, the standard personal allowance, no pension contributions and
-        no student loan. Figures are rounded to the nearest pound.
+        Each example assumes one job paid monthly, the standard personal allowance, no pension
+        contributions and no student loan. NI is worked out month by month, as payroll does it.
+        Figures are rounded to the nearest pound.
       </p>
 
       <h3>{gbp(25000)} a year</h3>
@@ -143,8 +163,9 @@ export default function TakeHomePayGuide() {
         {gbp(basicBand * basicRate)}. You pay {percent(higherRate)} on the {gbp(over60k)} above{' '}
         {gbp(basicRateLimit)}, which is {gbp(over60k * higherRate)}. Income tax comes to{' '}
         {gbp(on60k.incomeTax)}. NI is {percent(mainRate)} on the first slice and{' '}
-        {percent(upperRate)} on the second, {gbp(on60k.nationalInsurance)} in total. Take-home pay
-        is {gbp(on60k.takeHomeAnnual)} a year, or about {gbp(on60k.takeHomeMonthly)} a month.
+        {percent(upperRate)} on the second. Worked out each month with the monthly thresholds, that
+        comes to {gbp(on60k.nationalInsurance)} for the year. Take-home pay is{' '}
+        {gbp(on60k.takeHomeAnnual)} a year, or about {gbp(on60k.takeHomeMonthly)} a month.
       </p>
 
       <h2>If you pay Scottish income tax</h2>
@@ -223,6 +244,88 @@ export default function TakeHomePayGuide() {
         or about {gbp(scotOn47k.takeHomeMonthly)} a month.
       </p>
 
+      <h2>Tax codes</h2>
+      <p>
+        Your tax code tells your employer how much of your pay from that job is tax-free. The number
+        is the tax-free amount without its last digit, so {standardTaxCode} means{' '}
+        {gbp(personalAllowance)}. HMRC starts from your Personal Allowance and takes off income you
+        have not paid tax on, and deductions such as company benefits. In gov.uk's example, medical
+        insurance from an employer worth {gbp(benefit)} leaves {gbp(personalAllowance - benefit)}{' '}
+        tax-free, which is code {reducedCode}.
+      </p>
+      <ul>
+        <li>
+          L means the standard Personal Allowance. M and N mean Marriage Allowance: you get, or
+          give, 10% of a partner's allowance. T means HMRC used other calculations to work out your
+          allowance.
+        </li>
+        <li>
+          0T means no tax-free pay, because your allowance is used up or your employer does not have
+          the details to give you a code.
+        </li>
+        <li>
+          BR, D0 and D1 tax all pay from the job at the basic, higher or additional rate. They are
+          usually for a second job or pension. NT means no tax is taken.
+        </li>
+        <li>
+          K means you have income or deductions that are not taxed elsewhere and come to more than
+          your allowance, such as a company benefit or tax owed from an earlier year. The amount is
+          added to your pay instead. Your employer cannot take more than half your pay before tax in
+          tax.
+        </li>
+        <li>
+          S at the start means Scottish rates, and C the Welsh rates of income tax. Scotland has its
+          own one-rate codes, SBR and SD0 to SD3. Wales has CBR, CD0 and CD1. In {TAX_YEAR} the
+          Welsh rates are the same as in England and Northern Ireland.
+        </li>
+      </ul>
+      <p>
+        A code ending in W1, M1 or X is an emergency code. Tax is then worked out on each week's or
+        month's pay on its own, not on your pay so far in the tax year. The calculator works it out
+        over the whole year, which comes to the same when your pay is the same every time.
+      </p>
+      <p>
+        Payroll uses your code as it is. If your income goes over {gbp(taperStart)} and your code
+        does not allow for the smaller allowance, you will owe more tax for the year than payroll
+        takes.
+      </p>
+
+      <h2>Bonuses</h2>
+      <p>
+        A bonus is taxed as part of your pay on the day it is paid. Income tax is worked out on your
+        pay so far in the tax year, so over the year a bonus is taxed at your top rate, or rates if
+        it crosses a band. NI is worked out on each pay period on its own. In the month a bonus is
+        paid, more of your pay can be above the upper limit of {gbp(monthly.upperEarningsLimit)},
+        where NI is {percent(upperRate)} instead of {percent(mainRate)}. Student loan repayments are
+        worked out on each payday too, so the month of a bonus has a larger one.
+      </p>
+      <p>
+        On a salary of {gbp(35000)} paid monthly, a {gbp(5000)} bonus has{' '}
+        {gbp(bonusExample.incomeTax)} of income tax and {gbp(bonusExample.nationalInsurance)} of NI
+        taken from it, not the {gbp(5000 * mainRate)} that {percent(mainRate)} would be. You keep{' '}
+        {gbp(bonusExample.kept)}.
+      </p>
+
+      <h2>Pensions</h2>
+      <p>The calculator offers the three ways a workplace pension can be taken from pay.</p>
+      <ul>
+        <li>
+          Salary sacrifice: you agree to lower cash pay, and your employer pays the difference into
+          your pension. Tax and NI are worked out on the lower pay. It cannot take your pay below
+          the National Minimum Wage.
+        </li>
+        <li>
+          Net pay arrangement: your employer takes the contribution from your pay before income tax.
+          NI is still worked out on your full pay.
+        </li>
+        <li>
+          Relief at source: the contribution comes from your pay after tax, and your pension
+          provider claims {percent(basicRate)} from the government and adds it to your pot. If you
+          pay {percent(higherRate)} or {percent(additionalRate)} tax, you can claim more on a Self
+          Assessment tax return.
+        </li>
+      </ul>
+
       <h2>Common questions</h2>
 
       <h3>
@@ -245,9 +348,9 @@ export default function TakeHomePayGuide() {
 
       <h3>Why is my payslip different from this calculator?</h3>
       <p>
-        The usual reasons are pension contributions, student loan repayments, a tax code other than{' '}
-        {standardTaxCode}, taxable benefits such as a company car, or starting the job part way
-        through the tax year.
+        Check that you entered your tax code, pension and student loan. Other common reasons are pay
+        that changes from month to month, starting the job part way through the tax year, or an
+        emergency tax code.
       </p>
 
       <h3>Is income tax different in Scotland?</h3>
@@ -284,6 +387,30 @@ export default function TakeHomePayGuide() {
         >
           rates and bands for {TAX_YEAR}
         </a>
+        .
+      </p>
+      <p>
+        On tax codes, see{' '}
+        <Source href="https://www.gov.uk/tax-codes/what-your-tax-code-means">
+          what your tax code means
+        </Source>
+        ,{' '}
+        <Source href="https://www.gov.uk/tax-codes/emergency-tax-codes">emergency tax codes</Source>{' '}
+        and <Source href="https://www.gov.uk/tax-codes/k-in-your-tax-code">K tax codes</Source>. The
+        Welsh rates are on{' '}
+        <Source href="https://www.gov.uk/welsh-income-tax">Welsh Income Tax</Source>. The weekly and
+        monthly thresholds are in HMRC's{' '}
+        <Source href="https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027">
+          rates and thresholds for employers
+        </Source>
+        , and pensions are covered by{' '}
+        <Source href="https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief">
+          pension tax relief
+        </Source>{' '}
+        and{' '}
+        <Source href="https://www.gov.uk/guidance/salary-sacrifice-and-the-effects-on-paye">
+          salary sacrifice and the effects on PAYE
+        </Source>
         .
       </p>
     </CalculatorGuide>

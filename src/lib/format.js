@@ -25,6 +25,78 @@ export const formatGBPPence = (value) => withMinusSign(poundsAndPence.format(val
 /** 0.09 becomes 9%, 0.045 becomes 4.5% */
 export const percent = (rate) => `${Math.round(rate * 1000) / 10}%`
 
+/**
+ * An amount taken off pay, with a minus sign: −£4,486, or −£149.49 with
+ * pence. An amount that rounds to nothing shows as £0, never as −£0.
+ */
+export function formatDeduction(value, { pence = false } = {}) {
+  const shown = pence ? Math.round(value * 100) / 100 : Math.round(value)
+  const format = pence ? formatGBPPence : formatGBP
+  return shown > 0 ? format(-shown) : format(0)
+}
+
+/** 1950 becomes "1,950" and 37.5 stays "37.5". */
+export const formatNumber = (value) => value.toLocaleString('en-GB', { maximumFractionDigits: 2 })
+
+const UNIT_WORDS = {
+  weeks: ['week', 'weeks'],
+  months: ['month', 'months'],
+  years: ['year', 'years'],
+}
+
+/**
+ * One amount from a calculation's working (working.js), shown the way its
+ * unit says: 'gbp', 'gbpPence', 'percent', 'weeks', 'months', 'years',
+ * 'number' or 'yesNo'.
+ */
+export function formatAmount(value, unit = 'gbp') {
+  if (unit === 'gbpPence') return formatGBPPence(value)
+  if (unit === 'percent') return percent(value)
+  if (unit === 'number') return formatNumber(value)
+  if (unit === 'yesNo') return value ? 'Yes' : 'No'
+  if (UNIT_WORDS[unit]) {
+    const [one, many] = UNIT_WORDS[unit]
+    return `${formatNumber(value)} ${value === 1 ? one : many}`
+  }
+  return formatGBP(value)
+}
+
+/**
+ * Puts thousands commas into a number as it is typed: '35000' becomes
+ * '35,000' and '1234567.5' becomes '1,234,567.5'. Text that is not a plain
+ * number, such as '-5' or '12a', is left as it is, so the field can say what
+ * is wrong with it.
+ */
+export function groupDigits(text) {
+  const typed = String(text ?? '')
+  const match = /^(\s*£?\s*)([\d,]*)(\.\d*)?(\s*)$/.exec(typed)
+  if (!match) return typed
+  const [, before, whole, decimals = '', after] = match
+  const digits = whole.replace(/,/g, '')
+  // A number written with leading zeros, such as 007, is left alone.
+  if (digits.length > 1 && digits.startsWith('0')) return typed
+  return before + digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + decimals + after
+}
+
+/**
+ * Where the caret goes once groupDigits has changed what was typed: after the
+ * same number of digits (and decimal point) as it was after before.
+ */
+export function caretAfterGrouping(grouped, typed, caret) {
+  const isDigit = (character) => /[\d.]/.test(character)
+  const wanted = [...typed.slice(0, caret)].filter(isDigit).length
+  if (wanted === 0) {
+    const first = [...grouped].findIndex(isDigit)
+    return first === -1 ? grouped.length : first
+  }
+  let seen = 0
+  for (let index = 0; index < grouped.length; index += 1) {
+    if (isDigit(grouped[index])) seen += 1
+    if (seen === wanted) return index + 1
+  }
+  return grouped.length
+}
+
 const longDate = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
   month: 'long',

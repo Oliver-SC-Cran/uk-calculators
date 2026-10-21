@@ -8,7 +8,10 @@ import { forTaxYear } from './rates/taxYear.js'
 import { add, info, part, subtract, total } from './working.js'
 
 /** The name of the income tax line, which says which rates were used. */
-export const incomeTaxLabel = (scottish) => (scottish ? 'Scottish income tax' : 'Income tax')
+export function incomeTaxLabel(scottish, welsh = false) {
+  if (scottish) return 'Scottish income tax'
+  return welsh ? 'Income tax (Welsh rates)' : 'Income tax'
+}
 
 /**
  * Reduces the personal allowance (£12,570 in 2026/27) by £1 for every £2 of
@@ -40,7 +43,7 @@ export function taperedPersonalAllowance(grossAnnual, { taxYear } = {}) {
  * gov.uk's figures for the extra relief: 20% and 25%, or in Scotland 1%, 22%,
  * 25% and 28%. gov.uk publishes the percentages, not this method.
  */
-function incomeTaxBands({ scottish, reliefAtSource, taxYear }) {
+function incomeTaxBands({ scottish, welsh, reliefAtSource, taxYear }) {
   const rates = forTaxYear(INCOME_TAX_RATES, taxYear)
   const { personalAllowance } = rates.incomeTax
   if (scottish) {
@@ -66,7 +69,9 @@ function incomeTaxBands({ scottish, reliefAtSource, taxYear }) {
       { name: 'Top rate', upTo: Infinity, rate: s.topRate },
     ]
   }
-  const { basicRateLimit, higherRateLimit, basicRate, higherRate, additionalRate } = rates.incomeTax
+  // Wales uses the same bands as England and Northern Ireland, with its own rates.
+  const { basicRateLimit, higherRateLimit } = rates.incomeTax
+  const { basicRate, higherRate, additionalRate } = welsh ? rates.welshIncomeTax : rates.incomeTax
   return [
     {
       name: 'Basic rate',
@@ -79,9 +84,15 @@ function incomeTaxBands({ scottish, reliefAtSource, taxYear }) {
 }
 
 /**
- * Income tax for the year. By default this uses the rates for England, Wales
- * and Northern Ireland (20%, 40% and 45%). With scottish, it uses the six
- * Scottish rates. The personal allowance and its taper are the same for both.
+ * Income tax for the year. By default this uses the rates for England and
+ * Northern Ireland (20%, 40% and 45%). With scottish, it uses the six Scottish
+ * rates, and with welsh the Welsh rates, which are the same as England's in
+ * 2026/27. The personal allowance and its taper are the same for all three.
+ *
+ * allowance is the tax-free pay from a tax code, such as 12,570 for 1257L or
+ * -4,750 for K475. When it is given it is used as it is, without the taper,
+ * the way payroll uses a code. When it is left out, the personal allowance is
+ * worked out from income, with the taper.
  *
  * reliefAtSourceGross is the gross amount paid into a relief at source
  * pension (what was paid plus the 20% relief the provider claimed). It raises
@@ -94,18 +105,20 @@ function incomeTaxBands({ scottish, reliefAtSource, taxYear }) {
  */
 export function calculateIncomeTax(
   grossAnnual,
-  { reliefAtSourceGross = 0, scottish = false, taxYear } = {},
+  { reliefAtSourceGross = 0, scottish = false, welsh = false, allowance, taxYear } = {},
 ) {
   const gross = atLeastZero(grossAnnual)
   const reliefAtSource = atLeastZero(reliefAtSourceGross)
-  const pa = taperedPersonalAllowance(gross - reliefAtSource, { taxYear })
+  const pa = Number.isFinite(allowance)
+    ? allowance
+    : taperedPersonalAllowance(gross - reliefAtSource, { taxYear })
   const taxable = Math.max(0, gross - pa)
 
   let tax = 0
   let topRate = 0
   let from = 0
   const bands = []
-  for (const band of incomeTaxBands({ scottish, reliefAtSource, taxYear })) {
+  for (const band of incomeTaxBands({ scottish, welsh, reliefAtSource, taxYear })) {
     const inBand = Math.max(0, Math.min(taxable, band.upTo) - from)
     if (inBand > 0) {
       topRate = band.rate
@@ -115,6 +128,95 @@ export function calculateIncomeTax(
     from = band.upTo
   }
   return { tax, personalAllowanceUsed: pa, topRate, taxableIncome: taxable, bands }
+}
+
+/**
+ * The rate for a tax code that taxes all pay from a job at one rate (BR, D0,
+ * D1 and the Scottish and Welsh ones). band is the name readTaxCode gives it.
+ */
+export function flatRateFor(band, { scottish = false, welsh = false, taxYear } = {}) {
+  const rates = forTaxYear(INCOME_TAX_RATES, taxYear)
+  if (scottish) {
+    const s = rates.scottishIncomeTax
+    const byBand = {
+      basic: s.basicRate,
+      intermediate: s.intermediateRate,
+      higher: s.higherRate,
+      advanced: s.advancedRate,
+      top: s.topRate,
+    }
+    return byBand[band]
+  }
+  const r = welsh ? rates.welshIncomeTax : rates.incomeTax
+  return { basic: r.basicRate, higher: r.higherRate, additional: r.additionalRate }[band]
+}
+
+/**
+ * Income tax for the year on pay from a job with a tax code. code is what
+ * readTaxCode gives. Payroll works tax out on pay so far in the tax year, so
+ * over a whole year it comes to the tax on the year's pay.
+ *
+ * Returns the same as calculateIncomeTax. personalAllowanceUsed is the
+ * tax-free pay from the code (negative for a K code), and flatRate is set for
+ * a code that taxes everything at one rate.
+ */
+export function incomeTaxOnCode(pay, code, { scottish = false, welsh = false, taxYear } = {}) {
+  const gross = atLeastZero(pay)
+  if (code.kind === 'noTax') {
+    return { tax: 0, personalAllowanceUsed: 0, topRate: 0, taxableIncome: 0, bands: [] }
+  }
+  if (code.kind === 'flat') {
+    const rate = flatRateFor(code.band, { scottish, welsh, taxYear })
+    const bands = gross > 0 ? [{ name: 'All your pay', rate, on: gross, tax: gross * rate }] : []
+    return {
+      tax: gross * rate,
+      personalAllowanceUsed: 0,
+      topRate: gross > 0 ? rate : 0,
+      taxableIncome: gross,
+      flatRate: rate,
+      bands,
+    }
+  }
+  return calculateIncomeTax(gross, { allowance: code.allowance, scottish, welsh, taxYear })
+}
+
+/**
+ * Employee National Insurance on one pay day, the way payroll works it out:
+ * on that day's pay on its own, with the thresholds for the pay period.
+ * frequency is 'monthly' or 'weekly'. bands are the slices it was charged on.
+ */
+export function nationalInsuranceForPeriod(periodPay, frequency, { taxYear } = {}) {
+  const pay = atLeastZero(periodPay)
+  const { mainRate, upperRate, byPayPeriod } = forTaxYear(
+    INCOME_TAX_RATES,
+    taxYear,
+  ).nationalInsurance
+  const { primaryThreshold, upperEarningsLimit } = byPayPeriod[frequency]
+  const bands = []
+  if (pay > primaryThreshold) {
+    const on = Math.min(pay, upperEarningsLimit) - primaryThreshold
+    bands.push({
+      name: 'Pay between the primary threshold and the upper earnings limit',
+      rate: mainRate,
+      on,
+      amount: on * mainRate,
+    })
+  }
+  if (pay > upperEarningsLimit) {
+    const on = pay - upperEarningsLimit
+    bands.push({
+      name: 'Pay above the upper earnings limit',
+      rate: upperRate,
+      on,
+      amount: on * upperRate,
+    })
+  }
+  return {
+    ni: bands.reduce((sum, band) => sum + band.amount, 0),
+    primaryThreshold,
+    upperEarningsLimit,
+    bands,
+  }
 }
 
 /**

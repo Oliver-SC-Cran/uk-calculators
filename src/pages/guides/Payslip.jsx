@@ -1,21 +1,21 @@
 import GuidePage from '../../components/GuidePage'
-import { calculateTakeHome } from '../../lib/incomeTax'
 import { INCOME_TAX, NATIONAL_INSURANCE, TAX_CODE_TIMES } from '../../lib/rates/incomeTax'
 import { AUTO_ENROLMENT } from '../../lib/rates/pensions'
 import { STUDENT_LOAN } from '../../lib/rates/studentLoans'
 import { TAX_YEAR } from '../../lib/rates/taxYear'
-import { calculateStudentLoanRepayment, monthlyLoanThreshold } from '../../lib/studentLoans'
+import { monthlyLoanThreshold } from '../../lib/studentLoans'
+import { calculateTakeHomePay } from '../../lib/takeHome'
 import { formatGBP as gbp, formatGBPPence as pence, percent } from '../../lib/format'
 import Source from '../../components/Source'
 import { taxCodeFor } from '../../lib/taxCode'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-20'
+const LAST_UPDATED = '2026-10-21'
 
 export default function Payslip() {
   const { personalAllowance, basicRate, higherRate, additionalRate } = INCOME_TAX
   const { basicRateLimit, higherRateLimit } = INCOME_TAX
-  const { primaryThreshold, upperEarningsLimit, mainRate, upperRate } = NATIONAL_INSURANCE
+  const { mainRate, upperRate } = NATIONAL_INSURANCE
   const plan2 = STUDENT_LOAN.plan2
 
   const standardCode = taxCodeFor(personalAllowance)
@@ -23,23 +23,18 @@ export default function Payslip() {
   const benefit = 1570
   const reducedCode = taxCodeFor(personalAllowance - benefit)
 
-  // gov.uk gives the monthly NI thresholds as £1,048 and £4,189, which are the
-  // yearly ones divided by 12 and rounded to the pound.
-  const monthlyNiStart = Math.round(primaryThreshold / 12)
-  const monthlyNiUpper = Math.round(upperEarningsLimit / 12)
+  // gov.uk gives the monthly NI thresholds as £1,048 and £4,189.
+  const monthlyNiStart = NATIONAL_INSURANCE.byPayPeriod.monthly.primaryThreshold
+  const monthlyNiUpper = NATIONAL_INSURANCE.byPayPeriod.monthly.upperEarningsLimit
 
-  // The example payslip: the yearly figures from the take-home calculator,
-  // divided by 12.
+  // The example payslip: one month from the take-home calculator.
   const salary = 30000
-  const year = calculateTakeHome(salary)
-  const grossPay = salary / 12
-  const incomeTax = year.incomeTax / 12
-  const nationalInsurance = year.nationalInsurance / 12
-  const studentLoan = calculateStudentLoanRepayment({
-    grossAnnual: salary,
-    plan: 'plan2',
-  }).undergradMonthly
-  const netPay = grossPay - incomeTax - nationalInsurance - studentLoan
+  const month = calculateTakeHomePay({ pay: salary, plan: 'plan2' }).columns.month
+  const grossPay = month.pay
+  const incomeTax = month.incomeTax
+  const nationalInsurance = month.nationalInsurance
+  const studentLoan = month.studentLoan
+  const netPay = month.takeHome
 
   return (
     <GuidePage
@@ -79,8 +74,8 @@ export default function Payslip() {
       <h2>An example payslip</h2>
       <p>
         Someone on {gbp(salary)} a year, paid monthly, with a Plan 2 student loan and no pension.
-        These are our take-home calculator's yearly figures divided by 12, so a real payslip can
-        differ by a few pence.
+        These are our take-home calculator's figures for one month, so a real payslip can differ by
+        a few pence.
       </p>
       <table className="result-table result-table--total">
         <tbody>

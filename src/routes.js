@@ -36,7 +36,7 @@ export const routes = [
     path: '/salary-calculator',
     name: 'Take-home pay calculator',
     title: `Take-home pay calculator ${TAX_YEAR}: salary after tax and NI`,
-    description: `Enter your salary to see your take-home pay after income tax and National Insurance for ${TAX_YEAR}. Covers the whole UK, with Scottish income tax rates.`,
+    description: `Work out your take-home pay for ${TAX_YEAR} after income tax, National Insurance, pension and student loan, with your tax code and any bonus. Covers the whole UK.`,
   },
   {
     path: '/pay-rise-calculator',

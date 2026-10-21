@@ -2,17 +2,43 @@
 // rates/studentLoans.js, by tax year.
 
 import { atLeastZero } from './numbers.js'
+import { PAY_FREQUENCIES } from './payPeriods.js'
 import { STUDENT_LOAN_RATES } from './rates/studentLoans.js'
 import { forTaxYear } from './rates/taxYear.js'
 import { add, info, part, total } from './working.js'
 
 /**
- * One month's repayment on one loan, the way gov.uk works it out for someone
- * paid monthly: the monthly threshold is the annual one divided by 12 and
- * rounded down to the pound (£26,900 becomes £2,241), and the repayment is
- * rounded down to the pound too.
+ * The threshold for one pay period, the way gov.uk works it out: the annual
+ * one divided by 12 for monthly pay, or 52 for weekly pay, rounded down to
+ * the pound. £26,900 becomes £2,241 a month or £517 a week. frequency is
+ * 'monthly' or 'weekly'.
  */
-export const monthlyLoanThreshold = ({ threshold }) => Math.floor(threshold / 12)
+export const loanThresholdFor = ({ threshold }, frequency = 'monthly') =>
+  Math.floor(threshold / PAY_FREQUENCIES[frequency].perYear)
+
+/** The monthly threshold for a plan: £26,900 becomes £2,241. */
+export const monthlyLoanThreshold = (plan) => loanThresholdFor(plan, 'monthly')
+
+/**
+ * Every step of one pay day's repayment on one loan. The repayment is rounded
+ * down to the pound, as in gov.uk's examples.
+ */
+function repaymentSteps(periodPay, plan, frequency) {
+  const threshold = loanThresholdFor(plan, frequency)
+  // Whole pence and a whole-number percentage keep the rounding exact.
+  const payPence = Math.round(atLeastZero(periodPay) * 100)
+  const overPence = Math.max(0, payPence - threshold * 100)
+  const beforeRoundingPence = (overPence * Math.round(plan.rate * 100)) / 100
+  return {
+    pay: payPence / 100,
+    threshold,
+    over: overPence / 100,
+    beforeRounding: Math.round(beforeRoundingPence) / 100,
+    // Not rounded to the penny, so that it always rounds down to the repayment.
+    exact: beforeRoundingPence / 100,
+    repayment: Math.floor(beforeRoundingPence / 100),
+  }
+}
 
 /**
  * Every step of one month's repayment on one loan, so the guide can show
@@ -20,75 +46,98 @@ export const monthlyLoanThreshold = ({ threshold }) => Math.floor(threshold / 12
  * from STUDENT_LOAN, such as STUDENT_LOAN.plan1.
  */
 export function studentLoanWorking(grossAnnual, plan) {
-  const monthlyThreshold = monthlyLoanThreshold(plan)
-  // Whole pence and a whole-number percentage keep the rounding exact.
-  const payPence = Math.round((atLeastZero(grossAnnual) / 12) * 100)
-  const overPence = Math.max(0, payPence - monthlyThreshold * 100)
-  const beforeRoundingPence = (overPence * Math.round(plan.rate * 100)) / 100
+  const steps = repaymentSteps(atLeastZero(grossAnnual) / 12, plan, 'monthly')
   return {
-    monthlyPay: payPence / 100,
-    monthlyThreshold,
-    over: overPence / 100,
-    beforeRounding: Math.round(beforeRoundingPence) / 100,
-    repayment: Math.floor(beforeRoundingPence / 100),
+    monthlyPay: steps.pay,
+    monthlyThreshold: steps.threshold,
+    over: steps.over,
+    beforeRounding: steps.beforeRounding,
+    repayment: steps.repayment,
   }
 }
 
-/** One loan's monthly repayment, step by step, for the working. */
-function loanPart(grossAnnual, plan) {
-  const steps = studentLoanWorking(grossAnnual, plan)
-  // Not rounded to the penny, so that it always rounds down to the repayment.
-  const beforeRounding = (Math.round(steps.over * 100) * Math.round(plan.rate * 100)) / 10000
+/** One loan's repayment on one pay day, step by step, for the working. */
+function loanPart(periodPay, plan, frequency) {
+  const steps = repaymentSteps(periodPay, plan, frequency)
+  const period = PAY_FREQUENCIES[frequency].period
   return part(
     plan.label,
     [
-      info('Pay a month', steps.monthlyPay, { unit: 'gbpPence' }),
-      info('Threshold a month, rounded down to the pound', steps.monthlyThreshold),
+      info(`Pay a ${period}`, steps.pay, { unit: 'gbpPence' }),
+      info(`Threshold a ${period}, rounded down to the pound`, steps.threshold),
       info('Pay over the threshold', steps.over, { unit: 'gbpPence' }),
-      add('Repayment before rounding', beforeRounding, {
+      add('Repayment before rounding', steps.exact, {
         unit: 'gbpPence',
         rate: plan.rate,
         on: steps.over,
       }),
     ],
-    total('Repayment a month, rounded down to the pound', steps.repayment, { rounding: 'down' }),
+    total(`Repayment a ${period}, rounded down to the pound`, steps.repayment, {
+      rounding: 'down',
+    }),
   )
 }
 
-const monthlyLoanRepayment = (grossAnnual, plan) => studentLoanWorking(grossAnnual, plan).repayment
-
 /**
- * Student loan repayments for an employee paid the same amount every month. A
- * person can have an undergraduate plan (1, 2, 4 or 5) and a Postgraduate Loan
- * at the same time, and both are repaid together, so this returns each
- * separately plus the combined total.
+ * Student loan repayments on one pay day. A person can have an undergraduate
+ * plan (1, 2, 4 or 5) and a Postgraduate Loan at the same time, and both are
+ * repaid together, so this returns each separately plus the combined total.
+ * periodPay is the pay for that pay day that National Insurance is worked out
+ * on. frequency is 'monthly' or 'weekly'.
  */
-export function calculateStudentLoanRepayment({ grossAnnual, plan, hasPostgraduateLoan, taxYear }) {
+export function studentLoanForPeriod({
+  periodPay,
+  plan,
+  hasPostgraduateLoan,
+  frequency = 'monthly',
+  taxYear,
+}) {
   const loans = forTaxYear(STUDENT_LOAN_RATES, taxYear)
-  const gross = atLeastZero(grossAnnual)
+  const pay = atLeastZero(periodPay)
   const undergradPlan = plan && plan !== 'none' ? loans[plan] : null
+  const repay = (loan) => repaymentSteps(pay, loan, frequency).repayment
 
-  const undergradMonthly = undergradPlan ? monthlyLoanRepayment(gross, undergradPlan) : 0
-  const postgradMonthly = hasPostgraduateLoan ? monthlyLoanRepayment(gross, loans.postgraduate) : 0
-  const totalMonthly = undergradMonthly + postgradMonthly
+  const undergrad = undergradPlan ? repay(undergradPlan) : 0
+  const postgrad = hasPostgraduateLoan ? repay(loans.postgraduate) : 0
+  const period = PAY_FREQUENCIES[frequency].period
 
   return {
-    undergradMonthly,
-    postgradMonthly,
-    totalMonthly,
-    totalAnnual: totalMonthly * 12,
+    undergrad,
+    postgrad,
+    total: undergrad + postgrad,
     working: [
       part(
         'Student loan repayment',
         [
-          undergradPlan && add(undergradPlan.label, undergradMonthly),
-          hasPostgraduateLoan && add(loans.postgraduate.label, postgradMonthly),
+          undergradPlan && add(undergradPlan.label, undergrad),
+          hasPostgraduateLoan && add(loans.postgraduate.label, postgrad),
         ],
-        total('Total a month', totalMonthly),
+        total(`Total a ${period}`, undergrad + postgrad),
       ),
-      undergradPlan && loanPart(gross, undergradPlan),
-      hasPostgraduateLoan && loanPart(gross, loans.postgraduate),
+      undergradPlan && loanPart(pay, undergradPlan, frequency),
+      hasPostgraduateLoan && loanPart(pay, loans.postgraduate, frequency),
     ].filter(Boolean),
+  }
+}
+
+/**
+ * Student loan repayments for an employee paid the same amount every month,
+ * as monthly and yearly totals.
+ */
+export function calculateStudentLoanRepayment({ grossAnnual, plan, hasPostgraduateLoan, taxYear }) {
+  const month = studentLoanForPeriod({
+    periodPay: atLeastZero(grossAnnual) / 12,
+    plan,
+    hasPostgraduateLoan,
+    frequency: 'monthly',
+    taxYear,
+  })
+  return {
+    undergradMonthly: month.undergrad,
+    postgradMonthly: month.postgrad,
+    totalMonthly: month.total,
+    totalAnnual: month.total * 12,
+    working: month.working,
   }
 }
 

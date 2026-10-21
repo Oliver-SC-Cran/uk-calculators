@@ -17,7 +17,13 @@ import { calculateISAAllowance } from './isa.js'
 import { checkMinimumWage } from './minimumWage.js'
 import { STUDENT_LOAN } from './rates/studentLoans.js'
 import { calculateRedundancyPay } from './redundancy.js'
-import { calculateStudentLoanRepayment, studentLoanWorking } from './studentLoans.js'
+import { calculateTakeHomePay } from './takeHome.js'
+import {
+  calculateStudentLoanRepayment,
+  loanThresholdFor,
+  studentLoanForPeriod,
+  studentLoanWorking,
+} from './studentLoans.js'
 import { taxCodeFor } from './taxCode.js'
 
 const near = (actual, expected, message) =>
@@ -60,8 +66,9 @@ test('take-home [own working] tax and NI at each band boundary', () => {
 })
 
 test('take-home [own working] the worked examples shown in the guide', () => {
+  // The guide uses the calculator's own sums, with NI worked out each month.
   const pounds = (salary) => {
-    const result = calculateTakeHome(salary)
+    const result = calculateTakeHomePay({ pay: salary })
     return [
       result.incomeTax,
       result.nationalInsurance,
@@ -72,7 +79,14 @@ test('take-home [own working] the worked examples shown in the guide', () => {
   assert.deepEqual(pounds(25000), [2486, 994, 21520, 1793])
   assert.deepEqual(pounds(30000), [3486, 1394, 25120, 2093])
   assert.deepEqual(pounds(35000), [4486, 1794, 28720, 2393])
-  assert.deepEqual(pounds(60000), [11432, 3211, 45357, 3780])
+  // NI is £267.50 a month, £3,210 a year. On the yearly figures it would be £3,210.60.
+  assert.deepEqual(pounds(60000), [11432, 3210, 45358, 3780])
+  // The bonus example: £5,000 on £35,000 keeps £3,824 after £1,000 tax and £176 NI.
+  const { bonus } = calculateTakeHomePay({ pay: 35000, bonus: 5000 })
+  assert.deepEqual(
+    [bonus.incomeTax, bonus.nationalInsurance, bonus.kept].map(Math.round),
+    [1000, 176, 3824],
+  )
 })
 
 test('take-home [own working] the personal allowance taper', () => {
@@ -224,7 +238,7 @@ test('Scottish take-home [own working] the personal allowance taper', () => {
 
 test('Scottish take-home [own working] the worked examples shown in the guide', () => {
   const pounds = (salary) => {
-    const result = scottish(salary)
+    const result = calculateTakeHomePay({ pay: salary, scottish: true })
     return [
       result.incomeTax,
       result.nationalInsurance,
@@ -514,6 +528,38 @@ test('student loan [gov.uk] monthly thresholds for each plan', () => {
   }
   assert.equal(loan(1750 * 12, 'none', true).totalMonthly, 0)
   assert.equal(loan(1850 * 12, 'none', true).totalMonthly, 6)
+})
+
+test('student loan [gov.uk] weekly thresholds for each plan', () => {
+  // gov.uk lists £517, £565, £649, £480 and £403 a week: the yearly threshold
+  // divided by 52, rounded down to the pound. Checked on 21 October 2026.
+  const week = (periodPay, plan, hasPostgraduateLoan = false) =>
+    studentLoanForPeriod({ periodPay, plan, hasPostgraduateLoan, frequency: 'weekly' })
+  const weeklyThresholds = { plan1: 517, plan2: 565, plan4: 649, plan5: 480 }
+  for (const [plan, threshold] of Object.entries(weeklyThresholds)) {
+    assert.equal(loanThresholdFor(STUDENT_LOAN[plan], 'weekly'), threshold, plan)
+    assert.equal(week(threshold, plan).total, 0, plan)
+    assert.equal(week(threshold + 100, plan).total, 9, plan)
+  }
+  assert.equal(loanThresholdFor(STUDENT_LOAN.postgraduate, 'weekly'), 403)
+  assert.equal(week(403, 'none', true).total, 0)
+  assert.equal(week(503, 'none', true).total, 6)
+  // Both together, each rounded down: 9% of £35.50 is £3.19, 6% of £197.50 is £11.85.
+  const both = week(600.5, 'plan2', true)
+  assert.equal(both.undergrad, 3)
+  assert.equal(both.postgrad, 11)
+  assert.equal(both.total, 14)
+})
+
+test('student loan [own working] the monthly figures are the same either way', () => {
+  for (const salary of [0, 21000, 30000, 55555, 120000]) {
+    const month = studentLoanForPeriod({
+      periodPay: salary / 12,
+      plan: 'plan2',
+      hasPostgraduateLoan: true,
+    })
+    assert.equal(month.total, loan(salary, 'plan2', true).totalMonthly, `${salary}`)
+  }
 })
 
 test('student loan [own working] a Welsh student who started in 2024 is on Plan 2', () => {

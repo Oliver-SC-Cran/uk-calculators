@@ -1,4 +1,5 @@
-import { Children, cloneElement } from 'react'
+import { Children, cloneElement, useLayoutEffect, useRef } from 'react'
+import { caretAfterGrouping, groupDigits } from '../lib/format'
 
 /**
  * The inputs on a calculator page, as numbered steps. Each child is one of the
@@ -13,11 +14,15 @@ export function Steps({ children }) {
   )
 }
 
-/** The label, hint and error message shared by every kind of field. */
-function Field({ number, id, label, hint, optional, error, size, isGroup, children }) {
+/**
+ * The label, hint and error message shared by every kind of field. describe
+ * is the id of anything else on the page that explains the field, such as a
+ * note under a row of fields.
+ */
+function Field({ number, id, label, hint, optional, error, size, isGroup, describe, children }) {
   const hintId = hint ? `${id}-hint` : undefined
   const errorId = error ? `${id}-error` : undefined
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined
+  const describedBy = [hintId, errorId, describe].filter(Boolean).join(' ') || undefined
 
   const Box = isGroup ? 'fieldset' : 'div'
   const Label = isGroup ? 'legend' : 'label'
@@ -49,8 +54,30 @@ function Field({ number, id, label, hint, optional, error, size, isGroup, childr
 /**
  * A number input. field comes from useCalculatorState, which also holds the label.
  * before and after are short bits of text shown inside the box, such as £ or %.
+ * When the field's rules have grouped: true, commas go in as someone types and
+ * the caret stays after the digit it was after.
  */
 export function NumberField({ field, before, after, decimal, size = 'medium', below, ...rest }) {
+  const inputRef = useRef(null)
+  const caret = useRef(null)
+
+  const onChange = (event) => {
+    const { value, selectionStart } = event.target
+    if (field.grouped && selectionStart !== null) {
+      const grouped = groupDigits(value)
+      caret.current = grouped === value ? null : caretAfterGrouping(grouped, value, selectionStart)
+    }
+    field.setText(value)
+  }
+
+  // Put the caret back where it was once the commas have moved.
+  useLayoutEffect(() => {
+    const input = inputRef.current
+    if (caret.current === null || !input) return
+    if (document.activeElement === input) input.setSelectionRange(caret.current, caret.current)
+    caret.current = null
+  })
+
   return (
     <Field label={field.label} {...rest} error={field.error} size={size}>
       {({ describedBy, invalid }) => (
@@ -62,12 +89,13 @@ export function NumberField({ field, before, after, decimal, size = 'medium', be
               </span>
             )}
             <input
+              ref={inputRef}
               id={rest.id}
               type="text"
               inputMode={decimal ? 'decimal' : 'numeric'}
               autoComplete="off"
               value={field.text}
-              onChange={(event) => field.setText(event.target.value)}
+              onChange={onChange}
               onBlur={field.onBlur}
               aria-describedby={describedBy}
               aria-invalid={invalid}
@@ -82,6 +110,60 @@ export function NumberField({ field, before, after, decimal, size = 'medium', be
         </>
       )}
     </Field>
+  )
+}
+
+/**
+ * A text input for something that is not a number, such as a tax code. field
+ * comes from useCalculatorState (textInput). Letters show in capitals.
+ */
+export function TextField({ field, size = 'medium', below, ...rest }) {
+  return (
+    <Field label={field.label} {...rest} error={field.error} size={size}>
+      {({ describedBy, invalid }) => (
+        <>
+          <div className="field__control">
+            <input
+              id={rest.id}
+              className="field__input--code"
+              type="text"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              value={field.text}
+              onChange={(event) => field.setText(event.target.value)}
+              onBlur={field.onBlur}
+              aria-describedby={describedBy}
+              aria-invalid={invalid}
+            />
+          </div>
+          {below}
+        </>
+      )}
+    </Field>
+  )
+}
+
+/**
+ * Buttons that fill a field with a common answer, such as 5% for a pension.
+ * Use as a field's `below`. options are [value, text] pairs, and the one that
+ * matches what is in the field shows as pressed.
+ */
+export function Chips({ label, options, current, onPick }) {
+  return (
+    <div className="chips" role="group" aria-label={label}>
+      {options.map(([value, text]) => (
+        <button
+          key={value}
+          type="button"
+          className="chip"
+          aria-pressed={String(current).trim() === String(value)}
+          onClick={() => onPick(String(value))}
+        >
+          {text}
+        </button>
+      ))}
+    </div>
   )
 }
 

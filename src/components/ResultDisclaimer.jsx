@@ -1,8 +1,6 @@
 /** The line shown inside every result box. */
-export default function ResultDisclaimer() {
+export default function ResultDisclaimer({ className = 'result__note' }) {
   return (
-    <p className="result__note">
-      This is an estimate for general information, not financial advice.
-    </p>
+    <p className={className}>This is an estimate for general information, not financial advice.</p>
   )
 }

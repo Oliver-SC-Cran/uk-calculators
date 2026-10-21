@@ -14,10 +14,12 @@ import { checkMinimumWage } from './minimumWage.js'
 import { calculateMortgageOverpayment } from './mortgage.js'
 import { calculateMaternityPay, calculatePaternityPay } from './parentalPay.js'
 import { calculatePayPackage, calculatePayRise } from './payRise.js'
+import { readTaxCode, taxRatesFor } from './readTaxCode.js'
 import { calculateRedundancyPay } from './redundancy.js'
 import { calculateSelfEmployedTax } from './selfEmployed.js'
 import { calculateStampDuty } from './stampDuty.js'
 import { calculateStudentLoanRepayment } from './studentLoans.js'
+import { calculateTakeHomePay } from './takeHome.js'
 import { sumOfLines } from './working.js'
 
 const product = (...lists) =>
@@ -82,6 +84,44 @@ test('working [own working] take-home pay adds up to the take-home figure', () =
   for (const [salary, scottish] of product(salaries, [false, true])) {
     const r = calculateTakeHome(salary, { scottish })
     checkHeadline(r.working, r.takeHomeAnnual, `take-home ${salary} ${scottish}`)
+  }
+})
+
+test('working [own working] the take-home pay calculator adds up to the take-home figure', () => {
+  const codes = [null, '1257L', 'S1185L M1', 'C0T', 'K2000', 'BR', 'SD3', 'NT']
+  for (const [pay, bonus, text, pensionType, frequency, plan] of product(
+    [0, 12570, 35000, 60000, 110000, 150000, NaN],
+    [0, 5000],
+    codes,
+    ['salarySacrifice', 'reliefAtSource'],
+    ['monthly', 'weekly'],
+    ['none', 'plan2'],
+  )) {
+    const taxCode = text ? readTaxCode(text).value : null
+    const r = calculateTakeHomePay({
+      pay,
+      bonus,
+      taxCode,
+      ...taxRatesFor(taxCode, 'restOfUk'),
+      pensionType,
+      pensionPercent: 5,
+      payFrequency: frequency,
+      plan,
+      hasPostgraduateLoan: plan !== 'none',
+    })
+    checkHeadline(r.working, r.takeHomeAnnual, `take-home ${pay} ${bonus} ${text} ${frequency}`)
+    if (r.bonus) {
+      const bonusPart = r.working.find((each) => each.title === 'Your bonus')
+      assert.ok(Math.abs(bonusPart.total.value - r.bonus.kept) < 0.005)
+    }
+  }
+  // Pay entered by the hour or day, and no National Insurance.
+  for (const [payPer, paysNationalInsurance] of product(
+    ['month', 'week', 'day', 'hour'],
+    [true, false],
+  )) {
+    const r = calculateTakeHomePay({ pay: 150, payPer, paysNationalInsurance })
+    checkHeadline(r.working, r.takeHomeAnnual, `take-home ${payPer} ${paysNationalInsurance}`)
   }
 })
 

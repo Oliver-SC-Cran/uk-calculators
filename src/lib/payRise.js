@@ -1,29 +1,20 @@
-// The pay rise calculator. It adds pensions on top of the tax, National
-// Insurance and student loan functions in incomeTax.js and studentLoans.js,
-// and contains no tax logic of its own.
+// The pay rise calculator. It adds pensions (pensions.js) on top of the tax,
+// National Insurance and student loan functions in incomeTax.js and
+// studentLoans.js, and contains no tax logic of its own.
 
 import { calculateIncomeTax, calculateNationalInsurance, incomeTaxLabel } from './incomeTax.js'
 import { atLeastZero } from './numbers.js'
+import { extraReliefToClaim as extraRelief, pensionContributions } from './pensions.js'
 import { INCOME_TAX_RATES } from './rates/incomeTax.js'
-import { FULL_TIME_HOURS, MINIMUM_WAGE_RATES } from './rates/minimumWage.js'
+import { FULL_TIME_HOURS } from './rates/minimumWage.js'
 import { forTaxYear } from './rates/taxYear.js'
 import { calculateStudentLoanRepayment } from './studentLoans.js'
 import { add, info, part, subtract, total } from './working.js'
 
-export const PENSION_TYPES = {
-  salarySacrifice: 'Salary sacrifice',
-  netPay: 'Net pay arrangement',
-  reliefAtSource: 'Relief at source',
-}
-
 /**
- * One salary with a student loan and a workplace pension. The three pension
- * types differ only in which deductions see the reduced pay:
- *
- * - salary sacrifice: pay is reduced first, so tax, NI and student loan all fall
- * - net pay: the contribution comes off before income tax, but not NI or student loan
- * - relief at source: nothing changes on the payslip. 80% of the contribution
- *   is paid from take-home pay and the provider claims the other 20% from HMRC
+ * One salary with a student loan and a workplace pension. pensionContributions
+ * in pensions.js says how each pension type changes the pay each deduction is
+ * worked out on.
  *
  * pensionPercent is a percentage of full salary. For relief at source it is
  * the total going into the pension, including the 20% from HMRC.
@@ -41,30 +32,19 @@ export function calculatePayPackage({
   scottish = false,
   taxYear,
 }) {
-  const { nationalLivingWage } = forTaxYear(MINIMUM_WAGE_RATES, taxYear)
-  const { basicRate } = forTaxYear(INCOME_TAX_RATES, taxYear).incomeTax
   const gross = atLeastZero(salary)
-  const share = Math.min(atLeastZero(pensionPercent), 100) / 100
-  const wanted = gross * share
-
-  // A salary sacrifice must not take cash pay below the minimum wage. This
-  // uses the rate for people aged 21 and over.
-  const minimumCashPay = nationalLivingWage * atLeastZero(weeklyHours) * 52
-  const isSacrifice = pensionType === 'salarySacrifice'
   const isReliefAtSource = pensionType === 'reliefAtSource'
-  const pensionIntoPot = isSacrifice
-    ? Math.min(wanted, Math.max(0, gross - minimumCashPay))
-    : wanted
-  const sacrificeCapped = isSacrifice && pensionIntoPot < wanted
-
-  const reliefAtSourceGross = isReliefAtSource ? pensionIntoPot : 0
-  const hmrcTopUp = reliefAtSourceGross * basicRate
-  const pensionFromPay = pensionIntoPot - hmrcTopUp
-
-  // The pay each deduction is worked out on.
-  const niablePay = isSacrifice ? gross - pensionIntoPot : gross
-  const taxablePay = isReliefAtSource ? gross : gross - pensionIntoPot
-  const adjustedNetIncome = gross - pensionIntoPot
+  const {
+    pensionIntoPot,
+    pensionFromPay,
+    hmrcTopUp,
+    reliefAtSourceGross,
+    sacrificeCapped,
+    minimumCashPay,
+    taxablePay,
+    niablePay,
+    adjustedNetIncome,
+  } = pensionContributions({ gross, pensionType, pensionPercent, weeklyHours, taxYear })
 
   const {
     tax: incomeTax,
@@ -79,11 +59,7 @@ export function calculatePayPackage({
     taxYear,
   })
 
-  // Relief at source only: the tax owed once the wider bands and the
-  // allowance based on adjusted net income are taken into account. The
-  // difference from the payslip is what can be claimed back from HMRC.
-  const taxAfterClaim = calculateIncomeTax(gross, { reliefAtSourceGross, scottish, taxYear }).tax
-  const extraReliefToClaim = isReliefAtSource ? Math.max(0, incomeTax - taxAfterClaim) : 0
+  const extraReliefToClaim = extraRelief({ income: gross, reliefAtSourceGross, scottish, taxYear })
 
   const takeHomeAnnual = gross - incomeTax - nationalInsurance - loan.totalAnnual - pensionFromPay
 

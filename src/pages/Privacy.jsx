@@ -4,7 +4,7 @@ import { CONTACT_EMAIL, OWNER_NAME } from '../routes'
 import LastUpdated from '../components/LastUpdated'
 
 // Change this by hand whenever the policy changes.
-const LAST_UPDATED = '2026-10-11'
+const LAST_UPDATED = '2026-10-21'
 
 export default function Privacy() {
   return (
@@ -22,7 +22,17 @@ export default function Privacy() {
       <h2>What you type into the calculators</h2>
       <p>
         The calculators run entirely in your browser. The numbers you type in are not sent to us,
-        stored by us or seen by us. They are gone when you close or reload the page.
+        stored by us or seen by us.
+      </p>
+      <p>
+        On the take-home pay calculator, the "Copy link to these figures" button makes a link with
+        the figures you entered in it, after a # sign. Nothing is put in a link unless you press the
+        button. Browsers do not send the part of a link after # to any server, so the figures do not
+        reach us or Cloudflare. They are in the link itself, though, so anyone you send it to can
+        see them, and so can anywhere you paste or save it. When a page is opened from one of these
+        links, the calculator reads the figures and then takes them out of the address bar. Until
+        then, scripts running on the page, including Google's advertising script, can read the whole
+        address.
       </p>
 
       <h2>Advertising</h2>
@@ -63,8 +73,8 @@ export default function Privacy() {
       </p>
       <p>
         For each page you open, it records the time, the address of the page (without anything after
-        a question mark), the page that linked you here, your country, the type of device, operating
-        system and browser you are using, and how long the page took to load.
+        a question mark or #), the page that linked you here, your country, the type of device,
+        operating system and browser you are using, and how long the page took to load.
       </p>
       <p>
         What we see is totals, such as how many times a page was opened. We do not see your IP

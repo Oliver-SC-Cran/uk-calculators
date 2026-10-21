@@ -16,6 +16,10 @@ import { parseIsoDate } from './dates.js'
 // places. Anything else is ignored, and the field keeps its starting value.
 const NUMBER_TEXT = /^\d{1,12}(\.\d{1,4})?$/
 
+// What a text field, such as a tax code, may hold in a link: letters, digits,
+// spaces and a slash, up to 16 of them. The page's own check reads it after that.
+const PLAIN_TEXT = /^[A-Za-z0-9 /]{1,16}$/
+
 /**
  * '#salary=60000&region=scotland' for the inputs that differ from where the
  * page starts, or '' when none do. inputs is the same object a page passes to
@@ -28,6 +32,8 @@ export function linkHash(inputs, values) {
     if (value === input.initial || value === null || value === undefined) continue
     if (input.kind === 'checkbox') {
       params.set(key, value ? '1' : '0')
+    } else if (input.kind === 'text') {
+      params.set(key, String(value).trim())
     } else {
       // A £ sign, commas, spaces and a % sign are left out of the link.
       params.set(key, String(value).replace(/[\s,£%]/g, ''))
@@ -41,9 +47,10 @@ export function linkHash(inputs, values) {
  * The inputs found in a link's # part, as { key: value }, or null if it holds
  * none (such as '#calculators', a link to part of a page). Only the page's own
  * keys are read, and only values its inputs could hold: a choice must be one
- * of the page's options, a tick box '1' or '0', a date a real date, and a
- * number plain digits. Numbers then go through the page's usual checks, so one
- * that is out of range shows the usual message.
+ * of the page's options, a tick box '1' or '0', a date a real date, a number
+ * plain digits, and text only letters, digits, spaces and slashes. Numbers and
+ * text then go through the page's usual checks, so one that is out of range
+ * shows the usual message.
  */
 export function readLinkHash(hash, inputs) {
   if (typeof hash !== 'string' || !hash.startsWith('#') || !hash.includes('=')) return null
@@ -56,6 +63,7 @@ export function readLinkHash(hash, inputs) {
     if (input.kind === 'choice' && input.choices.includes(text)) found[key] = text
     if (input.kind === 'checkbox' && (text === '1' || text === '0')) found[key] = text === '1'
     if (input.kind === 'date' && parseIsoDate(text) !== null) found[key] = text
+    if (input.kind === 'text' && (text === '' || PLAIN_TEXT.test(text))) found[key] = text
   }
   return Object.keys(found).length > 0 ? found : null
 }

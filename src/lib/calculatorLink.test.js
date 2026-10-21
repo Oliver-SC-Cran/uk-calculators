@@ -12,6 +12,7 @@ const inputs = {
   postgrad: { kind: 'checkbox', initial: false },
   due: { kind: 'date', initial: '2027-03-01' },
   start: { kind: 'date', initial: null },
+  taxCode: { kind: 'text', initial: '' },
 }
 const starting = {
   salary: '35000',
@@ -19,6 +20,7 @@ const starting = {
   postgrad: false,
   due: '2027-03-01',
   start: null,
+  taxCode: '',
 }
 
 test('share link [own working] only what differs from the starting values goes in the link', () => {
@@ -59,6 +61,17 @@ test('share link [own working] a link to part of a page, or no link, is not read
   assert.equal(readLinkHash('#settings', inputs), null)
   assert.equal(readLinkHash(undefined, inputs), null)
   assert.equal(readLinkHash('#other=1', inputs), null)
+})
+
+test('share link [own working] a tax code goes in as typed and comes back the same', () => {
+  const values = { ...starting, taxCode: 'S1257L M1' }
+  assert.equal(linkHash(inputs, values), '#taxCode=S1257L+M1')
+  assert.deepEqual(readLinkHash('#taxCode=S1257L+M1', inputs), { taxCode: 'S1257L M1' })
+  assert.deepEqual(readLinkHash('#taxCode=1257L%2FW1', inputs), { taxCode: '1257L/W1' })
+  // Anything but letters, digits, spaces and slashes is ignored.
+  assert.equal(readLinkHash('#taxCode=%3Cscript%3E', inputs), null)
+  assert.equal(readLinkHash('#taxCode=1257L%26x%3D1', inputs), null)
+  assert.equal(readLinkHash(`#taxCode=${'A'.repeat(17)}`, inputs), null)
 })
 
 test('share link [own working] values the inputs could not hold are ignored', () => {

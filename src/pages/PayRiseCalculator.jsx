@@ -25,7 +25,8 @@ import { STUDENT_LOAN } from '../lib/rates/studentLoans'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, formatGBPPence, percent } from '../lib/format'
 import { MONEY, PERCENTAGE } from '../lib/validation'
-import { calculatePayRise, newSalaryFrom, PENSION_TYPES, riseEnteredAs } from '../lib/payRise'
+import { calculatePayRise, newSalaryFrom, riseEnteredAs } from '../lib/payRise'
+import { PENSION_TYPES } from '../lib/pensions'
 import { incomeTaxLabel } from '../lib/incomeTax'
 
 // The label and hint for the rise, for each way of entering it.
