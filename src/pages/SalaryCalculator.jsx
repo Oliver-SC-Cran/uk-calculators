@@ -23,7 +23,6 @@ import { CHILD_BENEFIT_CHARGE, INCOME_TAX } from '../lib/rates/incomeTax'
 import { FULL_TIME_HOURS, MINIMUM_WAGE } from '../lib/rates/minimumWage'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { readTaxCode, taxRatesFor } from '../lib/readTaxCode'
-import { taxCodeFor } from '../lib/taxCode'
 import { calculateTakeHomePay } from '../lib/takeHome'
 import { MONEY, PERCENTAGE } from '../lib/validation'
 
@@ -31,8 +30,6 @@ import { MONEY, PERCENTAGE } from '../lib/validation'
 const LAST_UPDATED = '2026-10-21'
 
 const PAY_PER_NAMES = { year: 'Year', month: 'Month', week: 'Week', day: 'Day', hour: 'Hour' }
-
-const STANDARD_CODE = taxCodeFor(INCOME_TAX.personalAllowance)
 
 // Quick picks for the pension step. They are common choices, not rates.
 const PENSION_PERCENTS = [3, 5, 8, 10].map((value) => [value, `${value}%`])
@@ -213,7 +210,7 @@ export default function SalaryCalculator() {
                 <TextField
                   id="tax-code"
                   optional
-                  hint={`On your payslip. Leave it blank for the standard code, ${STANDARD_CODE}.`}
+                  hint={`On your payslip. Leave it blank to use the standard Personal Allowance of ${formatGBP(INCOME_TAX.personalAllowance)}.`}
                   describe={code ? 'tax-code-note' : undefined}
                   field={taxCode}
                 />

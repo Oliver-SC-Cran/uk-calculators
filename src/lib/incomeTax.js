@@ -3,7 +3,8 @@
 // and uses TAX_YEAR when it is not passed.
 
 import { atLeastZero } from './numbers.js'
-import { INCOME_TAX_RATES } from './rates/incomeTax.js'
+import { PAY_FREQUENCIES } from './payPeriods.js'
+import { INCOME_TAX_RATES, PAYE_TAX_TABLES } from './rates/incomeTax.js'
 import { forTaxYear } from './rates/taxYear.js'
 import { add, info, part, subtract, total } from './working.js'
 
@@ -89,8 +90,8 @@ function incomeTaxBands({ scottish, welsh, reliefAtSource, taxYear }) {
  * rates, and with welsh the Welsh rates, which are the same as England's in
  * 2026/27. The personal allowance and its taper are the same for all three.
  *
- * allowance is the tax-free pay from a tax code, such as 12,570 for 1257L or
- * -4,750 for K475. When it is given it is used as it is, without the taper,
+ * allowance is the tax-free pay from a tax code as payroll works it out
+ * (payrollCodeAllowance), negative for a K code. When it is given it is used as it is, without the taper,
  * the way payroll uses a code. When it is left out, the personal allowance is
  * worked out from income, with the taper.
  *
@@ -151,16 +152,57 @@ export function flatRateFor(band, { scottish = false, welsh = false, taxYear } =
   return { basic: r.basicRate, higher: r.higherRate, additional: r.additionalRate }[band]
 }
 
+// An amount for one pay day, the way HMRC's tax tables round it: worked to
+// four decimal places of a pound, then rounded up to the penny.
+function sharedOver(annualPounds, payDays) {
+  const tenThousandths = Math.floor((annualPounds * 10000) / payDays)
+  return Math.ceil(tenThousandths / 100) / 100
+}
+
+/**
+ * The tax-free pay ("free pay") a tax code gives, or the pay a K code adds
+ * ("additional pay"), the way payroll works it out from HMRC's tax tables
+ * (PAYE_TAX_TABLES in rates/incomeTax.js):
+ *
+ * - a code of 1 to 500 is worth its number times £10, plus £9, a year, shared
+ *   over the pay days and rounded up to the penny. Code 257 is £214.92 a month
+ * - a bigger code is split into blocks of 500, each worth £5,000 a year
+ *   (£416.67 a month or £96.16 a week), and a remainder of 1 to 500
+ *
+ * So 1257L gives £1,048.26 a month, which is £12,579.12 over the year.
+ * Returns { payDay, year }. frequency is 'monthly' or 'weekly'.
+ */
+export function payrollCodeAllowance(number, frequency = 'monthly') {
+  const { poundsPerCodeUnit, addedToEachCode, codeBlock } = PAYE_TAX_TABLES
+  const payDays = PAY_FREQUENCIES[frequency].perYear
+  if (!(number > 0)) return { payDay: 0, year: 0 }
+  const blocks = Math.floor((number - 1) / codeBlock)
+  const remainder = number - blocks * codeBlock
+  const payDay =
+    sharedOver(remainder * poundsPerCodeUnit + addedToEachCode, payDays) +
+    blocks * sharedOver(codeBlock * poundsPerCodeUnit, payDays)
+  return {
+    payDay: Math.round(payDay * 100) / 100,
+    year: Math.round(payDay * payDays * 100) / 100,
+  }
+}
+
 /**
  * Income tax for the year on pay from a job with a tax code. code is what
  * readTaxCode gives. Payroll works tax out on pay so far in the tax year, so
- * over a whole year it comes to the tax on the year's pay.
+ * over a whole year it comes to the tax on the year's pay, with the code's
+ * tax-free pay as payroll works it out (payrollCodeAllowance). frequency is
+ * how often payroll runs, which changes the rounding a little.
  *
  * Returns the same as calculateIncomeTax. personalAllowanceUsed is the
  * tax-free pay from the code (negative for a K code), and flatRate is set for
  * a code that taxes everything at one rate.
  */
-export function incomeTaxOnCode(pay, code, { scottish = false, welsh = false, taxYear } = {}) {
+export function incomeTaxOnCode(
+  pay,
+  code,
+  { scottish = false, welsh = false, frequency = 'monthly', taxYear } = {},
+) {
   const gross = atLeastZero(pay)
   if (code.kind === 'noTax') {
     return { tax: 0, personalAllowanceUsed: 0, topRate: 0, taxableIncome: 0, bands: [] }
@@ -177,7 +219,9 @@ export function incomeTaxOnCode(pay, code, { scottish = false, welsh = false, ta
       bands,
     }
   }
-  return calculateIncomeTax(gross, { allowance: code.allowance, scottish, welsh, taxYear })
+  const { year } = payrollCodeAllowance(code.number, frequency)
+  const allowance = code.kind === 'k' ? -year : year
+  return calculateIncomeTax(gross, { allowance, scottish, welsh, taxYear })
 }
 
 /**

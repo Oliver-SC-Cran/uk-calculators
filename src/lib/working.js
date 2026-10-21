@@ -1,5 +1,5 @@
 // The steps behind a result, as data, so that every calculator can show
-// "How we worked this out". No page shows them yet.
+// "How we worked this out" (Working.jsx shows them on the new layout).
 //
 // A calculation's `working` is a list of parts. The first part arrives at the
 // figure the result panel shows (it has no total when there is no figure,
@@ -18,9 +18,12 @@
 //   - from and to, for a slice of an amount, such as part of a price.
 // - The total is { label, value, unit } and maybe rounding: 'down' when the
 //   sum is rounded down to the whole pound, or 'notBelowZero'.
+// - A part can have a note: one sentence under it that explains a rule, such
+//   as how payroll turns a tax code into tax-free pay.
 //
 // Labels are plain text with no amounts in them, so a page can format every
-// amount the same way, with format.js. sumOfLines is what the tests use to
+// amount the same way, with format.js. A note may name the fixed amounts in a
+// rule, but not the amounts worked out for one person. sumOfLines is what the tests use to
 // check that each part adds up to its total.
 
 const line = (kind) => (label, value, extra) => ({ kind, label, value, unit: 'gbp', ...extra })
@@ -35,11 +38,16 @@ export const info = line('info')
 /** The total a part comes to. */
 export const total = (label, value, extra) => ({ label, value, unit: 'gbp', ...extra })
 
-/** One part of the working. Leave total out when the part only explains. */
-export const part = (title, lines, partTotal) =>
-  partTotal
-    ? { title, lines: lines.filter(Boolean), total: partTotal }
-    : { title, lines: lines.filter(Boolean) }
+/**
+ * One part of the working. Leave total out when the part only explains, and
+ * note out unless a rule needs a sentence of its own.
+ */
+export const part = (title, lines, partTotal, note) => ({
+  title,
+  lines: lines.filter(Boolean),
+  ...(partTotal && { total: partTotal }),
+  ...(note && { note }),
+})
 
 const isMoney = (unit) => unit === 'gbp' || unit === 'gbpPence'
 const sameKind = (a, b) => a === b || (isMoney(a) && isMoney(b))

@@ -50,6 +50,15 @@ function amount(line) {
 
 function WorkingPart({ part }) {
   return (
+    <div className="working__part">
+      <PartTable part={part} />
+      {part.note && <p className="working__note">{part.note}</p>}
+    </div>
+  )
+}
+
+function PartTable({ part }) {
+  return (
     <table className="result-table working__table">
       <caption>{part.title}</caption>
       <tbody>

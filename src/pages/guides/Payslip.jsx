@@ -4,6 +4,7 @@ import { AUTO_ENROLMENT } from '../../lib/rates/pensions'
 import { STUDENT_LOAN } from '../../lib/rates/studentLoans'
 import { TAX_YEAR } from '../../lib/rates/taxYear'
 import { monthlyLoanThreshold } from '../../lib/studentLoans'
+import { readTaxCode } from '../../lib/readTaxCode'
 import { calculateTakeHomePay } from '../../lib/takeHome'
 import { formatGBP as gbp, formatGBPPence as pence, percent } from '../../lib/format'
 import Source from '../../components/Source'
@@ -27,9 +28,14 @@ export default function Payslip() {
   const monthlyNiStart = NATIONAL_INSURANCE.byPayPeriod.monthly.primaryThreshold
   const monthlyNiUpper = NATIONAL_INSURANCE.byPayPeriod.monthly.upperEarningsLimit
 
-  // The example payslip: one month from the take-home calculator.
+  // The example payslip: one month from the take-home calculator, with the
+  // standard tax code as payroll uses it.
   const salary = 30000
-  const month = calculateTakeHomePay({ pay: salary, plan: 'plan2' }).columns.month
+  const month = calculateTakeHomePay({
+    pay: salary,
+    plan: 'plan2',
+    taxCode: readTaxCode(standardCode).value,
+  }).columns.month
   const grossPay = month.pay
   const incomeTax = month.incomeTax
   const nationalInsurance = month.nationalInsurance

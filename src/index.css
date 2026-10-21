@@ -1554,6 +1554,12 @@ h2[tabindex='-1']:focus {
   font-weight: 400;
 }
 
+.working__note {
+  margin: var(--space-3) 0 0;
+  font-size: 0.875rem;
+  color: var(--text-soft);
+}
+
 .result-table tfoot th,
 .result-table tfoot td {
   border-top: 2px solid var(--border-strong);

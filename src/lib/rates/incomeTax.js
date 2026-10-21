@@ -129,3 +129,17 @@ export const SAVINGS_TAX = current.savingsTax
 export const CHILD_BENEFIT_CHARGE = current.childBenefitCharge
 export const CHILDCARE = current.childcare
 export const TAX_CODE_TIMES = current.taxCodeTimes
+
+// How payroll turns a tax code's number into tax-free pay ("free pay"), or
+// into the pay a K code adds ("additional pay"). Not kept by tax year: HMRC's
+// Tables A have been used unchanged since 6 April 1993, and its P9X for
+// 2026 to 2027 says to keep using them. Checked on 21 October 2026.
+// Sources: Specification for PAYE Tax Table Routines, version 24.0 (February
+//          2026), paragraph 4.3.1, at
+//          https://www.gov.uk/government/publications/payroll-technical-specifications-income-tax
+//          https://www.gov.uk/government/publications/tables-a-pay-adjustment-tables
+export const PAYE_TAX_TABLES = {
+  poundsPerCodeUnit: 10, // each 1 in the code is £10 a year
+  addedToEachCode: 9, // £9 is added, so code 1 is £1 to £19 and 1257L is £12,579
+  codeBlock: 500, // a code over 500 is split into blocks of 500 and a remainder
+}

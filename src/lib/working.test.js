@@ -48,6 +48,7 @@ function checkShape(working, where) {
   assert.ok(Array.isArray(working) && working.length > 0, `${where}: no working`)
   for (const part of working) {
     assert.equal(typeof part.title, 'string', `${where}: a part has no title`)
+    if ('note' in part) assert.ok(typeof part.note === 'string' && part.note.length > 0)
     for (const line of [...part.lines, ...(part.total ? [part.total] : [])]) {
       assert.equal(typeof line.label, 'string', `${where}: a line has no label`)
       assert.doesNotMatch(line.label, /£|\d%/, `${where}: "${line.label}" has an amount in it`)

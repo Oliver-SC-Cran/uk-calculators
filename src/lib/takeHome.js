@@ -4,7 +4,9 @@
 //
 // - Income tax is cumulative: payroll works it out on pay so far in the tax
 //   year, so over the year it comes to the tax on the year's pay. With a tax
-//   code it uses the code as it is. Without one it uses the standard Personal
+//   code it uses the code as it is, with the tax-free pay HMRC's tax tables
+//   give it (payrollCodeAllowance in incomeTax.js: 1257L is £12,579.12 for
+//   someone paid monthly). Without one it uses the standard Personal
 //   Allowance, reduced above £100,000.
 // - National Insurance and student loans are worked out on each pay day on
 //   its own, with the thresholds for a week or a month.
@@ -15,16 +17,18 @@
 // It builds on incomeTax.js, studentLoans.js and pensions.js and has no tax
 // rules of its own. The figures are in rates/.
 
+import { formatGBP } from './format.js'
 import {
   calculateIncomeTax,
   incomeTaxLabel,
   incomeTaxOnCode,
   nationalInsuranceForPeriod,
+  payrollCodeAllowance,
 } from './incomeTax.js'
 import { atLeastZero } from './numbers.js'
 import { PAY_FREQUENCIES, yearlyPayFrom } from './payPeriods.js'
 import { extraReliefToClaim, pensionContributions } from './pensions.js'
-import { INCOME_TAX_RATES } from './rates/incomeTax.js'
+import { INCOME_TAX_RATES, PAYE_TAX_TABLES } from './rates/incomeTax.js'
 import { FULL_TIME_HOURS } from './rates/minimumWage.js'
 import { forTaxYear } from './rates/taxYear.js'
 import { studentLoanForPeriod } from './studentLoans.js'
@@ -86,7 +90,9 @@ export function calculateTakeHomePay({
 
   // Income tax due for the year, with and without the bonus.
   const taxDue = (income) =>
-    taxCode ? incomeTaxOnCode(income, taxCode, where) : calculateIncomeTax(income, where)
+    taxCode
+      ? incomeTaxOnCode(income, taxCode, { ...where, frequency: payFrequency })
+      : calculateIncomeTax(income, where)
   const regular = taxDue(taxablePay)
   const withBonus = extra > 0 ? taxDue(taxablePay + extra) : regular
 
@@ -220,7 +226,7 @@ export function calculateTakeHomePay({
       ),
       payPart({ entered, payPer, hoursPerWeek, daysPerWeek, gross }),
       pension.pensionIntoPot > 0 && pensionPart(pension, extraRelief),
-      incomeTaxPart({ taxName, taxCode, taxablePay, regular, incomeTax }),
+      incomeTaxPart({ taxName, taxCode, taxablePay, regular, incomeTax, payFrequency, payDays }),
       nationalInsurancePart({ niablePayDay, niUsual, period, paysNationalInsurance }),
       ...(hasLoan ? loanUsual.working : []),
       bonusResult &&
@@ -290,19 +296,34 @@ function pensionPart(pension, extraRelief) {
   ])
 }
 
+// The one sentence under the income tax working that says how payroll turns
+// a code's number into tax-free pay (PAYE_TAX_TABLES).
+const { poundsPerCodeUnit, addedToEachCode } = PAYE_TAX_TABLES
+const CODE_NOTE = `Payroll takes the number in your tax code times ${formatGBP(poundsPerCodeUnit)}, adds ${formatGBP(addedToEachCode)} and shares that over your pay days, each rounded up to the penny, as HMRC's tax tables do.`
+
 /** How the year's income tax was worked out, with or without a tax code. */
-function incomeTaxPart({ taxName, taxCode, taxablePay, regular, incomeTax }) {
+function incomeTaxPart({
+  taxName,
+  taxCode,
+  taxablePay,
+  regular,
+  incomeTax,
+  payFrequency,
+  payDays,
+}) {
+  const usesNumber = taxCode?.kind === 'allowance' || taxCode?.kind === 'k'
+  const fromCode = usesNumber ? payrollCodeAllowance(taxCode.number, payFrequency) : null
   const allowanceLine = () => {
     if (!taxCode) {
       return info('Personal Allowance (tax-free)', regular.personalAllowanceUsed, pence)
     }
-    if (taxCode.kind === 'allowance') {
-      return info('Tax-free pay from your tax code', taxCode.allowance, pence)
-    }
-    if (taxCode.kind === 'k') {
-      return info('Added to your pay by your tax code', -taxCode.allowance, pence)
-    }
-    return null
+    if (!usesNumber) return null
+    const label =
+      taxCode.kind === 'k'
+        ? 'Added to your pay by your tax code'
+        : 'Tax-free pay from your tax code'
+    const shared = fromCode.year > 0 ? { count: payDays, each: fromCode.payDay } : {}
+    return info(label, fromCode.year, { ...pence, ...shared })
   }
   const notTaken = regular.tax - incomeTax
   return part(
@@ -317,6 +338,7 @@ function incomeTaxPart({ taxName, taxCode, taxablePay, regular, incomeTax }) {
       notTaken > 0.005 && subtract('Not taken, over the limit of half your pay', notTaken, pence),
     ],
     total(`${taxName} a year`, incomeTax, pence),
+    fromCode?.year > 0 ? CODE_NOTE : undefined,
   )
 }
 

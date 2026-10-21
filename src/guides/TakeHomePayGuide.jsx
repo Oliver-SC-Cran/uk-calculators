@@ -1,5 +1,10 @@
-import { taperedPersonalAllowance } from '../lib/incomeTax'
-import { INCOME_TAX, NATIONAL_INSURANCE, SCOTTISH_INCOME_TAX } from '../lib/rates/incomeTax'
+import { payrollCodeAllowance, taperedPersonalAllowance } from '../lib/incomeTax'
+import {
+  INCOME_TAX,
+  NATIONAL_INSURANCE,
+  PAYE_TAX_TABLES,
+  SCOTTISH_INCOME_TAX,
+} from '../lib/rates/incomeTax'
 import { TAX_YEAR, TAX_YEAR_END, TAX_YEAR_START } from '../lib/rates/taxYear'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 import CalculatorGuide from '../components/CalculatorGuide'
@@ -51,6 +56,10 @@ export default function TakeHomePayGuide() {
   // gov.uk's own example of a reduced code: medical insurance worth £1,570.
   const benefit = 1570
   const reducedCode = taxCodeFor(personalAllowance - benefit)
+
+  // What payroll gives the standard code, from HMRC's tax tables.
+  const { addedToEachCode, poundsPerCodeUnit } = PAYE_TAX_TABLES
+  const codeOnPayroll = payrollCodeAllowance(personalAllowance / poundsPerCodeUnit, 'monthly')
 
   // A bonus on £35,000, paid monthly.
   const bonusExample = calculateTakeHomePay({ pay: 35000, bonus: 5000 }).bonus
@@ -253,6 +262,13 @@ export default function TakeHomePayGuide() {
         insurance from an employer worth {gbp(benefit)} leaves {gbp(personalAllowance - benefit)}{' '}
         tax-free, which is code {reducedCode}.
       </p>
+      <p>
+        Payroll follows HMRC's tax tables, which add {gbp(addedToEachCode)} to the number times{' '}
+        {gbp(poundsPerCodeUnit)} and share it over your paydays, each rounded up to the penny. So{' '}
+        {standardTaxCode} gives {gbpPence(codeOnPayroll.payDay)} of tax-free pay a month, or{' '}
+        {gbpPence(codeOnPayroll.year)} over the year. The calculator does the same when you enter a
+        code. With no code it uses the Personal Allowance itself.
+      </p>
       <ul>
         <li>
           L means the standard Personal Allowance. M and N mean Marriage Allowance: you get, or
@@ -396,8 +412,16 @@ export default function TakeHomePayGuide() {
         </Source>
         ,{' '}
         <Source href="https://www.gov.uk/tax-codes/emergency-tax-codes">emergency tax codes</Source>{' '}
-        and <Source href="https://www.gov.uk/tax-codes/k-in-your-tax-code">K tax codes</Source>. The
-        Welsh rates are on{' '}
+        and <Source href="https://www.gov.uk/tax-codes/k-in-your-tax-code">K tax codes</Source>. How
+        payroll turns a code into tax-free pay is in HMRC's{' '}
+        <Source href="https://www.gov.uk/government/publications/payroll-technical-specifications-income-tax">
+          specification for PAYE tax table routines
+        </Source>{' '}
+        and{' '}
+        <Source href="https://www.gov.uk/government/publications/tables-a-pay-adjustment-tables">
+          Tables A
+        </Source>
+        . The Welsh rates are on{' '}
         <Source href="https://www.gov.uk/welsh-income-tax">Welsh Income Tax</Source>. The weekly and
         monthly thresholds are in HMRC's{' '}
         <Source href="https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027">

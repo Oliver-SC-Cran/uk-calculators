@@ -1,12 +1,15 @@
 import { flatRateFor } from '../lib/incomeTax'
 import { formatGBP, percent } from '../lib/format'
-import { INCOME_TAX } from '../lib/rates/incomeTax'
+import { INCOME_TAX, PAYE_TAX_TABLES } from '../lib/rates/incomeTax'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { taxCodeFor } from '../lib/taxCode'
 
 // What each part of a tax code means, in plain words. The meanings come from
 // gov.uk's "What your tax code means" and "Emergency tax codes" pages, checked
-// on 21 October 2026.
+// on 21 October 2026. The £9 payroll adds is from HMRC's tax tables
+// (PAYE_TAX_TABLES), and "How we worked this out" shows it.
+
+const { addedToEachCode } = PAYE_TAX_TABLES
 
 const BAND_NAMES = {
   basic: 'basic rate',
@@ -36,7 +39,7 @@ function mainSentences(code) {
   }
   if (code.kind === 'k') {
     return [
-      `K means ${formatGBP(-code.allowance)} is added to the pay you are taxed on. You have income or deductions, such as a company benefit or tax owed from an earlier year, that are more than your Personal Allowance and are not already taxed.`,
+      `K means ${formatGBP(-code.allowance)} is added to the pay you are taxed on, which payroll makes ${formatGBP(-code.allowance + addedToEachCode)}. You have income or deductions, such as a company benefit or tax owed from an earlier year, that are more than your Personal Allowance and are not already taxed.`,
       'Your employer cannot take more than half your pay before tax in tax on any pay day.',
     ]
   }
@@ -45,7 +48,7 @@ function mainSentences(code) {
       'All your pay is taxed, with no tax-free pay. Your Personal Allowance has been used up, or your employer does not yet have the details to give you a tax code.',
     ]
   }
-  const tax = `The first ${formatGBP(code.allowance)} of your pay in the tax year is tax-free.`
+  const tax = `The number means ${formatGBP(code.allowance)} of tax-free pay in the tax year, which payroll makes ${formatGBP(code.allowance + addedToEachCode)}.`
   if (code.letter === 'M') {
     return [
       tax,

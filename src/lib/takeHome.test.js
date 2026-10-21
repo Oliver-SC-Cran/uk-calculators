@@ -23,6 +23,7 @@ import {
   flatRateFor,
   incomeTaxLabel,
   nationalInsuranceForPeriod,
+  payrollCodeAllowance,
 } from './incomeTax.js'
 import { payFor, yearlyPayFrom } from './payPeriods.js'
 import { calculatePayPackage } from './payRise.js'
@@ -187,34 +188,96 @@ test('National Insurance [gov.uk] none is paid after State Pension age', () => {
 // Tax codes
 // ---------------------------------------------------------------------------
 
-test('tax codes [own working] 1257L gives the same as no code, up to £100,000', () => {
-  for (const pay of [0, 12570, 20000, 35000, 50270, 60000, 100000]) {
-    near(withCode('1257L', { pay }).incomeTax, calculateTakeHomePay({ pay }).incomeTax, `${pay}`)
-  }
+// Payroll's tax-free pay for a code, from HMRC's Specification for PAYE Tax
+// Table Routines, version 24.0 (February 2026), paragraph 4.3.1, and its
+// Tables A, which HMRC's P9X says are still used unchanged in 2026 to 2027:
+//   https://www.gov.uk/government/publications/payroll-technical-specifications-income-tax
+//   https://www.gov.uk/government/publications/tables-a-pay-adjustment-tables
+
+test('tax codes [gov.uk] payroll turns a code into tax-free pay as HMRC’s tax tables do', () => {
+  // The specification: "suffix code 1 thus represents annual allowances (Free
+  // Pay) of £19". Tables A give code 1 as £1.59 in month 1 and £0.37 in week 1.
+  assert.equal(payrollCodeAllowance(1, 'monthly').payDay, 1.59)
+  assert.equal(payrollCodeAllowance(1, 'weekly').payDay, 0.37)
+  // Tables A, month 1: code 257 is £214.92, 383 is £319.92, 100 is £84.09 and
+  // 500 is £417.42. Week 1: 257 is £49.60 and 500 is £96.33.
+  assert.equal(payrollCodeAllowance(257, 'monthly').payDay, 214.92)
+  assert.equal(payrollCodeAllowance(383, 'monthly').payDay, 319.92)
+  assert.equal(payrollCodeAllowance(100, 'monthly').payDay, 84.09)
+  assert.equal(payrollCodeAllowance(500, 'monthly').payDay, 417.42)
+  assert.equal(payrollCodeAllowance(257, 'weekly').payDay, 49.6)
+  assert.equal(payrollCodeAllowance(500, 'weekly').payDay, 96.33)
+  // Each further 500 is the box marked * in Tables A: £416.67 a month, £96.16 a week.
+  near(payrollCodeAllowance(1000, 'monthly').payDay - 417.42, 416.67)
+  near(payrollCodeAllowance(1000, 'weekly').payDay - 96.33, 96.16)
+  // So 1257L is £214.92 plus 2 lots of £416.67 a month. Tables A, month 12:
+  // code 257 is £2,579.04 and the box is £5,000.04, so £12,579.12 for the year.
+  assert.deepEqual(payrollCodeAllowance(1257, 'monthly'), { payDay: 1048.26, year: 12579.12 })
+  assert.deepEqual(payrollCodeAllowance(1257, 'weekly'), { payDay: 241.92, year: 12579.84 })
+  // Tables A's worked example: code 1500 at week 35 is £3,371.55 for one unit
+  // of 500 and £6,731.20 for the other two, £10,102.75 of free pay to date.
+  near(35 * payrollCodeAllowance(1500, 'weekly').payDay, 10102.75)
+  // A K code's "additional pay" is worked out the same way: each 1 is £10,
+  // with £9 added. K154, from HMRC's PAYE11095 example of a £1,550 deduction.
+  assert.equal(payrollCodeAllowance(154, 'monthly').payDay, 129.09)
+  // There is no free pay for code 0, as in 0T.
+  assert.deepEqual(payrollCodeAllowance(0, 'monthly'), { payDay: 0, year: 0 })
+})
+
+test('tax codes [own working] 1257L gives payroll’s £12,579.12, not £12,570', () => {
+  // Paid monthly, £9.12 more is tax-free than with no code, so 20% of it
+  // (£1.82) less tax at the basic rate, and 40% of it (£3.65) at the higher.
+  near(withCode('1257L', { pay: 35000 }).incomeTax, (35000 - 12579.12) * 0.2)
+  near(withCode('1257L', { pay: 50270 }).incomeTax, 7540 - 1.824)
+  near(withCode('1257L', { pay: 60000 }).incomeTax, 11432 - 3.648)
+  // Paid weekly it is £12,579.84.
+  near(
+    withCode('1257L', { pay: 35000, payFrequency: 'weekly' }).incomeTax,
+    (35000 - 12579.84) * 0.2,
+  )
+  // No tax below the free pay, with or without a code.
+  assert.equal(withCode('1257L', { pay: 12579 }).incomeTax, 0)
+  assert.equal(withCode('1257L', { pay: 0 }).incomeTax, 0)
+  // The working shows it, with the rule in a note.
+  const part = withCode('1257L', { pay: 35000 }).working.find((each) =>
+    each.title.endsWith('tax code 1257L'),
+  )
+  const line = part.lines.find((each) => each.label === 'Tax-free pay from your tax code')
+  assert.equal(line.value, 12579.12)
+  assert.equal(line.each, 1048.26)
+  assert.equal(line.count, 12)
+  assert.match(part.note, /times £10, adds £9/)
+  // No code: no note, and the Personal Allowance itself.
+  const plain = calculateTakeHomePay({ pay: 35000 }).working.find(
+    (each) => each.title === 'Income tax',
+  )
+  assert.equal(plain.note, undefined)
 })
 
 test('tax codes [own working] a code is used as it is above £100,000', () => {
   // No code: the allowance falls to £7,570 at £110,000, so tax is £7,540 plus
   // 40% of £64,730, which is £33,432. With 1257L payroll keeps the full
-  // £12,570: £7,540 plus 40% of £59,730, which is £31,432.
+  // £12,579.12: £7,540 plus 40% of £59,720.88, which is £31,428.35.
   const noCode = calculateTakeHomePay({ pay: 110000 })
   near(noCode.incomeTax, 33432)
   assert.equal(noCode.codeSkipsTaper, false)
   const coded = withCode('1257L', { pay: 110000 })
-  near(coded.incomeTax, 31432)
+  near(coded.incomeTax, 31428.352)
   assert.equal(coded.codeSkipsTaper, true)
   assert.equal(withCode('1257L', { pay: 100000 }).codeSkipsTaper, false)
 })
 
-test('tax codes [gov.uk] 1100L leaves £11,000 tax-free', () => {
-  // £35,000 less the £11,000 in gov.uk's example is £24,000 at 20%.
-  near(withCode('1100L', { pay: 35000 }).incomeTax, 4800)
+test('tax codes [own working] 1100L, gov.uk’s example of a reduced code', () => {
+  // Payroll: £84.09 for 100 plus 2 lots of £416.67 is £917.43 a month,
+  // £11,009.16 a year. £35,000 less that, at 20%.
+  near(withCode('1100L', { pay: 35000 }).incomeTax, (35000 - 11009.16) * 0.2)
 })
 
 test('tax codes [own working] M and N codes', () => {
-  // 1383M: £13,830 tax-free. 1131N: £11,310.
-  near(withCode('1383M', { pay: 35000 }).incomeTax, (35000 - 13830) * 0.2)
-  near(withCode('1131N', { pay: 35000 }).incomeTax, (35000 - 11310) * 0.2)
+  // 1383M: £319.92 plus £833.34 a month, £13,839.12 a year.
+  // 1131N: £109.92 plus £833.34 a month, £11,319.12 a year.
+  near(withCode('1383M', { pay: 35000 }).incomeTax, (35000 - 13839.12) * 0.2)
+  near(withCode('1131N', { pay: 35000 }).incomeTax, (35000 - 11319.12) * 0.2)
 })
 
 test('tax codes [own working] 0T taxes all pay, with the usual bands', () => {
@@ -253,23 +316,25 @@ test('tax codes [gov.uk] NT means no tax, but NI is still paid', () => {
 })
 
 test('tax codes [own working] a K code adds its amount to taxable pay', () => {
-  // K475 on £30,000: £34,750 is taxable, at 20%.
-  near(withCode('K475', { pay: 30000 }).incomeTax, 6950)
+  // K475 on £30,000: payroll adds £396.59 a month, £4,759.08 a year, at 20%.
+  near(withCode('K475', { pay: 30000 }).incomeTax, (30000 + 4759.08) * 0.2)
   // A K code that takes taxable pay into the higher rate: K1000 on £45,000
-  // makes £55,000 taxable, so £37,700 at 20% and £17,300 at 40%.
-  near(withCode('K1000', { pay: 45000 }).incomeTax, 7540 + 6920)
+  // adds £834.09 a month, £10,009.08 a year. £55,009.08 is taxable, so
+  // £37,700 at 20% and £17,309.08 at 40%.
+  near(withCode('K1000', { pay: 45000 }).incomeTax, 7540 + 6923.632)
 })
 
 test('tax codes [gov.uk] a K code cannot take more than half of each pay day', () => {
   // gov.uk: "Employers and pension providers cannot take more than half of
   // your pre-tax wages or pension when using a K tax code."
-  // K2000 on £1,000 a month: £32,000 is taxable, so £6,400 is due for the
-  // year. Half of each month's £1,000 is £500, so £6,000 is taken.
+  // K2000 on £1,000 a month adds £1,667.43 a month, £20,009.16 a year, so
+  // £32,009.16 is taxable and £6,401.83 is due. Half of each month's £1,000
+  // is £500, so £6,000 is taken.
   const r = withCode('K2000', { pay: 12000 })
-  near(r.incomeTaxDue, 6400)
+  near(r.incomeTaxDue, 6401.832)
   near(r.incomeTax, 6000)
   near(r.columns.month.incomeTax, 500)
-  near(r.taxNotTaken, 400)
+  near(r.taxNotTaken, 401.832)
   // Weekly pay is held to half of each week's pay in the same way.
   near(withCode('K2000', { pay: 12000, payFrequency: 'weekly' }).incomeTax, 6000)
   // When the limit is not reached, the full tax is taken.
@@ -277,18 +342,19 @@ test('tax codes [gov.uk] a K code cannot take more than half of each pay day', (
 })
 
 test('tax codes [own working] tax held back by the K code limit comes out of a bonus', () => {
-  // K2000 on £12,000 with a £3,000 bonus on the last pay day: £7,000 is due.
-  // Eleven months take £500 each. The last month can take up to half of
-  // £4,000, so it takes the £1,500 still due.
+  // K2000 on £12,000 with a £3,000 bonus on the last pay day: £7,001.83 is
+  // due. Eleven months take £500 each. The last month can take up to half of
+  // £4,000, so it takes the £1,501.83 still due.
   const r = withCode('K2000', { pay: 12000, bonus: 3000 })
-  near(r.bonus.incomeTax, 1000)
+  near(r.bonus.incomeTax, 1001.832)
   near(r.taxNotTaken, 0)
-  // K3000 on £12,000 with a £1,000 bonus: £9,660 is due with the bonus.
-  // £5,500 is taken before it and £1,000 on the last pay day, so £3,160 is not taken.
+  // K3000 adds £2,500.77 a month, £30,009.24 a year. On £12,000 with a
+  // £1,000 bonus, £9,663.70 is due with the bonus. £5,500 is taken before it
+  // and £1,000 on the last pay day, so £3,163.70 is not taken.
   const short = withCode('K3000', { pay: 12000, bonus: 1000 })
-  near(short.incomeTaxDue, 9260)
+  near(short.incomeTaxDue, 9263.696)
   near(short.bonus.incomeTax, 500)
-  near(short.taxNotTaken, 3160)
+  near(short.taxNotTaken, 3163.696)
 })
 
 test('tax codes [gov.uk] emergency codes are worked out over the whole year here', () => {
@@ -296,19 +362,20 @@ test('tax codes [gov.uk] emergency codes are worked out over the whole year here
   // in that week or month only". With the same pay every month that is the
   // same over the year, which is how this calculator works it out.
   for (const text of ['1257L W1', '1257L M1', '1257L X']) {
-    near(withCode(text, { pay: 35000 }).incomeTax, 4486, text)
+    near(withCode(text, { pay: 35000 }).incomeTax, (35000 - 12579.12) * 0.2, text)
   }
 })
 
 test('tax codes [own working] S codes use Scottish rates, C codes the Welsh rates', () => {
-  // Scottish rates on £35,000, as in the guide's example: £4,501.07.
+  // Scottish rates on £35,000 with S1257L: £22,420.88 is taxable. £753.73 at
+  // 19%, £2,597.80 at 20% and 21% of £5,464.88 is £4,499.15.
   const scottish = withCode('S1257L', { pay: 35000 })
-  near(scottish.incomeTax, 4501.07)
+  near(scottish.incomeTax, 4499.1548)
   assert.equal(scottish.incomeTaxName, 'Scottish income tax')
-  // Living in Scotland with no code does the same.
+  // Living in Scotland with no code gives the guide's £4,501.07.
   near(calculateTakeHomePay({ pay: 35000, scottish: true }).incomeTax, 4501.07)
   const welsh = withCode('C1257L', { pay: 35000 })
-  near(welsh.incomeTax, 4486)
+  near(welsh.incomeTax, (35000 - 12579.12) * 0.2)
   assert.equal(welsh.incomeTaxName, 'Income tax (Welsh rates)')
   assert.equal(incomeTaxLabel(false, false), 'Income tax')
 })
