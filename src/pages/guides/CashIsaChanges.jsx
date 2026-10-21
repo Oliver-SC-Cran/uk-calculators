@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import GuidePage from '../../components/GuidePage'
-import { ISA, SELF_EMPLOYED, TAX_YEAR, TAX_YEAR_END } from '../../lib/calculations'
+import { ISA } from '../../lib/rates/isa'
+import { SELF_EMPLOYED } from '../../lib/rates/selfEmployed'
+import { TAX_YEAR, TAX_YEAR_END } from '../../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.

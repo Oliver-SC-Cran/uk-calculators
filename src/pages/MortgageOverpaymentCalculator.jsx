@@ -6,9 +6,10 @@ import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import MortgageOverpaymentGuide from '../guides/MortgageOverpaymentGuide'
-import { MORTGAGE } from '../lib/calculations'
+import { monthAfter } from '../lib/dates'
+import { MORTGAGE } from '../lib/rates/mortgage'
 import { formatGBP, formatMonthYear, percent, yearsAndMonths } from '../lib/format'
-import { calculateMortgageOverpayment, monthAfter } from '../lib/mortgage'
+import { calculateMortgageOverpayment } from '../lib/mortgage'
 
 // Today as 'YYYY-MM-DD', in the visitor's own time zone.
 function today() {

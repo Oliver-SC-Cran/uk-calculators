@@ -1,29 +1,14 @@
 // The maternity and paternity pay calculator. Rates and limits are in
-// PARENTAL_PAY in calculations.js.
+// rates/parentalPay.js, by tax year.
 //
-// Dates are plain 'YYYY-MM-DD' text and all date sums are done in UTC, so the
-// result is the same on the build server and in any browser time zone.
+// Dates are plain 'YYYY-MM-DD' text and all date sums are done in UTC (see
+// dates.js), so the result is the same on the build server and in any browser
+// time zone.
 
-import { PARENTAL_PAY } from './calculations.js'
-
-const DAY = 24 * 60 * 60 * 1000
-
-const atLeastZero = (value) => (Number.isFinite(value) ? Math.max(0, value) : 0)
-
-/** '2027-03-01' to a UTC timestamp, or null if it is not a real date. */
-function parseDate(text) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text ?? '')
-  if (!match) return null
-  const [year, month, day] = match.slice(1).map(Number)
-  const time = Date.UTC(year, month - 1, day)
-  const date = new Date(time)
-  const isReal =
-    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
-  return isReal ? time : null
-}
-
-const toText = (time) => new Date(time).toISOString().slice(0, 10)
-const addDays = (text, days) => toText(parseDate(text) + days * DAY)
+import { addDays, DAY, parseIsoDate, toIsoDate } from './dates.js'
+import { atLeastZero } from './numbers.js'
+import { PARENTAL_PAY_RATES } from './rates/parentalPay.js'
+import { forTaxYear } from './rates/taxYear.js'
 
 /** HMRC rounds statutory pay up to the next penny. */
 const roundUpToPenny = (amount) => Math.ceil(amount * 100 - 1e-6) / 100
@@ -46,12 +31,13 @@ export function averageWeeklyEarnings({ amount, period }) {
  * Weeks run Sunday to Saturday. The expected week of childbirth is the week
  * the due date falls in. The qualifying week is the 15th week before it.
  */
-export function keyDates(dueDate) {
-  const due = parseDate(dueDate)
+export function keyDates(dueDate, { taxYear } = {}) {
+  const due = parseIsoDate(dueDate)
   if (due === null) return null
 
-  const { qualifyingWeekBeforeDue, earliestLeaveWeeksBeforeDue, continuousWeeks } = PARENTAL_PAY
-  const expectedWeekStart = toText(due - new Date(due).getUTCDay() * DAY)
+  const rates = forTaxYear(PARENTAL_PAY_RATES, taxYear)
+  const { qualifyingWeekBeforeDue, earliestLeaveWeeksBeforeDue, continuousWeeks } = rates
+  const expectedWeekStart = toIsoDate(due - new Date(due).getUTCDay() * DAY)
   const qualifyingWeekStart = addDays(expectedWeekStart, -7 * qualifyingWeekBeforeDue)
   const qualifyingWeekEnd = addDays(qualifyingWeekStart, 6)
 
@@ -67,22 +53,22 @@ export function keyDates(dueDate) {
     earliestLeaveStart: addDays(expectedWeekStart, -7 * earliestLeaveWeeksBeforeDue),
     // The earnings limit on file is for qualifying weeks in one tax year.
     limitMayDiffer:
-      qualifyingWeekEnd < PARENTAL_PAY.lowerEarningsLimitFrom ||
-      qualifyingWeekEnd > PARENTAL_PAY.lowerEarningsLimitTo,
+      qualifyingWeekEnd < rates.lowerEarningsLimitFrom ||
+      qualifyingWeekEnd > rates.lowerEarningsLimitTo,
   }
 }
 
 /** Why someone does not qualify, as a list of codes. Empty if they do. */
-function reasonsNotQualifying({ earnings, workedContinuously }) {
+function reasonsNotQualifying({ earnings, workedContinuously, rates }) {
   const reasons = []
   if (!workedContinuously) reasons.push('service')
-  if (earnings < PARENTAL_PAY.lowerEarningsLimit) reasons.push('earnings')
+  if (earnings < rates.lowerEarningsLimit) reasons.push('earnings')
   return reasons
 }
 
 /** The flat rate, or 90% of earnings if that is lower. */
-const cappedWeeklyPay = (earnings) =>
-  Math.min(PARENTAL_PAY.weeklyRate, roundUpToPenny(earnings * PARENTAL_PAY.earningsShare))
+const cappedWeeklyPay = (earnings, rates) =>
+  Math.min(rates.weeklyRate, roundUpToPenny(earnings * rates.earningsShare))
 
 /**
  * Statutory Maternity Pay: 90% of average weekly earnings for 6 weeks, then
@@ -94,18 +80,20 @@ export function calculateMaternityPay({
   leaveStart,
   averageWeeklyEarnings: weeklyEarnings,
   workedContinuously,
+  taxYear,
 }) {
-  const dates = keyDates(dueDate)
+  const dates = keyDates(dueDate, { taxYear })
   if (!dates) return null
 
-  const { maternity, maternityAllowance, earningsShare, noticeDays } = PARENTAL_PAY
+  const rates = forTaxYear(PARENTAL_PAY_RATES, taxYear)
+  const { maternity, maternityAllowance, earningsShare, noticeDays } = rates
   const earnings = atLeastZero(weeklyEarnings)
-  const start = parseDate(leaveStart) === null ? dueDate : leaveStart
-  const reasons = reasonsNotQualifying({ earnings, workedContinuously })
+  const start = parseIsoDate(leaveStart) === null ? dueDate : leaveStart
+  const reasons = reasonsNotQualifying({ earnings, workedContinuously, rates })
   const qualifies = reasons.length === 0
 
   const higherWeekly = roundUpToPenny(earnings * earningsShare)
-  const standardWeekly = cappedWeeklyPay(earnings)
+  const standardWeekly = cappedWeeklyPay(earnings, rates)
   const standardWeeks = maternity.payWeeks - maternity.higherRateWeeks
 
   const weeks = []
@@ -127,7 +115,7 @@ export function calculateMaternityPay({
   // Maternity Allowance is for people who cannot get SMP. It needs earnings
   // of at least £30 a week, and the same flat rate or 90% applies.
   const allowanceMayApply = !qualifies && earnings >= maternityAllowance.weeklyEarnings
-  const allowanceWeekly = allowanceMayApply ? cappedWeeklyPay(earnings) : 0
+  const allowanceWeekly = allowanceMayApply ? cappedWeeklyPay(earnings, rates) : 0
 
   return {
     ...dates,
@@ -155,15 +143,17 @@ export function calculatePaternityPay({
   dueDate,
   averageWeeklyEarnings: weeklyEarnings,
   workedContinuously,
+  taxYear,
 }) {
-  const dates = keyDates(dueDate)
+  const dates = keyDates(dueDate, { taxYear })
   if (!dates) return null
 
-  const { paternity } = PARENTAL_PAY
+  const rates = forTaxYear(PARENTAL_PAY_RATES, taxYear)
+  const { paternity } = rates
   const earnings = atLeastZero(weeklyEarnings)
-  const reasons = reasonsNotQualifying({ earnings, workedContinuously })
+  const reasons = reasonsNotQualifying({ earnings, workedContinuously, rates })
   const qualifies = reasons.length === 0
-  const weekly = qualifies ? cappedWeeklyPay(earnings) : 0
+  const weekly = qualifies ? cappedWeeklyPay(earnings, rates) : 0
 
   return {
     ...dates,

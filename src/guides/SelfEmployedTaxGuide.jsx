@@ -1,10 +1,7 @@
-import {
-  INCOME_TAX,
-  SCOTTISH_INCOME_TAX,
-  SELF_EMPLOYED,
-  STUDENT_LOAN,
-  TAX_YEAR,
-} from '../lib/calculations'
+import { INCOME_TAX, SCOTTISH_INCOME_TAX } from '../lib/rates/incomeTax'
+import { SELF_EMPLOYED } from '../lib/rates/selfEmployed'
+import { STUDENT_LOAN } from '../lib/rates/studentLoans'
+import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 import { calculateSelfEmployedTax } from '../lib/selfEmployed'
 

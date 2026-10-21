@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MORTGAGE } from '../lib/calculations'
+import { MORTGAGE } from '../lib/rates/mortgage'
 import { formatGBP as gbp, percent, yearsAndMonths } from '../lib/format'
 import { calculateMortgageOverpayment } from '../lib/mortgage'
 

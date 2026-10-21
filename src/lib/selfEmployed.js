@@ -1,18 +1,25 @@
-// The self-employed tax calculator. It puts together the income tax, Class 4
-// National Insurance and student loan functions in calculations.js, and
-// contains no rates or thresholds of its own.
+// The self-employed tax calculator. It puts together the income tax and
+// student loan functions with Class 4 National Insurance. Its rates and
+// Self Assessment dates are in rates/selfEmployed.js, by tax year.
 
-import {
-  calculateClass4NationalInsurance,
-  calculateIncomeTax,
-  calculateStudentLoanForYear,
-  calculateStudentLoanRepayment,
-  INCOME_TAX,
-  SCOTTISH_INCOME_TAX,
-  SELF_EMPLOYED,
-} from './calculations.js'
+import { calculateIncomeTax } from './incomeTax.js'
+import { atLeastZero } from './numbers.js'
+import { INCOME_TAX_RATES } from './rates/incomeTax.js'
+import { SELF_EMPLOYED_RATES } from './rates/selfEmployed.js'
+import { forTaxYear } from './rates/taxYear.js'
+import { calculateStudentLoanForYear, calculateStudentLoanRepayment } from './studentLoans.js'
 
-const atLeastZero = (value) => (Number.isFinite(value) ? Math.max(0, value) : 0)
+/** Class 4 National Insurance on self-employed profit: 6% then 2%. */
+export function calculateClass4NationalInsurance(profit, { taxYear } = {}) {
+  const { lowerProfitsLimit, upperProfitsLimit, mainRate, upperRate } = forTaxYear(
+    SELF_EMPLOYED_RATES,
+    taxYear,
+  ).class4
+  const amount = atLeastZero(profit)
+  const inMainBand = Math.max(0, Math.min(amount, upperProfitsLimit) - lowerProfitsLimit)
+  const aboveUpperLimit = Math.max(0, amount - upperProfitsLimit)
+  return inMainBand * mainRate + aboveUpperLimit * upperRate
+}
 
 /**
  * Tax on self-employed profit for one tax year, for a sole trader who may
@@ -34,8 +41,13 @@ export function calculateSelfEmployedTax({
   plan = 'none',
   hasPostgraduateLoan = false,
   scottish = false,
+  taxYear,
 }) {
-  const { tradingAllowance, paymentsOnAccount, class2 } = SELF_EMPLOYED
+  const { tradingAllowance, paymentsOnAccount, class2 } = forTaxYear(SELF_EMPLOYED_RATES, taxYear)
+  const { incomeTax: incomeTaxRates, scottishIncomeTax: scottishRates } = forTaxYear(
+    INCOME_TAX_RATES,
+    taxYear,
+  )
   const turnover = atLeastZero(income)
   const job = atLeastZero(employmentIncome)
 
@@ -44,20 +56,22 @@ export function calculateSelfEmployedTax({
   const deducted = Math.min(turnover, costs)
   const profit = turnover - deducted
 
-  const taxOnJob = calculateIncomeTax(job, { scottish })
-  const taxOnEverything = calculateIncomeTax(job + profit, { scottish })
+  const taxOnJob = calculateIncomeTax(job, { scottish, taxYear })
+  const taxOnEverything = calculateIncomeTax(job + profit, { scottish, taxYear })
   const incomeTax = taxOnEverything.tax - taxOnJob.tax
-  const class4 = calculateClass4NationalInsurance(profit)
+  const class4 = calculateClass4NationalInsurance(profit, { taxYear })
 
   const loanForYear = calculateStudentLoanForYear({
     income: job + profit,
     plan,
     hasPostgraduateLoan,
+    taxYear,
   }).total
   const loanThroughJob = calculateStudentLoanRepayment({
     grossAnnual: job,
     plan,
     hasPostgraduateLoan,
+    taxYear,
   }).totalAnnual
   const studentLoan = Math.max(0, loanForYear - loanThroughJob)
 
@@ -72,11 +86,11 @@ export function calculateSelfEmployedTax({
   const personalAllowance = taxOnEverything.personalAllowanceUsed
   const allowanceUsedByJob = Math.min(job, personalAllowance)
   const higherRateStartsAbove = scottish
-    ? SCOTTISH_INCOME_TAX.intermediateRateLimit
-    : INCOME_TAX.basicRateLimit
+    ? scottishRates.intermediateRateLimit
+    : incomeTaxRates.basicRateLimit
   const basicRateBandLeft = Math.max(
     0,
-    higherRateStartsAbove - Math.max(job, INCOME_TAX.personalAllowance),
+    higherRateStartsAbove - Math.max(job, incomeTaxRates.personalAllowance),
   )
 
   // Payments on account cover income tax and Class 4, not student loan. They

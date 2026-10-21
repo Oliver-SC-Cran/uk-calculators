@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
 import GuidePage from '../../components/GuidePage'
-import { INCOME_TAX, ISA, MORTGAGE, SAVINGS_TAX, TAX_YEAR } from '../../lib/calculations'
+import { INCOME_TAX, SAVINGS_TAX } from '../../lib/rates/incomeTax'
+import { ISA } from '../../lib/rates/isa'
+import { MORTGAGE } from '../../lib/rates/mortgage'
+import { TAX_YEAR } from '../../lib/rates/taxYear'
 import { formatGBP as gbp, percent, yearsAndMonths } from '../../lib/format'
 import { calculateMortgageOverpayment } from '../../lib/mortgage'
 import {

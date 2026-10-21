@@ -6,7 +6,8 @@ import RegionField from '../components/RegionField'
 import ResultPanel from '../components/ResultPanel'
 import { useNumberField } from '../components/useNumberField'
 import TakeHomePayGuide from '../guides/TakeHomePayGuide'
-import { calculateTakeHome, TAX_YEAR } from '../lib/calculations'
+import { calculateTakeHome } from '../lib/incomeTax'
+import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, percent } from '../lib/format'
 
 export default function SalaryCalculator() {

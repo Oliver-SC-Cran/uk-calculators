@@ -1,4 +1,6 @@
-import { calculateRedundancyPay, REDUNDANCY, TAX_YEAR, TAX_YEAR_START } from '../lib/calculations'
+import { REDUNDANCY } from '../lib/rates/redundancy'
+import { TAX_YEAR, TAX_YEAR_START } from '../lib/rates/taxYear'
+import { calculateRedundancyPay } from '../lib/redundancy'
 import { formatGBP as gbp } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.

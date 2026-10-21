@@ -10,7 +10,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { calculateStampDuty } from './calculations.js'
+import { calculateStampDuty } from './stampDuty.js'
 
 const duty = (price, buyerType = 'homeMover', nonResident = false) =>
   calculateStampDuty({ price, buyerType, nonResident })

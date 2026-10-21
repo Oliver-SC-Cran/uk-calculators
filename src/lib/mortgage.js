@@ -1,13 +1,10 @@
 // The mortgage overpayment calculator. It works a month at a time, so it can
 // handle a regular overpayment, a one-off lump sum, or both, and keep track of
 // how much is overpaid in each year. The typical yearly overpayment limit is
-// in MORTGAGE in calculations.js.
+// in rates/mortgage.js.
 
-import { MORTGAGE } from './calculations.js'
-
-// Inputs come straight from form fields, so treat anything that is not a
-// positive number (blank, negative, not a number) as zero.
-const atLeastZero = (value) => (Number.isFinite(value) ? Math.max(0, value) : 0)
+import { atLeastZero } from './numbers.js'
+import { MORTGAGE } from './rates/mortgage.js'
 
 // Less than half a penny left counts as paid off.
 const PAID_OFF = 0.005
@@ -142,15 +139,4 @@ export function calculateMortgageOverpayment({
     firstYearAllowance: years[0].allowance,
     yearsOverAllowance,
   }
-}
-
-/**
- * The month a number of monthly payments after a start date ends in, as
- * 'YYYY-MM'. startDate is 'YYYY-MM-DD' text, and only its year and month are
- * used, so this gives the same answer on the server and in any browser.
- */
-export function monthAfter(startDate, months) {
-  const [year, month] = startDate.split('-').map(Number)
-  const index = year * 12 + (month - 1) + months
-  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`
 }

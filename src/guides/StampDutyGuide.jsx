@@ -1,4 +1,5 @@
-import { calculateStampDuty, STAMP_DUTY } from '../lib/calculations'
+import { STAMP_DUTY } from '../lib/rates/stampDuty'
+import { calculateStampDuty } from '../lib/stampDuty'
 import { formatGBP as gbp, percent } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.

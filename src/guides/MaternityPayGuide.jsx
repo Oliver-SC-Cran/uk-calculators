@@ -1,4 +1,4 @@
-import { PARENTAL_PAY } from '../lib/calculations'
+import { PARENTAL_PAY } from '../lib/rates/parentalPay'
 import { formatDate, formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 import {
   averageWeeklyEarnings,

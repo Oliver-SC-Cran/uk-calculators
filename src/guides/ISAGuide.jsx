@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
-import { calculateISAAllowance, ISA, TAX_YEAR } from '../lib/calculations'
+import { calculateISAAllowance } from '../lib/isa'
+import { ISA } from '../lib/rates/isa'
+import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.

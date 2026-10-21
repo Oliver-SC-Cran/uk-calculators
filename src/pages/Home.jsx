@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { ISA, TAX_YEAR } from '../lib/calculations'
+import { ISA } from '../lib/rates/isa'
+import { TAX_YEAR } from '../lib/rates/taxYear'
 import { percent } from '../lib/format'
 import { guides, routes } from '../routes'
 

@@ -13,12 +13,9 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import {
-  calculateClass4NationalInsurance,
-  calculateStudentLoanForYear,
-  calculateTakeHome,
-} from './calculations.js'
-import { calculateSelfEmployedTax } from './selfEmployed.js'
+import { calculateTakeHome } from './incomeTax.js'
+import { calculateClass4NationalInsurance, calculateSelfEmployedTax } from './selfEmployed.js'
+import { calculateStudentLoanForYear } from './studentLoans.js'
 
 const near = (actual, expected, message) =>
   assert.ok(

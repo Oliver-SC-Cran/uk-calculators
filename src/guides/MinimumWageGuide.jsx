@@ -1,4 +1,5 @@
-import { checkMinimumWage, MINIMUM_WAGE } from '../lib/calculations'
+import { checkMinimumWage } from '../lib/minimumWage'
+import { MINIMUM_WAGE } from '../lib/rates/minimumWage'
 import { formatGBP as gbp, formatGBPPence as gbpPence } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.

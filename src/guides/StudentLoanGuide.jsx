@@ -1,10 +1,10 @@
+import { STUDENT_LOAN } from '../lib/rates/studentLoans'
+import { TAX_YEAR } from '../lib/rates/taxYear'
 import {
   calculateStudentLoanRepayment,
   monthlyLoanThreshold,
   studentLoanWorking,
-  STUDENT_LOAN,
-  TAX_YEAR,
-} from '../lib/calculations'
+} from '../lib/studentLoans'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.

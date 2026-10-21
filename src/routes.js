@@ -2,15 +2,13 @@
 // script (scripts/prerender.js) and the sitemap are all built from this list.
 // To add a page: add it here, then map its path to a component in App.jsx.
 
-import {
-  INCOME_TAX,
-  ISA,
-  MINIMUM_WAGE,
-  PARENTAL_PAY,
-  REDUNDANCY,
-  STAMP_DUTY,
-  TAX_YEAR,
-} from './lib/calculations.js'
+import { INCOME_TAX } from './lib/rates/incomeTax.js'
+import { ISA } from './lib/rates/isa.js'
+import { MINIMUM_WAGE } from './lib/rates/minimumWage.js'
+import { PARENTAL_PAY } from './lib/rates/parentalPay.js'
+import { REDUNDANCY } from './lib/rates/redundancy.js'
+import { STAMP_DUTY } from './lib/rates/stampDuty.js'
+import { TAX_YEAR } from './lib/rates/taxYear.js'
 
 export const SITE_URL = 'https://ukmoneycalculators.co.uk'
 export const SITE_NAME = 'UK Money Calculators'

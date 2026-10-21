@@ -5,7 +5,7 @@ import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import MaternityPayGuide from '../guides/MaternityPayGuide'
-import { PARENTAL_PAY } from '../lib/calculations'
+import { PARENTAL_PAY } from '../lib/rates/parentalPay'
 import { formatDate, formatDateShort, formatGBPPence } from '../lib/format'
 import {
   averageWeeklyEarnings,

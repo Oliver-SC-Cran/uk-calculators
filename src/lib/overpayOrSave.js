@@ -1,17 +1,20 @@
 // The sums behind the "Should I overpay my mortgage or save?" guide. Overpaying
-// uses the mortgage calculator's own functions, and savings use the 2026/27
-// rules for tax on savings interest in SAVINGS_TAX.
+// uses the mortgage calculator's own functions, and savings use the rules for
+// tax on savings interest in rates/incomeTax.js, by tax year.
 
-import { INCOME_TAX, SAVINGS_TAX } from './calculations.js'
 import { calculateMortgageOverpayment } from './mortgage.js'
+import { atLeastZero } from './numbers.js'
+import { INCOME_TAX_RATES } from './rates/incomeTax.js'
+import { forTaxYear } from './rates/taxYear.js'
 
-const atLeastZero = (value) => (Number.isFinite(value) ? Math.max(0, value) : 0)
-
-export const TAX_BANDS = {
-  basic: INCOME_TAX.basicRate,
-  higher: INCOME_TAX.higherRate,
-  additional: INCOME_TAX.additionalRate,
+/** The income tax rate for each band, which savings interest above the allowances pays. */
+const taxBandsFor = (taxYear) => {
+  const { basicRate, higherRate, additionalRate } = forTaxYear(INCOME_TAX_RATES, taxYear).incomeTax
+  return { basic: basicRate, higher: higherRate, additional: additionalRate }
 }
+
+// The current tax year's bands, for the guide.
+export const TAX_BANDS = taxBandsFor()
 
 /**
  * The mortgage interest a lump sum overpayment saves over the first `years`
@@ -52,13 +55,15 @@ export function savingsInterestAfterTax({
   band = 'basic',
   otherInterest = 0,
   isa = false,
+  taxYear,
 }) {
+  const { savingsTax } = forTaxYear(INCOME_TAX_RATES, taxYear)
   const interest = (atLeastZero(amount) * atLeastZero(ratePercent)) / 100
   const allowanceLeft = isa
     ? 0
-    : Math.max(0, SAVINGS_TAX.personalSavingsAllowance[band] - atLeastZero(otherInterest))
+    : Math.max(0, savingsTax.personalSavingsAllowance[band] - atLeastZero(otherInterest))
   const taxable = isa ? 0 : Math.max(0, interest - allowanceLeft)
-  const tax = taxable * TAX_BANDS[band]
+  const tax = taxable * taxBandsFor(taxYear)[band]
   return { interest, allowanceUsed: interest - taxable, taxable, tax, afterTax: interest - tax }
 }
 
@@ -67,4 +72,5 @@ export function savingsInterestAfterTax({
  * for interest above the allowance. A basic rate taxpayer needs 5% to be left
  * with 4%, because 20% of it goes in tax.
  */
-export const rateBeforeTaxToMatch = (ratePercent, band) => ratePercent / (1 - TAX_BANDS[band])
+export const rateBeforeTaxToMatch = (ratePercent, band, { taxYear } = {}) =>
+  ratePercent / (1 - taxBandsFor(taxYear)[band])

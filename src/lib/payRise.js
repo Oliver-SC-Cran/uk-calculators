@@ -1,36 +1,19 @@
 // The pay rise calculator. It adds pensions on top of the tax, National
-// Insurance and student loan functions in calculations.js, and contains no
-// tax logic of its own.
+// Insurance and student loan functions in incomeTax.js and studentLoans.js,
+// and contains no tax logic of its own.
 
-import {
-  calculateIncomeTax,
-  calculateNationalInsurance,
-  calculateStudentLoanRepayment,
-  INCOME_TAX,
-  MINIMUM_WAGE,
-  SCOTTISH_INCOME_TAX,
-} from './calculations.js'
+import { calculateIncomeTax, calculateNationalInsurance } from './incomeTax.js'
+import { atLeastZero } from './numbers.js'
+import { INCOME_TAX_RATES } from './rates/incomeTax.js'
+import { FULL_TIME_HOURS, MINIMUM_WAGE_RATES } from './rates/minimumWage.js'
+import { forTaxYear } from './rates/taxYear.js'
+import { calculateStudentLoanRepayment } from './studentLoans.js'
 
 export const PENSION_TYPES = {
   salarySacrifice: 'Salary sacrifice',
   netPay: 'Net pay arrangement',
   reliefAtSource: 'Relief at source',
 }
-
-export const CHILD_BENEFIT_CHARGE = {
-  threshold: 60000, // adjusted net income above this can trigger the charge
-  fullyRepaidAt: 80000, // above this, all of the Child Benefit is paid back
-}
-
-// Announced on 26 November 2025. Not in force for 2026/27.
-export const SALARY_SACRIFICE_CHANGE = {
-  startDate: '6 April 2029',
-  niFreeLimit: 2000, // pension salary sacrifice above this a year will have NI charged on it
-}
-
-export const FULL_TIME_HOURS = 37.5
-
-const atLeastZero = (value) => (Number.isFinite(value) ? Math.max(0, value) : 0)
 
 /**
  * One salary with a student loan and a workplace pension. The three pension
@@ -55,14 +38,17 @@ export function calculatePayPackage({
   pensionType = 'salarySacrifice',
   weeklyHours = FULL_TIME_HOURS,
   scottish = false,
+  taxYear,
 }) {
+  const { nationalLivingWage } = forTaxYear(MINIMUM_WAGE_RATES, taxYear)
+  const { basicRate } = forTaxYear(INCOME_TAX_RATES, taxYear).incomeTax
   const gross = atLeastZero(salary)
   const share = Math.min(atLeastZero(pensionPercent), 100) / 100
   const wanted = gross * share
 
   // A salary sacrifice must not take cash pay below the minimum wage. This
   // uses the rate for people aged 21 and over.
-  const minimumCashPay = MINIMUM_WAGE.nationalLivingWage * atLeastZero(weeklyHours) * 52
+  const minimumCashPay = nationalLivingWage * atLeastZero(weeklyHours) * 52
   const isSacrifice = pensionType === 'salarySacrifice'
   const isReliefAtSource = pensionType === 'reliefAtSource'
   const pensionIntoPot = isSacrifice
@@ -71,7 +57,7 @@ export function calculatePayPackage({
   const sacrificeCapped = isSacrifice && pensionIntoPot < wanted
 
   const reliefAtSourceGross = isReliefAtSource ? pensionIntoPot : 0
-  const hmrcTopUp = reliefAtSourceGross * INCOME_TAX.basicRate
+  const hmrcTopUp = reliefAtSourceGross * basicRate
   const pensionFromPay = pensionIntoPot - hmrcTopUp
 
   // The pay each deduction is worked out on.
@@ -83,14 +69,19 @@ export function calculatePayPackage({
     tax: incomeTax,
     personalAllowanceUsed,
     topRate: topTaxRate,
-  } = calculateIncomeTax(taxablePay, { scottish })
-  const nationalInsurance = calculateNationalInsurance(niablePay)
-  const loan = calculateStudentLoanRepayment({ grossAnnual: niablePay, plan, hasPostgraduateLoan })
+  } = calculateIncomeTax(taxablePay, { scottish, taxYear })
+  const nationalInsurance = calculateNationalInsurance(niablePay, { taxYear })
+  const loan = calculateStudentLoanRepayment({
+    grossAnnual: niablePay,
+    plan,
+    hasPostgraduateLoan,
+    taxYear,
+  })
 
   // Relief at source only: the tax owed once the wider bands and the
   // allowance based on adjusted net income are taken into account. The
   // difference from the payslip is what can be claimed back from HMRC.
-  const taxAfterClaim = calculateIncomeTax(gross, { reliefAtSourceGross, scottish }).tax
+  const taxAfterClaim = calculateIncomeTax(gross, { reliefAtSourceGross, scottish, taxYear }).tax
   const extraReliefToClaim = isReliefAtSource ? Math.max(0, incomeTax - taxAfterClaim) : 0
 
   const takeHomeAnnual = gross - incomeTax - nationalInsurance - loan.totalAnnual - pensionFromPay
@@ -134,20 +125,21 @@ export function calculatePayRise({ currentSalary, newSalary, ...settings }) {
   const rise = change('salary')
   const kept = change('takeHomeAnnual')
 
-  const { taperStart, taperFullyGoneAt } = INCOME_TAX
+  const rates = forTaxYear(INCOME_TAX_RATES, settings.taxYear)
+  const { taperStart, taperFullyGoneAt } = rates.incomeTax
   const warnings = []
 
   // The higher rate starts at a lower income in Scotland, which also has an
   // advanced rate before the taper.
   const higherRateStartsAbove = settings.scottish
-    ? SCOTTISH_INCOME_TAX.intermediateRateLimit
-    : INCOME_TAX.basicRateLimit
+    ? rates.scottishIncomeTax.intermediateRateLimit
+    : rates.incomeTax.basicRateLimit
   if (crosses(before.taxablePay, after.taxablePay, higherRateStartsAbove)) {
     warnings.push('higher-rate')
   }
   if (
     settings.scottish &&
-    crosses(before.taxablePay, after.taxablePay, SCOTTISH_INCOME_TAX.higherRateLimit)
+    crosses(before.taxablePay, after.taxablePay, rates.scottishIncomeTax.higherRateLimit)
   ) {
     warnings.push('advanced-rate')
   }
@@ -167,7 +159,9 @@ export function calculatePayRise({ currentSalary, newSalary, ...settings }) {
   ) {
     warnings.push('inside-taper')
   }
-  if (crosses(before.adjustedNetIncome, after.adjustedNetIncome, CHILD_BENEFIT_CHARGE.threshold)) {
+  if (
+    crosses(before.adjustedNetIncome, after.adjustedNetIncome, rates.childBenefitCharge.threshold)
+  ) {
     warnings.push('child-benefit')
   }
 

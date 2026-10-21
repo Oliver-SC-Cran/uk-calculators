@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { ISA, LIFETIME_ISA_REFORM, TAX_YEAR } from '../lib/calculations'
+import { ISA, LIFETIME_ISA_REFORM } from '../lib/rates/isa'
+import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../lib/format'
 import { projectLifetimeIsa, withdrawalFor } from '../lib/lifetimeIsa'
 

@@ -7,7 +7,8 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { calculateMortgageOverpayment, monthAfter } from './mortgage.js'
+import { calculateMortgageOverpayment } from './mortgage.js'
+import { monthAfter } from './dates.js'
 
 const near = (actual, expected, message) =>
   assert.ok(

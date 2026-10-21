@@ -14,7 +14,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { calculateIncomeTax, calculateTakeHome } from './calculations.js'
+import { calculateIncomeTax, calculateTakeHome } from './incomeTax.js'
 import { calculatePayPackage, calculatePayRise } from './payRise.js'
 
 const near = (actual, expected, message) =>

@@ -1,12 +1,14 @@
 import {
+  CHILD_BENEFIT_CHARGE,
   INCOME_TAX,
   NATIONAL_INSURANCE,
   SCOTTISH_INCOME_TAX,
-  STUDENT_LOAN,
-  TAX_YEAR,
-} from '../lib/calculations'
+} from '../lib/rates/incomeTax'
+import { SALARY_SACRIFICE_CHANGE } from '../lib/rates/pensions'
+import { STUDENT_LOAN } from '../lib/rates/studentLoans'
+import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../lib/format'
-import { calculatePayRise, CHILD_BENEFIT_CHARGE, SALARY_SACRIFICE_CHANGE } from '../lib/payRise'
+import { calculatePayRise } from '../lib/payRise'
 
 // Change these by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '11 October 2026'

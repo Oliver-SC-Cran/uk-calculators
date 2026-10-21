@@ -5,7 +5,8 @@ import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
 import { useNumberField } from '../components/useNumberField'
 import StudentLoanGuide from '../guides/StudentLoanGuide'
-import { calculateStudentLoanRepayment, TAX_YEAR } from '../lib/calculations'
+import { TAX_YEAR } from '../lib/rates/taxYear'
+import { calculateStudentLoanRepayment } from '../lib/studentLoans'
 import { formatGBP } from '../lib/format'
 
 export default function StudentLoanCalculator() {

@@ -1,0 +1,49 @@
+// Statutory Maternity Pay, Statutory Paternity Pay and Maternity Allowance.
+// The rates change each April. Re-check them every April on gov.uk, then add
+// the new tax year below the last one.
+// Sources: https://www.gov.uk/maternity-pay-leave/pay
+//          https://www.gov.uk/paternity-pay-leave/pay
+//          https://www.gov.uk/maternity-allowance/what-youll-get
+
+import { forTaxYear } from './taxYear.js'
+
+export const PARENTAL_PAY_RATES = {
+  '2026/27': {
+    ratesFrom: 'April 2026',
+    weeklyRate: 194.32, // the flat rate for SMP, SPP and Maternity Allowance
+    earningsShare: 0.9, // or 90% of average weekly earnings, if that is lower
+    // To qualify, average weekly earnings must be at least this. It is the limit
+    // for qualifying weeks that end between these two dates (the 2026/27 tax year).
+    lowerEarningsLimit: 129,
+    lowerEarningsLimitFrom: '2026-04-06',
+    lowerEarningsLimitTo: '2027-04-05',
+    continuousWeeks: 26, // weeks with the employer by the qualifying week
+    qualifyingWeekBeforeDue: 15, // the qualifying week is this many weeks before the week the baby is due
+    earliestLeaveWeeksBeforeDue: 11,
+    noticeDays: 28, // notice to give an employer before pay starts
+    maternity: {
+      payWeeks: 39,
+      higherRateWeeks: 6, // the first weeks, paid at 90% of earnings with no cap
+      leaveWeeks: 52,
+    },
+    paternity: {
+      payWeeks: 2,
+      leaveMustEndWithinWeeks: 52, // of the birth
+    },
+    sharedParental: {
+      leaveWeeks: 50,
+      payWeeks: 37,
+    },
+    maternityAllowance: {
+      payWeeks: 39,
+      testPeriodWeeks: 66, // the weeks before the baby is due that are looked at
+      weeksWorked: 26, // employed or self-employed for this many of them
+      weeklyEarnings: 30, // earning at least this much a week
+      weeksEarning: 13, // in at least this many weeks
+      selfEmployedMinimum: 27, // lowest weekly rate for the self-employed
+    },
+  },
+}
+
+// The current tax year's figures, for page copy and guides.
+export const PARENTAL_PAY = forTaxYear(PARENTAL_PAY_RATES)

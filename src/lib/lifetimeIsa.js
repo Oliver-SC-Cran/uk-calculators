@@ -1,9 +1,9 @@
 // The Lifetime ISA calculator. Its rules (ages, the yearly limit, the bonus and
-// the withdrawal charge) are in ISA in calculations.js.
+// the withdrawal charge) are in rates/isa.js, by tax year.
 
-import { ISA } from './calculations.js'
-
-const atLeastZero = (value) => (Number.isFinite(value) ? Math.max(0, value) : 0)
+import { atLeastZero } from './numbers.js'
+import { ISA_RATES } from './rates/isa.js'
+import { forTaxYear } from './rates/taxYear.js'
 
 /**
  * A projection of a Lifetime ISA up to a goal: buying a first home at
@@ -32,9 +32,11 @@ export function projectLifetimeIsa({
   growthPercent = 0,
   goal = 'home',
   purchaseAge,
+  taxYear,
 }) {
-  const { lisaLimit, lisaBonusRate, lisaMinOpenAge, lisaMaxOpenAge } = ISA
-  const { lisaMaxContributionAge, lisaAccessAge, lisaWithdrawalChargeRate } = ISA
+  const rules = forTaxYear(ISA_RATES, taxYear)
+  const { lisaLimit, lisaBonusRate, lisaMinOpenAge, lisaMaxOpenAge } = rules
+  const { lisaMaxContributionAge, lisaAccessAge, lisaWithdrawalChargeRate } = rules
 
   const startAge = Math.floor(atLeastZero(age))
   const already = atLeastZero(currentBalance)
@@ -103,5 +105,5 @@ export function projectLifetimeIsa({
  * gov.uk: "Withdrawing £160 means you pay a 25% withdrawal charge of £40 and
  * receive £120 in cash".
  */
-export const withdrawalFor = (cashNeeded) =>
-  atLeastZero(cashNeeded) / (1 - ISA.lisaWithdrawalChargeRate)
+export const withdrawalFor = (cashNeeded, { taxYear } = {}) =>
+  atLeastZero(cashNeeded) / (1 - forTaxYear(ISA_RATES, taxYear).lisaWithdrawalChargeRate)

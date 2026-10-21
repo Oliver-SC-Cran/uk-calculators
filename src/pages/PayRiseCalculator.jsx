@@ -7,20 +7,16 @@ import ResultPanel from '../components/ResultPanel'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import PayRiseGuide from '../guides/PayRiseGuide'
 import {
+  CHILD_BENEFIT_CHARGE,
   INCOME_TAX,
-  MINIMUM_WAGE,
   NATIONAL_INSURANCE,
   SCOTTISH_INCOME_TAX,
-  STUDENT_LOAN,
-  TAX_YEAR,
-} from '../lib/calculations'
+} from '../lib/rates/incomeTax'
+import { FULL_TIME_HOURS, MINIMUM_WAGE } from '../lib/rates/minimumWage'
+import { STUDENT_LOAN } from '../lib/rates/studentLoans'
+import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, formatGBPPence, percent } from '../lib/format'
-import {
-  calculatePayRise,
-  CHILD_BENEFIT_CHARGE,
-  FULL_TIME_HOURS,
-  PENSION_TYPES,
-} from '../lib/payRise'
+import { calculatePayRise, PENSION_TYPES } from '../lib/payRise'
 
 function newSalaryFrom(current, riseType, riseAmount) {
   if (riseType === 'percent') return current * (1 + riseAmount / 100)

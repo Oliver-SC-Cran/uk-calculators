@@ -1,14 +1,11 @@
 import { Link } from 'react-router-dom'
 import GuidePage from '../../components/GuidePage'
-import {
-  CHILDCARE,
-  INCOME_TAX,
-  NATIONAL_INSURANCE,
-  STUDENT_LOAN,
-  TAX_YEAR,
-} from '../../lib/calculations'
+import { CHILDCARE, INCOME_TAX, NATIONAL_INSURANCE } from '../../lib/rates/incomeTax'
+import { SALARY_SACRIFICE_CHANGE } from '../../lib/rates/pensions'
+import { STUDENT_LOAN } from '../../lib/rates/studentLoans'
+import { TAX_YEAR } from '../../lib/rates/taxYear'
 import { formatGBP as gbp, formatGBPPence, percent } from '../../lib/format'
-import { calculatePayPackage, calculatePayRise, SALARY_SACRIFICE_CHANGE } from '../../lib/payRise'
+import { calculatePayPackage, calculatePayRise } from '../../lib/payRise'
 
 // Change these by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '11 October 2026'

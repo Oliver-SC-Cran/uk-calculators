@@ -5,7 +5,8 @@ import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import StampDutyGuide from '../guides/StampDutyGuide'
-import { calculateStampDuty, STAMP_DUTY } from '../lib/calculations'
+import { STAMP_DUTY } from '../lib/rates/stampDuty'
+import { calculateStampDuty } from '../lib/stampDuty'
 import { formatGBP, percent } from '../lib/format'
 
 export default function StampDutyCalculator() {

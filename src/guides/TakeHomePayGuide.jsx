@@ -1,13 +1,6 @@
-import {
-  calculateTakeHome,
-  INCOME_TAX,
-  NATIONAL_INSURANCE,
-  SCOTTISH_INCOME_TAX,
-  taperedPersonalAllowance,
-  TAX_YEAR,
-  TAX_YEAR_END,
-  TAX_YEAR_START,
-} from '../lib/calculations'
+import { calculateTakeHome, taperedPersonalAllowance } from '../lib/incomeTax'
+import { INCOME_TAX, NATIONAL_INSURANCE, SCOTTISH_INCOME_TAX } from '../lib/rates/incomeTax'
+import { TAX_YEAR, TAX_YEAR_END, TAX_YEAR_START } from '../lib/rates/taxYear'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.

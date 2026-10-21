@@ -12,16 +12,12 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import {
-  calculateISAAllowance,
-  calculateRedundancyPay,
-  calculateStudentLoanRepayment,
-  calculateTakeHome,
-  checkMinimumWage,
-  STUDENT_LOAN,
-  studentLoanWorking,
-  taperedPersonalAllowance,
-} from './calculations.js'
+import { calculateTakeHome, taperedPersonalAllowance } from './incomeTax.js'
+import { calculateISAAllowance } from './isa.js'
+import { checkMinimumWage } from './minimumWage.js'
+import { STUDENT_LOAN } from './rates/studentLoans.js'
+import { calculateRedundancyPay } from './redundancy.js'
+import { calculateStudentLoanRepayment, studentLoanWorking } from './studentLoans.js'
 
 const near = (actual, expected, message) =>
   assert.ok(

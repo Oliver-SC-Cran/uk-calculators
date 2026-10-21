@@ -5,7 +5,8 @@ import Notice from '../components/Notice'
 import ResultPanel from '../components/ResultPanel'
 import { problemWith, useNumberField } from '../components/useNumberField'
 import LifetimeIsaGuide from '../guides/LifetimeIsaGuide'
-import { ISA, LIFETIME_ISA_REFORM, TAX_YEAR } from '../lib/calculations'
+import { ISA, LIFETIME_ISA_REFORM } from '../lib/rates/isa'
+import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, percent } from '../lib/format'
 import { projectLifetimeIsa } from '../lib/lifetimeIsa'
 import { MAX_AGE } from '../lib/validation'
@@ -160,7 +161,10 @@ export default function LifetimeIsaCalculator() {
               )
             }
             prompt={problem ?? cannotOpen}
-            link={{ to: '/isa-calculator', text: `Check your ISA allowance for ${TAX_YEAR}` }}
+            link={{
+              to: '/isa-calculator',
+              text: `Check your ISA allowance for ${TAX_YEAR}`,
+            }}
           >
             <table className="result-table result-table--total">
               <tbody>

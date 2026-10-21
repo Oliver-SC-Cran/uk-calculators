@@ -1,15 +1,10 @@
 import GuidePage from '../../components/GuidePage'
-import {
-  AUTO_ENROLMENT,
-  calculateStudentLoanRepayment,
-  calculateTakeHome,
-  INCOME_TAX,
-  monthlyLoanThreshold,
-  NATIONAL_INSURANCE,
-  STUDENT_LOAN,
-  TAX_CODE_TIMES,
-  TAX_YEAR,
-} from '../../lib/calculations'
+import { calculateTakeHome } from '../../lib/incomeTax'
+import { INCOME_TAX, NATIONAL_INSURANCE, TAX_CODE_TIMES } from '../../lib/rates/incomeTax'
+import { AUTO_ENROLMENT } from '../../lib/rates/pensions'
+import { STUDENT_LOAN } from '../../lib/rates/studentLoans'
+import { TAX_YEAR } from '../../lib/rates/taxYear'
+import { calculateStudentLoanRepayment, monthlyLoanThreshold } from '../../lib/studentLoans'
 import { formatGBP as gbp, formatGBPPence as pence, percent } from '../../lib/format'
 
 // Change these by hand whenever the wording or the figures in this guide change.
