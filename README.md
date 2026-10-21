@@ -1,6 +1,6 @@
 # UK Money Calculators
 
-The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): ten calculators for UK pay, tax, savings and property, each with a written guide, plus standalone guides at `/guides`.
+The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): eleven calculators for UK pay, tax, savings and property, each with a written guide, plus standalone guides at `/guides`.
 
 - Take-home pay
 - Pay rises
@@ -8,6 +8,7 @@ The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): ten c
 - Maternity and paternity pay
 - Statutory redundancy pay
 - ISA and Lifetime ISA allowance
+- Lifetime ISA projections
 - Mortgage overpayments
 - Stamp duty (England and Northern Ireland)
 - Minimum wage
@@ -38,20 +39,22 @@ npm run build
 ## How it is put together
 
 - React and Vite, with plain CSS in `src/index.css`.
-- `src/lib/calculations.js` holds every rate, threshold and calculation.
-- `src/routes.js` lists every page with its title and description.
+- `src/lib/rates/` holds every rate, threshold and allowance, one file per topic, kept by tax year.
+- `src/lib/` holds the calculations, one file per topic. Each one also returns its working: the steps behind the result.
+- `src/routes.js` lists every page with its title and description, and `src/pageFiles.js` the component for each one.
 - `src/pages/` has one component per page, and `src/guides/` has the guide shown under each calculator. The standalone guides are in `src/pages/guides/`.
 - `src/components/` has the parts every calculator page shares: the page layout, the numbered input fields and the result panel.
 - The Sora and Figtree fonts are served from the site itself. They come from the `@fontsource-variable` packages.
-- `scripts/prerender.js` turns each page into static HTML at build time.
+- `scripts/prerender.js` turns each page into static HTML at build time. Each page loads only its own JavaScript.
 
 The site is hosted on Cloudflare Pages. Pushing a branch creates a preview, and pushing `main` deploys the live site. The build command is `npm run build`, the output folder is `dist`, and `.node-version` sets the Node.js version Cloudflare builds with. Response headers are in `public/_headers`.
 
 ## Updating the figures each April
 
 1. Check the new rates on gov.uk (and nidirect for Northern Ireland).
-2. Update the constants in `src/lib/calculations.js`, including `TAX_YEAR`.
-3. Update the expected values in `src/lib/calculations.test.js`, checking the ones marked `[gov.uk]` against the source pages.
-4. Update the "Last updated" date at the top of each guide in `src/guides/`.
+2. Add the new tax year to `TAX_YEARS` in `src/lib/rates/taxYear.js`, and to every file in `src/lib/rates/` by copying the last year's entry and changing what has changed. Keep the earlier years.
+3. Move `CURRENT_TAX_YEAR` on to the new year.
+4. Update the expected values in the tests in `src/lib/`, checking the ones marked `[gov.uk]` against the source pages.
+5. Update the "Last updated" date at the top of each guide in `src/guides/`.
 
 `CLAUDE.md` has the working rules for the project: UK English, plain copy, dated figures and the branch workflow.
