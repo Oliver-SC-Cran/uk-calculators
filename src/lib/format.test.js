@@ -71,6 +71,17 @@ test('format [own working] percentages in page copy have one decimal place', () 
   assert.equal(percent(0), '0%')
   assert.equal(percent(1), '100%')
   assert.equal(percent(0.00045), '0%')
+  // A half rounds up, although 0.2275, 0.5005 and 0.1005 are stored as a
+  // little less: keeping £2,275 of a £10,000 rise, and a 10.05% limit.
+  assert.equal(percent(2275 / 10000), '22.8%')
+  assert.equal(percent(0.5005), '50.1%')
+  assert.equal(percent(10.05 / 100), '10.1%')
+  assert.equal(percent(0.2274999), '22.7%')
+  // Every share from 0% to 100% in steps of 0.005 percentage points, rounded
+  // half up to one place.
+  for (let step = 0; step <= 20000; step += 1) {
+    assert.equal(percent((step * 5) / 100000), `${Math.floor((step + 10) / 20) / 10}%`)
+  }
 })
 
 test('format [own working] percentages in the working have up to three decimal places', () => {

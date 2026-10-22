@@ -22,20 +22,25 @@ export const formatGBP = (value) => withMinusSign(wholePounds.format(value))
 /** £12.71 */
 export const formatGBPPence = (value) => withMinusSign(poundsAndPence.format(value))
 
-/** 0.09 becomes 9%, 0.045 becomes 4.5% */
-export const percent = (rate) => `${Math.round(rate * 1000) / 10}%`
+/**
+ * A share as a percentage to `places` decimal places, with trailing zeros
+ * dropped. A half rounds up, on the figure as written rather than as the
+ * computer stores it: 0.2275 is stored as a little less, but shows as 22.8%.
+ */
+function percentTo(rate, places) {
+  const scaled = Math.round(Number((rate * 10 ** (places + 2)).toPrecision(12)))
+  return `${scaled / 10 ** places}%`
+}
+
+/** 0.09 becomes 9%, 0.045 becomes 4.5% and 0.2275 becomes 22.8% */
+export const percent = (rate) => percentTo(rate, 1)
 
 /**
  * A percentage in the working, to up to three decimal places, so a monthly
  * interest rate (4.5% ÷ 12 = 0.375%) or a share of tax can be followed by
- * hand. Trailing zeros are dropped, so 0.2 stays 20%. A half rounds up, on the
- * figure as written rather than as the computer stores it, so 5.25% ÷ 12
- * (0.4375%) shows as 0.438%.
+ * hand. 0.2 stays 20%, and 5.25% ÷ 12 (0.4375%) shows as 0.438%.
  */
-function workingPercent(rate) {
-  const thousandths = Math.round(Number((rate * 100000).toPrecision(12)))
-  return `${thousandths / 1000}%`
-}
+const workingPercent = (rate) => percentTo(rate, 3)
 
 /**
  * An amount taken off pay, with a minus sign: −£4,486, or −£149.49 with
