@@ -26,6 +26,18 @@ export const formatGBPPence = (value) => withMinusSign(poundsAndPence.format(val
 export const percent = (rate) => `${Math.round(rate * 1000) / 10}%`
 
 /**
+ * A percentage in the working, to up to three decimal places, so a monthly
+ * interest rate (4.5% ÷ 12 = 0.375%) or a share of tax can be followed by
+ * hand. Trailing zeros are dropped, so 0.2 stays 20%. A half rounds up, on the
+ * figure as written rather than as the computer stores it, so 5.25% ÷ 12
+ * (0.4375%) shows as 0.438%.
+ */
+function workingPercent(rate) {
+  const thousandths = Math.round(Number((rate * 100000).toPrecision(12)))
+  return `${thousandths / 1000}%`
+}
+
+/**
  * An amount taken off pay, with a minus sign: −£4,486, or −£149.49 with
  * pence. An amount that rounds to nothing shows as £0, never as −£0.
  */
@@ -46,12 +58,12 @@ const UNIT_WORDS = {
 
 /**
  * One amount from a calculation's working (working.js), shown the way its
- * unit says: 'gbp', 'gbpPence', 'percent', 'weeks', 'months', 'years',
- * 'number' or 'yesNo'.
+ * unit says: 'gbp', 'gbpPence', 'percent' (to up to three decimal places),
+ * 'weeks', 'months', 'years', 'number' or 'yesNo'.
  */
 export function formatAmount(value, unit = 'gbp') {
   if (unit === 'gbpPence') return formatGBPPence(value)
-  if (unit === 'percent') return percent(value)
+  if (unit === 'percent') return workingPercent(value)
   if (unit === 'number') return formatNumber(value)
   if (unit === 'yesNo') return value ? 'Yes' : 'No'
   if (UNIT_WORDS[unit]) {

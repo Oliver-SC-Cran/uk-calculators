@@ -9,6 +9,7 @@ import {
   formatDeduction,
   formatNumber,
   groupDigits,
+  percent,
 } from './format.js'
 
 test('format [own working] commas go into numbers as they are typed', () => {
@@ -61,4 +62,37 @@ test('format [own working] each unit in the working', () => {
   assert.equal(formatAmount(true, 'yesNo'), 'Yes')
   assert.equal(formatAmount(false, 'yesNo'), 'No')
   assert.equal(formatNumber(12.346), '12.35')
+})
+
+test('format [own working] percentages in page copy have one decimal place', () => {
+  assert.equal(percent(0.09), '9%')
+  assert.equal(percent(0.045), '4.5%')
+  assert.equal(percent(0.12345), '12.3%')
+  assert.equal(percent(0), '0%')
+  assert.equal(percent(1), '100%')
+  assert.equal(percent(0.00045), '0%')
+})
+
+test('format [own working] percentages in the working have up to three decimal places', () => {
+  // A monthly interest rate: 4.5% ÷ 12 = 0.375%.
+  assert.equal(formatAmount(0.045 / 12, 'percent'), '0.375%')
+  // 4% ÷ 12 = 0.3333...%, and 4.25% ÷ 12 = 0.354166...%.
+  assert.equal(formatAmount(0.04 / 12, 'percent'), '0.333%')
+  assert.equal(formatAmount(0.0425 / 12, 'percent'), '0.354%')
+  // 5.25% ÷ 12 = 0.4375%, a half, which rounds up.
+  assert.equal(formatAmount(0.0525 / 12, 'percent'), '0.438%')
+  // 0.1% ÷ 12 = 0.00833...%.
+  assert.equal(formatAmount(0.001 / 12, 'percent'), '0.008%')
+  // A share of tax, and whole rates, which keep no trailing zeros.
+  assert.equal(formatAmount(0.94579196, 'percent'), '94.579%')
+  assert.equal(formatAmount(0.7996, 'percent'), '79.96%')
+  assert.equal(formatAmount(0.2, 'percent'), '20%')
+  assert.equal(formatAmount(0.045, 'percent'), '4.5%')
+  assert.equal(formatAmount(0, 'percent'), '0%')
+  // Every yearly rate from 0.01% to 15% in steps of 0.01, divided by 12, to
+  // three places, rounded half up.
+  for (let hundredths = 1; hundredths <= 1500; hundredths += 1) {
+    const thousandths = Math.floor((hundredths * 20 + 12) / 24)
+    assert.equal(formatAmount(hundredths / 10000 / 12, 'percent'), `${thousandths / 1000}%`)
+  }
 })

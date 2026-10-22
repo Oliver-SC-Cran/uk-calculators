@@ -1,4 +1,4 @@
-import { formatAmount, formatDeduction, formatNumber, percent } from '../lib/format'
+import { formatAmount, formatDeduction, formatNumber } from '../lib/format'
 
 const WORKING_ID = 'working'
 
@@ -28,7 +28,7 @@ const isMoney = (unit) => unit === 'gbp' || unit === 'gbpPence'
 function how(line) {
   const money = (value) => formatAmount(value, isMoney(line.unit) ? line.unit : 'gbp')
   if (line.rate !== undefined && line.on !== undefined) {
-    return `${percent(line.rate)} of ${money(line.on)}`
+    return `${formatAmount(line.rate, 'percent')} of ${money(line.on)}`
   }
   if (line.count !== undefined && line.each !== undefined) {
     return `${formatNumber(line.count)} × ${money(line.each)}`
