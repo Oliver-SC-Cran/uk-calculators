@@ -134,6 +134,11 @@ test('working [own working] student loans add up to the repayment', () => {
   )) {
     const r = calculateStudentLoanRepayment({ grossAnnual, plan, hasPostgraduateLoan: pg })
     checkHeadline(r.working, r.totalMonthly, `student loan ${grossAnnual} ${plan} ${pg}`)
+    checkHeadline(
+      r.weeklyWorking,
+      r.totalWeekly,
+      `student loan weekly ${grossAnnual} ${plan} ${pg}`,
+    )
   }
 })
 

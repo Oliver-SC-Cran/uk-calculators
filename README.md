@@ -43,7 +43,7 @@ npm run build
 - `src/lib/` holds the calculations, one file per topic. Each one also returns its working: the steps behind the result.
 - `src/routes.js` lists every page with its title and description, and `src/pageFiles.js` the component for each one.
 - `src/pages/` has one component per page, and `src/guides/` has the guide shown under each calculator. The standalone guides are in `src/pages/guides/`.
-- `src/components/` has the parts every calculator page shares: the page layout, the input fields and the result card. `CalculatorLayout.jsx` is the layout every calculator is moving to, with the inputs in one card, the result in another and "How we worked this out" under them. The take-home pay, mortgage overpayment, stamp duty, Lifetime ISA and ISA allowance calculators use it so far, and the rest still use `CalculatorPage.jsx`.
+- `src/components/` has the parts every calculator page shares: the page layout, the input fields and the result card. `CalculatorLayout.jsx` is the layout every calculator is moving to, with the inputs in one card, the result in another and "How we worked this out" under them. The take-home pay, pay rise, self-employed tax, student loan, mortgage overpayment, stamp duty, Lifetime ISA and ISA allowance calculators use it so far, and the rest still use `CalculatorPage.jsx`.
 - The Sora and Figtree fonts are served from the site itself. They come from the `@fontsource-variable` packages.
 - `scripts/prerender.js` turns each page into static HTML at build time. Each page loads only its own JavaScript.
 

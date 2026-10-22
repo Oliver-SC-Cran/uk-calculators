@@ -46,12 +46,14 @@ export const routes = [
   {
     path: '/pay-rise-calculator',
     name: 'Pay rise calculator',
+    sharedLinks: true,
     title: `Pay rise calculator ${TAX_YEAR}: how much of a rise you keep`,
     description: `See how much of a pay rise you keep after tax, National Insurance, student loan and pension in ${TAX_YEAR}. Includes Scottish income tax rates.`,
   },
   {
     path: '/self-employed-tax-calculator',
     name: 'Self-employed tax calculator',
+    sharedLinks: true,
     title: `Self-employed tax calculator ${TAX_YEAR}: tax, NI and what to save`,
     description: `Work out income tax, Class 4 National Insurance and student loan on your self-employed profit for ${TAX_YEAR}. Includes Scottish income tax rates.`,
   },
@@ -105,6 +107,7 @@ export const routes = [
   {
     path: '/student-loan-calculator',
     name: 'Student loan repayment calculator',
+    sharedLinks: true,
     title: `Student loan repayment calculator ${TAX_YEAR}: Plans 1, 2, 4 and 5`,
     description: `Work out your monthly student loan repayment from your salary for ${TAX_YEAR}. Covers Plan 1, Plan 2, Plan 4, Plan 5 and Postgraduate Loans.`,
   },

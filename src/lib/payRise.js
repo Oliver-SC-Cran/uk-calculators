@@ -2,7 +2,13 @@
 // National Insurance and student loan functions in incomeTax.js and
 // studentLoans.js, and contains no tax logic of its own.
 
-import { calculateIncomeTax, calculateNationalInsurance, incomeTaxLabel } from './incomeTax.js'
+import {
+  calculateIncomeTax,
+  calculateNationalInsurance,
+  incomeTaxLabel,
+  incomeTaxOnCode,
+  payrollCodeAllowance,
+} from './incomeTax.js'
 import { atLeastZero } from './numbers.js'
 import { extraReliefToClaim as extraRelief, pensionContributions } from './pensions.js'
 import { INCOME_TAX_RATES } from './rates/incomeTax.js'
@@ -16,20 +22,29 @@ import { add, info, part, subtract, total } from './working.js'
  * in pensions.js says how each pension type changes the pay each deduction is
  * worked out on.
  *
- * pensionPercent is a percentage of full salary. For relief at source it is
- * the total going into the pension, including the 20% from HMRC.
+ * pensionPercent is a percentage of full salary, and pensionYearlyAmount an
+ * amount in pounds on top of it. For relief at source they are the total
+ * going into the pension, including the 20% from HMRC.
  *
- * scottish uses the Scottish income tax rates. Relief at source is still
+ * scottish and welsh pick the income tax rates. Relief at source is still
  * claimed by the provider at 20%, whatever rate of Scottish tax is paid.
+ *
+ * taxCode is what readTaxCode gives, or null. With a code, income tax is what
+ * payroll takes on it over the year (incomeTaxOnCode), with the code used as
+ * it is and no more than half the pay taken, as in the take-home calculator.
+ * Without one, it uses the standard Personal Allowance with the taper.
  */
 export function calculatePayPackage({
   salary,
   plan = 'none',
   hasPostgraduateLoan = false,
   pensionPercent = 0,
+  pensionYearlyAmount = 0,
   pensionType = 'salarySacrifice',
   weeklyHours = FULL_TIME_HOURS,
   scottish = false,
+  welsh = false,
+  taxCode = null,
   taxYear,
 }) {
   const gross = atLeastZero(salary)
@@ -39,18 +54,29 @@ export function calculatePayPackage({
     pensionFromPay,
     hmrcTopUp,
     reliefAtSourceGross,
+    moreThanPay,
     sacrificeCapped,
     minimumCashPay,
     taxablePay,
     niablePay,
     adjustedNetIncome,
-  } = pensionContributions({ gross, pensionType, pensionPercent, weeklyHours, taxYear })
+  } = pensionContributions({
+    gross,
+    pensionType,
+    pensionPercent,
+    pensionYearlyAmount,
+    weeklyHours,
+    taxYear,
+  })
 
+  const where = { scottish, welsh, taxYear }
   const {
-    tax: incomeTax,
+    tax: incomeTaxDue,
     personalAllowanceUsed,
     topRate: topTaxRate,
-  } = calculateIncomeTax(taxablePay, { scottish, taxYear })
+  } = taxCode ? incomeTaxOnCode(taxablePay, taxCode, where) : calculateIncomeTax(taxablePay, where)
+  const { maxShareOfPayTaken } = forTaxYear(INCOME_TAX_RATES, taxYear).incomeTax
+  const incomeTax = taxCode ? Math.min(incomeTaxDue, maxShareOfPayTaken * taxablePay) : incomeTaxDue
   const nationalInsurance = calculateNationalInsurance(niablePay, { taxYear })
   const loan = calculateStudentLoanRepayment({
     grossAnnual: niablePay,
@@ -59,7 +85,13 @@ export function calculatePayPackage({
     taxYear,
   })
 
-  const extraReliefToClaim = extraRelief({ income: gross, reliefAtSourceGross, scottish, taxYear })
+  const extraReliefToClaim = extraRelief({
+    income: gross,
+    reliefAtSourceGross,
+    scottish,
+    welsh,
+    taxYear,
+  })
 
   const takeHomeAnnual = gross - incomeTax - nationalInsurance - loan.totalAnnual - pensionFromPay
 
@@ -69,6 +101,8 @@ export function calculatePayPackage({
     pensionIntoPot,
     pensionFromPay,
     hmrcTopUp,
+    // More was asked to go into the pension than the pay could cover.
+    moreThanPay,
     sacrificeCapped,
     minimumCashPay,
     taxablePay,
@@ -76,6 +110,9 @@ export function calculatePayPackage({
     adjustedNetIncome,
     personalAllowanceUsed,
     incomeTax,
+    // Tax a K code asks for that payroll cannot take, because it would be
+    // more than half the pay. HMRC collects it another way.
+    taxNotTaken: incomeTaxDue - incomeTax,
     topTaxRate,
     nationalInsurance,
     studentLoan: loan.totalAnnual,
@@ -89,7 +126,7 @@ export function calculatePayPackage({
         'Take-home pay',
         [
           add('Salary', gross),
-          subtract(incomeTaxLabel(scottish), incomeTax),
+          subtract(incomeTaxLabel(scottish, welsh), incomeTax),
           subtract('National Insurance', nationalInsurance),
           subtract('Student loan', loan.totalAnnual),
           subtract('Pension paid from your pay', pensionFromPay),
@@ -119,15 +156,28 @@ export function newSalaryFrom(current, riseType, riseAmount) {
 
 /**
  * The same rise written another way, for when someone switches how they enter
- * it. Whole pounds for amounts, and enough decimal places on a percentage that
+ * it. Amounts to `places` decimal places (whole pounds for a salary, pence
+ * for pay a month or an hour), and enough decimal places on a percentage that
  * switching back gives the same number of pounds.
  */
-export function riseEnteredAs(riseType, current, next) {
+export function riseEnteredAs(riseType, current, next, places = 0) {
   if (riseType === 'percent') {
     return current > 0 ? Number((((next - current) / current) * 100).toFixed(4)) : 0
   }
-  if (riseType === 'pounds') return Math.round(next - current)
-  return Math.round(next)
+  const round = (amount) => Math.round(amount * 10 ** places) / 10 ** places
+  if (riseType === 'pounds') return round(next - current)
+  return round(next)
+}
+
+/**
+ * The tax-free pay a code gives for a year, the way payroll works it out, in
+ * place of the Personal Allowance (negative for a K code). null for a code
+ * that taxes all pay at one rate, or none of it.
+ */
+function codeAllowance(code) {
+  if (code.kind !== 'allowance' && code.kind !== 'k') return null
+  const { year } = payrollCodeAllowance(code.number)
+  return code.kind === 'k' ? -year : year
 }
 
 const crosses = (before, after, threshold) => before <= threshold && after > threshold
@@ -146,27 +196,44 @@ export function calculatePayRise({ currentSalary, newSalary, ...settings }) {
   const kept = change('takeHomeAnnual')
 
   const rates = forTaxYear(INCOME_TAX_RATES, settings.taxYear)
-  const { taperStart, taperFullyGoneAt } = rates.incomeTax
+  const { taperStart, taperFullyGoneAt, personalAllowance } = rates.incomeTax
   const warnings = []
+
+  // A tax code moves the rates up or down by the difference between its
+  // tax-free pay and the Personal Allowance. A code that taxes everything at
+  // one rate, or nothing, has no thresholds to cross.
+  const code = settings.taxCode ?? null
+  const allowance = code ? codeAllowance(code) : personalAllowance
+  const shift = allowance === null ? 0 : allowance - personalAllowance
 
   // The higher rate starts at a lower income in Scotland, which also has an
   // advanced rate before the taper.
-  const higherRateStartsAbove = settings.scottish
-    ? rates.scottishIncomeTax.intermediateRateLimit
-    : rates.incomeTax.basicRateLimit
-  if (crosses(before.taxablePay, after.taxablePay, higherRateStartsAbove)) {
+  const thresholds = {
+    higherRate:
+      (settings.scottish
+        ? rates.scottishIncomeTax.intermediateRateLimit
+        : rates.incomeTax.basicRateLimit) + shift,
+    advancedRate: rates.scottishIncomeTax.higherRateLimit + shift,
+  }
+  if (allowance !== null && crosses(before.taxablePay, after.taxablePay, thresholds.higherRate)) {
     warnings.push('higher-rate')
   }
   if (
+    allowance !== null &&
     settings.scottish &&
-    crosses(before.taxablePay, after.taxablePay, rates.scottishIncomeTax.higherRateLimit)
+    crosses(before.taxablePay, after.taxablePay, thresholds.advancedRate)
   ) {
     warnings.push('advanced-rate')
   }
 
   // The taper and the Child Benefit charge both use adjusted net income, which
-  // every pension type reduces, including relief at source.
-  if (crosses(before.adjustedNetIncome, after.adjustedNetIncome, taperStart)) {
+  // every pension type reduces, including relief at source. Payroll uses a
+  // code as it is, without the taper, so with a code there is one note.
+  if (code) {
+    if (code.kind === 'allowance' && after.adjustedNetIncome > taperStart) {
+      warnings.push('taper-code')
+    }
+  } else if (crosses(before.adjustedNetIncome, after.adjustedNetIncome, taperStart)) {
     warnings.push('taper')
   } else if (crosses(before.taxablePay, after.taxablePay, taperStart)) {
     // Relief at source: pay goes over the limit on the payslip, but the pension
@@ -192,6 +259,7 @@ export function calculatePayRise({ currentSalary, newSalary, ...settings }) {
     warnings.push('postgraduate-loan')
   }
   if (after.sacrificeCapped) warnings.push('minimum-wage')
+  if (after.taxNotTaken > 0.5) warnings.push('tax-limit')
 
   return {
     before,
@@ -208,12 +276,13 @@ export function calculatePayRise({ currentSalary, newSalary, ...settings }) {
     pensionIntoPotChange: change('pensionIntoPot'),
     extraReliefChange: change('extraReliefToClaim'),
     warnings,
+    thresholds,
     working: [
       part(
         'What you keep of the rise',
         [
           add('Your rise', rise),
-          subtract(incomeTaxLabel(settings.scottish), change('incomeTax')),
+          subtract(incomeTaxLabel(settings.scottish, settings.welsh), change('incomeTax')),
           subtract('National Insurance', change('nationalInsurance')),
           subtract('Student loan', change('studentLoan')),
           subtract('Pension paid from your pay', change('pensionFromPay')),

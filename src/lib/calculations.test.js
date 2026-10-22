@@ -562,6 +562,30 @@ test('student loan [own working] the monthly figures are the same either way', (
   }
 })
 
+test('student loan [own working] a weekly payslip, beside the monthly one', () => {
+  // £30,000 on Plan 2 is £576.92 a week: £11.92 over £565, and 9% is £1.07.
+  const plan2 = loan(30000, 'plan2')
+  assert.equal(plan2.totalWeekly, 1)
+  assert.equal(plan2.totalAnnualPaidWeekly, 52)
+  assert.equal(plan2.totalAnnual, 48)
+  // £45,000 with Plan 2 and a Postgraduate Loan is £865.38 a week. Plan 2:
+  // 9% of £300.38 is £27.03. Postgraduate: 6% of £462.38 is £27.74. Each is
+  // rounded down, so £54 a week, or £2,808 over 52 weeks against £2,844 over
+  // 12 months.
+  const both = loan(45000, 'plan2', true)
+  assert.equal(both.undergradWeekly, 27)
+  assert.equal(both.postgradWeekly, 27)
+  assert.equal(both.totalWeekly, 54)
+  assert.equal(both.totalAnnualPaidWeekly, 2808)
+  assert.equal(both.totalAnnual, 2844)
+  // At the weekly threshold, and with no pay, nothing is repaid.
+  assert.equal(loan(565 * 52, 'plan2').totalWeekly, 0)
+  assert.equal(loan(0, 'plan5', true).totalWeekly, 0)
+  // The weekly working comes to the weekly figure, and says it is for weekly pay.
+  assert.equal(both.weeklyWorking[0].total.value, 54)
+  assert.equal(both.weeklyWorking[1].title, 'Plan 2 if you are paid weekly')
+})
+
 test('student loan [own working] a Welsh student who started in 2024 is on Plan 2', () => {
   // On £30,000, Plan 2 is 9% of £52 a month, which rounds down to £4.
   // Plan 5 (England only) would be 9% of £417 a month, which rounds down to £37.

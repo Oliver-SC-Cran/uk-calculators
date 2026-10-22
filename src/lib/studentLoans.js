@@ -125,19 +125,31 @@ export function studentLoanForPeriod({
  * as monthly and yearly totals.
  */
 export function calculateStudentLoanRepayment({ grossAnnual, plan, hasPostgraduateLoan, taxYear }) {
-  const month = studentLoanForPeriod({
-    periodPay: atLeastZero(grossAnnual) / 12,
-    plan,
-    hasPostgraduateLoan,
-    frequency: 'monthly',
-    taxYear,
-  })
+  const onPayDay = (frequency) =>
+    studentLoanForPeriod({
+      periodPay: atLeastZero(grossAnnual) / PAY_FREQUENCIES[frequency].perYear,
+      plan,
+      hasPostgraduateLoan,
+      frequency,
+      taxYear,
+    })
+  const month = onPayDay('monthly')
+  // The same pay paid weekly, as a weekly payslip shows it. Each pay day's
+  // threshold and repayment are rounded down to the pound, so 52 weekly
+  // repayments can come to a few pounds more or less than 12 monthly ones.
+  const week = onPayDay('weekly')
+  const paidWeekly = ' if you are paid weekly'
   return {
     undergradMonthly: month.undergrad,
     postgradMonthly: month.postgrad,
     totalMonthly: month.total,
     totalAnnual: month.total * 12,
+    undergradWeekly: week.undergrad,
+    postgradWeekly: week.postgrad,
+    totalWeekly: week.total,
+    totalAnnualPaidWeekly: week.total * 52,
     working: month.working,
+    weeklyWorking: week.working.map((each) => ({ ...each, title: each.title + paidWeekly })),
   }
 }
 

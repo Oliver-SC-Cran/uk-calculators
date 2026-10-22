@@ -16,6 +16,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { calculateIncomeTax, calculateTakeHome } from './incomeTax.js'
 import { calculatePayPackage, calculatePayRise, newSalaryFrom, riseEnteredAs } from './payRise.js'
+import { readTaxCode } from './readTaxCode.js'
 
 const near = (actual, expected, message) =>
   assert.ok(
@@ -549,4 +550,94 @@ test('pay rise [own working] switching how the rise is entered keeps the same ri
   assert.equal(riseEnteredAs('percent', 0, 30000), 0)
   // Amounts are whole pounds.
   assert.equal(riseEnteredAs('pounds', 45000, 49500.4), 4500)
+})
+
+test('pay rise [own working] pay a month or an hour keeps the pence when switching', () => {
+  // £3,750 a month to £55,000 a year (£4,583.33 a month) is £833.33 a month.
+  assert.equal(riseEnteredAs('pounds', 3750, 55000 / 12, 2), 833.33)
+  assert.equal(riseEnteredAs('newSalary', 3750, 55000 / 12, 2), 4583.33)
+  assert.equal(riseEnteredAs('percent', 3750, 55000 / 12, 2), 22.2222)
+})
+
+// ---------------------------------------------------------------------------
+// A tax code and a pension in pounds, as on the take-home calculator. Code
+// allowances are payroll's (HMRC's tax tables, tested in takeHome.test.js):
+// 1257L is £12,579.12 a year for someone paid monthly.
+// ---------------------------------------------------------------------------
+
+const code = (text) => readTaxCode(text).value
+
+test('pay rise [own working] no tax code gives the same result as before', () => {
+  for (const [from, to] of [
+    [45000, 55000],
+    [95000, 105000],
+    [20000, 30000],
+  ]) {
+    assert.deepEqual(rise(from, to, { taxCode: null }), rise(from, to))
+  }
+})
+
+test('pay rise [own working] 1257L uses payroll tax-free pay of £12,579.12', () => {
+  const result = rise(45000, 55000, { taxCode: code('1257L') })
+  // Before: (£45,000 − £12,579.12) at 20% is £6,484.18.
+  near(result.before.incomeTax, 6484.176)
+  // After: £37,700 at 20% is £7,540, and (£55,000 − £12,579.12 − £37,700) at
+  // 40% is £1,888.35, so £9,428.35.
+  near(result.after.incomeTax, 9428.352)
+  near(result.goesTo.incomeTax, 2944.176)
+  // The higher rate starts £9.12 later than with the Personal Allowance.
+  near(result.thresholds.higherRate, 50279.12)
+  assert.deepEqual(result.warnings, ['higher-rate'])
+  // NI does not depend on the code: £516.20 of the rise, as without one.
+  near(result.goesTo.nationalInsurance, 516.2)
+})
+
+test('pay rise [own working] a BR code taxes all pay at 20%, with no thresholds', () => {
+  const result = rise(45000, 55000, { taxCode: code('BR') })
+  near(result.before.incomeTax, 9000)
+  near(result.after.incomeTax, 11000)
+  assert.deepEqual(result.warnings, [])
+})
+
+test('pay rise [own working] payroll does not taper a code above £100,000', () => {
+  const result = rise(95000, 105000, { taxCode: code('1257L') })
+  // £10,000 at 40%, with no allowance lost.
+  near(result.goesTo.incomeTax, 4000)
+  assert.deepEqual(result.warnings, ['taper-code'])
+})
+
+test('pay rise [own working] a K code takes no more than half the pay', () => {
+  // K1500 adds £15,009.12 a year to taxable pay.
+  const result = rise(9000, 10000, { taxCode: code('K1500') })
+  // £24,009.12 at 20% is £4,801.82, more than half of £9,000.
+  near(result.before.incomeTax, 4500)
+  near(result.before.taxNotTaken, 301.824)
+  // £25,009.12 at 20% is £5,001.82, more than half of £10,000.
+  near(result.after.incomeTax, 5000)
+  near(result.after.taxNotTaken, 1.824)
+  assert.deepEqual(result.warnings, ['tax-limit'])
+})
+
+test('Scottish pay rise [own working] S1257L moves the higher rate to £43,671.12', () => {
+  const result = rise(40000, 46000, { taxCode: code('S1257L'), scottish: true })
+  near(result.thresholds.higherRate, 43671.12)
+  // £3,671.12 at 21% is £770.94, and £2,328.88 at 42% is £978.13.
+  near(result.goesTo.incomeTax, 1749.0648)
+  assert.deepEqual(result.warnings, ['higher-rate'])
+})
+
+test('pay rise [own working] a C code names the Welsh rates', () => {
+  const result = rise(30000, 33000, { taxCode: code('C1257L'), welsh: true })
+  // The Welsh rates are the same as England's in 2026/27: £3,000 at 20%.
+  near(result.goesTo.incomeTax, 600)
+  assert.equal(result.working[0].lines[1].label, 'Income tax (Welsh rates)')
+})
+
+test('pay rise [own working] a pension in pounds', () => {
+  const result = pack(45000, 'salarySacrifice', 0, { pensionYearlyAmount: 2400 })
+  near(result.pensionIntoPot, 2400)
+  // Tax on £42,600: (£42,600 − £12,570) at 20% is £6,006. NI is £2,402.40.
+  near(result.incomeTax, 6006)
+  near(result.nationalInsurance, 2402.4)
+  near(result.takeHomeAnnual, 34191.6)
 })

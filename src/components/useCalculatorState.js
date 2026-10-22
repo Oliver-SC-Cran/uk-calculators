@@ -15,7 +15,8 @@ import { parseDate, parseNumber } from '../lib/validation'
 /**
  * A number typed as text. initial is the text the field starts with. With
  * grouped: true in its rules, commas go in as someone types, so 35000 shows
- * as 35,000. Grouped rules must be an object, not a function.
+ * as 35,000. Rules that are a function can turn grouping on and off, such as
+ * for an amount that can also be entered as a percentage.
  */
 export const numberInput = (initial, rules) => ({ kind: 'number', initial, rules })
 /**
@@ -73,12 +74,7 @@ export function useCalculatorState(inputs, { sharedLinks = false } = {}) {
     // #calculators, is left alone.
     if (!hash.includes('=')) return
     const found = readLinkHash(hash, inputsRef.current)
-    if (found) {
-      for (const [key, value] of Object.entries(found)) {
-        if (inputsRef.current[key].rules?.grouped) found[key] = groupDigits(value)
-      }
-      setValues((previous) => ({ ...previous, ...found }))
-    }
+    if (found) setValues((previous) => ({ ...previous, ...found }))
     // Take the figures out of the address bar, even if none could be used.
     // This keeps React Router's own state, so back and forward still work.
     window.history.replaceState(window.history.state, '', pathname + search)
@@ -91,7 +87,9 @@ export function useCalculatorState(inputs, { sharedLinks = false } = {}) {
     if (input.kind === 'number' || input.kind === 'date' || input.kind === 'text') {
       const rules = typeof input.rules === 'function' ? input.rules(fields) : input.rules
       const { label, name = lowerFirst(label), grouped = false, read, ...checks } = rules
-      const text = value
+      // Grouped digits always show with their commas, including a figure from
+      // a shared link and one whose rules depend on another answer.
+      const text = grouped ? groupDigits(value) : value
       const isBlank = (text ?? '').trim() === ''
       let parsed
       if (input.kind === 'number') parsed = parseNumber(text, { name, ...checks })

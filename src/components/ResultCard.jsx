@@ -15,10 +15,14 @@ import { WorkingLink } from './Working'
  * - prompt, when there is no answer to show: a sentence saying what to enter
  *   or which step to check. The breakdown and the working link are hidden.
  * - children is the breakdown: a short table and any notes.
+ * - withPrompt is shown under the prompt in place of the breakdown, for
+ *   figures that still mean something, such as take-home pay before and
+ *   after a pay cut. Leave it out otherwise.
  * - shareLink is the function from useCalculatorState, on pages that have
  *   share links switched on. Leave it out otherwise.
  */
-export default function ResultCard({ label, figures, prompt, children, shareLink }) {
+export default function ResultCard({ label, figures, prompt, children, withPrompt, shareLink }) {
+  const body = prompt ? withPrompt : children
   return (
     <div className="result-card">
       <div aria-live="polite">
@@ -45,7 +49,7 @@ export default function ResultCard({ label, figures, prompt, children, shareLink
             </div>
           )}
         </div>
-        {!prompt && children && <div className="result-card__body">{children}</div>}
+        {body && <div className="result-card__body">{body}</div>}
       </div>
       <div className="result-card__foot">
         <ResultDisclaimer className="result-card__disclaimer" />
