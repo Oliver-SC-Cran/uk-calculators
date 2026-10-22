@@ -66,11 +66,10 @@ export default function CalculatorLayout({
             Your result
           </h2>
           {result}
-          {notices && (
-            <div className="calc__notices" aria-live="polite">
-              {notices}
-            </div>
-          )}
+          {/* The live region is always there, so a notice that appears is read out. */}
+          <div className={notices ? 'calc__notices' : undefined} aria-live="polite">
+            {notices}
+          </div>
         </section>
       </div>
 

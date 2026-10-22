@@ -828,7 +828,8 @@ h2[tabindex='-1']:focus {
   margin-top: var(--space-6);
 }
 
-.breakdown summary {
+.breakdown summary,
+.result-card__more summary {
   width: fit-content;
   cursor: pointer;
   font-weight: 600;
@@ -1193,6 +1194,32 @@ h2[tabindex='-1']:focus {
   grid-column: 1 / -1;
 }
 
+/* Fields side by side share five rows (label, box, message, quick picks and
+   hint), so their boxes line up even when one label runs to two lines. The
+   rows have no gaps, which would add up under fields that leave rows empty.
+   Each field has the space under it instead, and the row takes back the
+   space under its last field. */
+.input-card .field-row {
+  row-gap: 0;
+  margin-bottom: calc(-1 * var(--space-4));
+}
+
+.input-card .field-row > * {
+  margin-bottom: var(--space-4);
+}
+
+.input-card .field-row > :where(.field:not(.field--checkbox)) {
+  display: grid;
+  grid-row: span 5;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+}
+
+/* Keeps the space taken back by a row of fields inside its section. */
+.input-section {
+  display: flow-root;
+}
+
 /* In the card the hint goes under the box, so boxes side by side line up.
    :where keeps this rule weaker than the ones that put each part in order. */
 .input-card :where(.field:not(.field--checkbox)) {
@@ -1391,6 +1418,12 @@ h2[tabindex='-1']:focus {
   color: var(--text-soft-on-navy);
 }
 
+/* Words that must stay on one line, such as "mortgage-free", which a
+   browser would otherwise break after its hyphen. */
+.keep-together {
+  white-space: nowrap;
+}
+
 .result-card__prompt {
   margin: var(--space-3) 0 0;
   font-size: 1.125rem;
@@ -1466,6 +1499,26 @@ h2[tabindex='-1']:focus {
 
 .result-table--columns td + td {
   padding-left: var(--space-3);
+}
+
+/* A table with a column for each case, such as without and with overpaying.
+   Its cells hold dates as well as amounts, so they may wrap on a phone. */
+.result-table--compare td {
+  white-space: normal;
+}
+
+/* A chart in the result card, under its table. */
+.result-card__body .chart {
+  margin-top: var(--space-5);
+}
+
+/* A longer table in the result card, closed until it is opened. */
+.result-card__more {
+  margin-top: var(--space-4);
+}
+
+.result-card__more .result-table {
+  margin-top: var(--space-2);
 }
 
 .copy-link {

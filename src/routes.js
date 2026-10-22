@@ -1,6 +1,10 @@
 // The single source for every page on the site. The router, the prerender
 // script (scripts/prerender.js) and the sitemap are all built from this list.
 // To add a page: add it here, then map its path to a component in App.jsx.
+//
+// sharedLinks: true marks the calculators whose page passes sharedLinks to
+// useCalculatorState (see "Share links" in CLAUDE.md). The privacy policy
+// lists them from here, and routes.test.js checks the two agree.
 
 import { INCOME_TAX } from './lib/rates/incomeTax.js'
 import { ISA } from './lib/rates/isa.js'
@@ -35,6 +39,7 @@ export const routes = [
   {
     path: '/salary-calculator',
     name: 'Take-home pay calculator',
+    sharedLinks: true,
     title: `Take-home pay calculator ${TAX_YEAR}: salary after tax and NI`,
     description: `Work out your take-home pay for ${TAX_YEAR} after income tax, National Insurance, pension and student loan, with your tax code and any bonus. Covers the whole UK.`,
   },
@@ -65,18 +70,21 @@ export const routes = [
   {
     path: '/isa-calculator',
     name: 'ISA and Lifetime ISA allowance calculator',
+    sharedLinks: true,
     title: `ISA allowance calculator ${TAX_YEAR}: ${pounds(ISA.overallAllowance)} limit and LISA bonus`,
     description: `Check how much of your ${pounds(ISA.overallAllowance)} ISA allowance is left for ${TAX_YEAR} across Cash, Stocks and Shares and Lifetime ISAs, and see your ${ISA.lisaBonusRate * 100}% Lifetime ISA bonus.`,
   },
   {
     path: '/lifetime-isa-calculator',
     name: 'Lifetime ISA calculator',
+    sharedLinks: true,
     title: `Lifetime ISA calculator ${TAX_YEAR}: bonus, growth and charges`,
     description: `Project your Lifetime ISA with the ${ISA.lisaBonusRate * 100}% government bonus, for a first home or for age ${ISA.lisaAccessAge}, and see what the ${ISA.lisaWithdrawalChargeRate * 100}% withdrawal charge would cost.`,
   },
   {
     path: '/mortgage-overpayment-calculator',
     name: 'Mortgage overpayment calculator',
+    sharedLinks: true,
     title: 'Mortgage overpayment calculator: pay off your mortgage early',
     description:
       'See how soon you could pay off your mortgage early by overpaying each month or with a lump sum, the interest saved, and how much you can overpay each year.',
@@ -84,6 +92,7 @@ export const routes = [
   {
     path: '/stamp-duty-calculator',
     name: 'Stamp duty calculator',
+    sharedLinks: true,
     title: 'Stamp duty calculator: SDLT in England and Northern Ireland',
     description: `Work out stamp duty on a home in England or Northern Ireland, for home movers, first-time buyers (relief up to ${pounds(STAMP_DUTY.firstTimeBuyer.maxPrice)}) and additional properties.`,
   },

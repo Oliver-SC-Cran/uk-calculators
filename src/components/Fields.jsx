@@ -147,9 +147,13 @@ export function TextField({ field, size = 'medium', below, ...rest }) {
 /**
  * Buttons that fill a field with a common answer, such as 5% for a pension.
  * Use as a field's `below`. options are [value, text] pairs, and the one that
- * matches what is in the field shows as pressed.
+ * matches what is in the field shows as pressed. Commas are ignored, so
+ * £1,000 typed in a field with grouped digits matches the 1000 chip.
  */
 export function Chips({ label, options, current, onPick }) {
+  const typed = String(current ?? '')
+    .replace(/,/g, '')
+    .trim()
   return (
     <div className="chips" role="group" aria-label={label}>
       {options.map(([value, text]) => (
@@ -157,7 +161,7 @@ export function Chips({ label, options, current, onPick }) {
           key={value}
           type="button"
           className="chip"
-          aria-pressed={String(current).trim() === String(value)}
+          aria-pressed={typed === String(value)}
           onClick={() => onPick(String(value))}
         >
           {text}

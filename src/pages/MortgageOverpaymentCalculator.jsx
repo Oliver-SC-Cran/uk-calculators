@@ -1,9 +1,10 @@
 import { useMemo, useSyncExternalStore } from 'react'
-import CalculatorPage from '../components/CalculatorPage'
-import { DateField, NumberField, Steps } from '../components/Fields'
+import CalculatorLayout from '../components/CalculatorLayout'
+import { Chips, DateField, NumberField } from '../components/Fields'
+import { FieldRow, InputCard, InputSection, MoreOptions } from '../components/InputCard'
 import LineChart from '../components/LineChart'
 import Notice from '../components/Notice'
-import ResultPanel from '../components/ResultPanel'
+import ResultCard from '../components/ResultCard'
 import {
   dateInput,
   numberInput,
@@ -13,9 +14,15 @@ import {
 import MortgageOverpaymentGuide from '../guides/MortgageOverpaymentGuide'
 import { monthAfter } from '../lib/dates'
 import { MORTGAGE } from '../lib/rates/mortgage'
-import { formatGBP, formatMonthYear, percent, yearsAndMonths } from '../lib/format'
+import { formatAmount, formatGBP, formatMonthYear, percent, yearsAndMonths } from '../lib/format'
 import { calculateMortgageOverpayment } from '../lib/mortgage'
 import { MONEY, PERCENTAGE } from '../lib/validation'
+
+// Change this by hand whenever the calculator's figures or rules change.
+const LAST_UPDATED = '2026-10-22'
+
+// Quick picks for the monthly overpayment. They are common amounts, not advice.
+const OVERPAYMENTS = [100, 200, 300, 500].map((value) => [value, formatGBP(value)])
 
 // Today as 'YYYY-MM-DD', in the visitor's own time zone.
 function today() {
@@ -35,6 +42,21 @@ function whichYears(list) {
   return `years ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`
 }
 
+// "4 years 2 months" for the result strip, where each number stays on the
+// same line as its unit, so a narrow strip breaks it into two lines at most.
+const timeSaved = (months) =>
+  yearsAndMonths(months)
+    .replace(' and ', ' ')
+    .replace(/(\d+) /g, '$1 ')
+
+// What the "Your deal and overpayment limit" row says while it is closed.
+function limitSummary(limit, dealYears) {
+  if (!limit.valid || !dealYears.valid) return 'Check these figures'
+  if (limit.isBlank) return 'No limit check'
+  const years = dealYears.isBlank ? 'every year' : `for ${formatAmount(dealYears.value, 'years')}`
+  return `${percent(limit.value / 100)} a year, ${years}`
+}
+
 // The points for the chart: what is owed at the start, after a lump sum, and
 // at the end of each year until it is paid off.
 function balanceLines(result, balance) {
@@ -52,38 +74,52 @@ function balanceLines(result, balance) {
 }
 
 export default function MortgageOverpaymentCalculator() {
-  const state = useCalculatorState({
-    balance: numberInput('200000', { label: 'What you still owe', ...MONEY, min: 1 }),
-    rate: numberInput('4.5', { label: 'Your interest rate', ...PERCENTAGE }),
-    years: numberInput('25', { label: 'The years left on your mortgage', min: 1, max: 50 }),
-    overpayment: numberInput('200', {
-      label: 'The extra you pay each month',
-      ...MONEY,
-      optional: true,
-    }),
-    lumpSum: numberInput('', { label: 'A one-off lump sum', ...MONEY, optional: true }),
-    lumpSumYear: numberInput('1', {
-      label: 'The year you pay it',
-      name: 'the year you pay the lump sum',
-      min: 1,
-      max: 50,
-      whole: true,
-    }),
-    // null until the visitor picks a date. Until then the start date is today.
-    startDate: dateInput(null, { label: 'Start date', optional: true }),
-    limit: numberInput(String(MORTGAGE.typicalOverpaymentLimit * 100), {
-      label: "Your lender's yearly overpayment limit",
-      name: 'the yearly overpayment limit',
-      ...PERCENTAGE,
-      optional: true,
-    }),
-    dealYears: numberInput('5', {
-      label: 'Years left on your fixed or discounted deal',
-      name: 'the years left on your deal',
-      max: 50,
-      optional: true,
-    }),
-  })
+  const state = useCalculatorState(
+    {
+      balance: numberInput('200,000', {
+        label: 'What you still owe',
+        ...MONEY,
+        min: 1,
+        grouped: true,
+      }),
+      rate: numberInput('4.5', { label: 'Your interest rate', ...PERCENTAGE }),
+      years: numberInput('25', { label: 'The years left on your mortgage', min: 1, max: 50 }),
+      overpayment: numberInput('200', {
+        label: 'The extra you pay each month',
+        ...MONEY,
+        optional: true,
+        grouped: true,
+      }),
+      lumpSum: numberInput('', {
+        label: 'A one-off lump sum',
+        ...MONEY,
+        optional: true,
+        grouped: true,
+      }),
+      lumpSumYear: numberInput('1', {
+        label: 'The year you pay it',
+        name: 'the year you pay the lump sum',
+        min: 1,
+        max: 50,
+        whole: true,
+      }),
+      // null until the visitor picks a date. Until then the start date is today.
+      startDate: dateInput(null, { label: 'Start date', optional: true }),
+      limit: numberInput(String(MORTGAGE.typicalOverpaymentLimit * 100), {
+        label: "Your lender's yearly overpayment limit",
+        name: 'the yearly overpayment limit',
+        ...PERCENTAGE,
+        optional: true,
+      }),
+      dealYears: numberInput('5', {
+        label: 'Years left on your fixed or discounted deal',
+        name: 'the years left on your deal',
+        max: 50,
+        optional: true,
+      }),
+    },
+    { sharedLinks: true },
+  )
   const { balance, rate, years, overpayment, lumpSum, lumpSumYear, limit, dealYears } = state
 
   // The date can only be read in the browser. The page is built with no date,
@@ -122,8 +158,9 @@ export default function MortgageOverpaymentCalculator() {
     ],
   )
 
-  // The sums can still fail on figures that pass each check, such as a very
-  // high rate over a very long term.
+  // The year of the lump sum only matters when there is one. The sums can
+  // still fail on figures that pass each check, such as a very high rate over
+  // a very long term.
   const problem =
     problemWith(
       balance,
@@ -155,82 +192,137 @@ export default function MortgageOverpaymentCalculator() {
   const over = result ? result.yearsOverAllowance : []
   const firstOver = over.length > 0 && result.years[over[0] - 1]
 
+  // Warnings about what was entered, and notes on the result.
+  const notices = []
+  if (!problem && firstOver) {
+    notices.push(
+      <Notice key="over-limit" warning>
+        Your overpayments would be over your lender's limit in {whichYears(over)}. In year{' '}
+        {firstOver.year} you would overpay {formatGBP(firstOver.overpaid)}, and the limit is{' '}
+        {formatGBP(firstOver.allowance)}, which is {percent(limit.value / 100)} of the{' '}
+        {formatGBP(firstOver.startBalance)} you would owe at the start of that year. You could be
+        charged an early repayment charge, so check your mortgage offer.
+      </Notice>,
+    )
+  }
+  if (!problem && result.lumpSumNotAllUsed) {
+    notices.push(
+      <Notice key="lump-sum">
+        {result.lumpSumPaid > 0 ? (
+          <>
+            Only {formatGBP(result.lumpSumPaid)} of the lump sum is needed to pay off what is left.
+          </>
+        ) : (
+          <>
+            Your mortgage would be paid off before year {lumpSumYear.value}, so the lump sum is not
+            needed.
+          </>
+        )}
+      </Notice>,
+    )
+  }
+
   return (
-    <CalculatorPage
+    <CalculatorLayout
       title="Mortgage overpayment and early repayment calculator"
-      meta="Works from the figures you enter"
+      lede="See how much interest overpaying could save and how much sooner you could be mortgage-free. It works from the figures you enter."
+      updated={LAST_UPDATED}
+      checked={false}
       inputs={
         <>
-          <Steps>
-            <NumberField
-              id="balance"
-              hint="Your outstanding mortgage balance."
-              before="£"
-              field={balance}
-            />
-            <NumberField
-              id="rate"
-              hint="The yearly rate you pay now."
-              after="%"
-              decimal
-              size="short"
-              field={rate}
-            />
-            <NumberField
-              id="years"
-              hint="Part years are fine, such as 12.5."
-              decimal
-              size="short"
-              field={years}
-            />
-            <NumberField
-              id="overpayment"
-              hint="On top of your normal monthly payment."
-              before="£"
-              optional
-              field={overpayment}
-            />
-            <NumberField
-              id="lump-sum"
-              hint="Paid once, as well as any monthly overpayment. Leave it blank if you are not paying one."
-              before="£"
-              optional
-              field={lumpSum}
-            />
-            {hasLumpSum && (
-              <NumberField
-                id="lump-sum-year"
-                hint="Year 1 means straight away, year 2 means a year from the start date, and so on."
-                size="short"
-                field={lumpSumYear}
-              />
-            )}
-            <DateField
-              id="start-date"
-              label="Start date"
-              hint="Usually today. Your first payment is a month after this."
-              optional
-              value={startDate}
-              onChange={state.startDate.setText}
-            />
-            <NumberField
-              id="limit"
-              hint="A share of what you owe at the start of each year. Many lenders allow 10%. Leave it blank to skip the check."
-              after="%"
-              decimal
-              size="short"
-              optional
-              field={limit}
-            />
-            <NumberField
-              id="deal-years"
-              hint="Limits and early repayment charges usually only apply during a deal. Leave it blank to check every year."
-              decimal
-              size="short"
-              optional
-              field={dealYears}
-            />
-          </Steps>
+          <InputCard>
+            <InputSection title="Your mortgage">
+              <FieldRow>
+                <NumberField
+                  id="balance"
+                  hint="Your outstanding mortgage balance."
+                  before="£"
+                  field={balance}
+                />
+                <NumberField
+                  id="rate"
+                  hint="The yearly rate you pay now."
+                  after="%"
+                  decimal
+                  field={rate}
+                />
+                <NumberField
+                  id="years"
+                  hint="Part years are fine, such as 12.5."
+                  decimal
+                  field={years}
+                />
+                <DateField
+                  id="start-date"
+                  label="Start date"
+                  hint="Usually today. Your first payment is a month after this."
+                  optional
+                  value={startDate}
+                  onChange={state.startDate.setText}
+                />
+              </FieldRow>
+            </InputSection>
+
+            <InputSection title="What you'll overpay">
+              <FieldRow>
+                <NumberField
+                  id="overpayment"
+                  hint="On top of your normal monthly payment."
+                  before="£"
+                  decimal
+                  optional
+                  size="full"
+                  field={overpayment}
+                  below={
+                    <Chips
+                      label="Common monthly amounts"
+                      options={OVERPAYMENTS}
+                      current={overpayment.text}
+                      onPick={overpayment.setText}
+                    />
+                  }
+                />
+              </FieldRow>
+              <FieldRow>
+                <NumberField
+                  id="lump-sum"
+                  hint="Paid once, as well as any monthly overpayment."
+                  before="£"
+                  decimal
+                  optional
+                  field={lumpSum}
+                />
+                <NumberField
+                  id="lump-sum-year"
+                  hint="Year 1 means straight away, year 2 a year after the start date."
+                  field={lumpSumYear}
+                />
+              </FieldRow>
+            </InputSection>
+
+            <MoreOptions
+              title="Your deal and overpayment limit"
+              summary={limitSummary(limit, dealYears)}
+            >
+              <FieldRow>
+                <NumberField
+                  id="deal-years"
+                  hint="Limits and early repayment charges usually only apply during a deal. Leave it blank to check every year."
+                  decimal
+                  optional
+                  field={dealYears}
+                />
+                <NumberField
+                  id="limit"
+                  hint="A share of what you owe at the start of each year. Many lenders allow 10%. Leave it blank to skip the check."
+                  after="%"
+                  decimal
+                  optional
+                  field={limit}
+                />
+              </FieldRow>
+            </MoreOptions>
+          </InputCard>
 
           <Notice>
             This assumes your interest rate stays the same for the rest of the term, and that your
@@ -241,84 +333,69 @@ export default function MortgageOverpaymentCalculator() {
         </>
       }
       result={
-        <>
-          <ResultPanel
-            label="Interest you could save"
-            figure={result && formatGBP(result.interestSaved)}
-            detail={
-              result &&
-              (result.monthsSaved > 0 ? (
-                <>and your mortgage would be paid off {yearsAndMonths(result.monthsSaved)} sooner</>
-              ) : (
-                <>over the rest of your mortgage</>
-              ))
-            }
-            prompt={problem}
-            link={{ to: '/stamp-duty-calculator', text: 'Buying a home? Work out the stamp duty' }}
-          >
-            {result && (
-              <table className="result-table">
-                <tbody>
-                  <tr>
-                    <th scope="row">Normal monthly payment</th>
-                    <td>{formatGBP(result.standardPayment)}</td>
-                  </tr>
-                  {result.newPayment > result.standardPayment && (
+        <ResultCard
+          label="With your overpayments"
+          figures={
+            result
+              ? [
+                  { value: formatGBP(result.interestSaved), per: 'interest saved' },
+                  result.monthsSaved > 0 && {
+                    value: timeSaved(result.monthsSaved),
+                    per: (
+                      <>
+                        sooner <span className="keep-together">mortgage-free</span>
+                      </>
+                    ),
+                  },
+                ].filter(Boolean)
+              : []
+          }
+          prompt={problem}
+          shareLink={state.shareLink}
+        >
+          {result && (
+            <>
+              {!overpays && (
+                <p className="result-card__line">
+                  Enter a monthly overpayment or a lump sum to see what it could save.
+                </p>
+              )}
+              <div className="table-scroll">
+                <table className="result-table result-table--columns result-table--compare">
+                  <thead>
                     <tr>
-                      <th scope="row">With your monthly overpayment</th>
+                      <td></td>
+                      <th scope="col">Without overpaying</th>
+                      <th scope="col">With your overpayments</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Monthly payment</th>
+                      <td>{formatGBP(result.standardPayment)}</td>
                       <td>{formatGBP(result.newPayment)}</td>
                     </tr>
-                  )}
-                  {result.lumpSumPaid > 0 && (
+                    {result.lumpSumPaid > 0 && (
+                      <tr>
+                        <th scope="row">Lump sum in year {lumpSumYear.value}</th>
+                        <td>None</td>
+                        <td>{formatGBP(result.lumpSumPaid)}</td>
+                      </tr>
+                    )}
                     <tr>
-                      <th scope="row">Lump sum in year {lumpSumYear.value}</th>
-                      <td>{formatGBP(result.lumpSumPaid)}</td>
+                      <th scope="row">Paid off</th>
+                      <td>{ends(result.originalTermMonths)}</td>
+                      <td>{ends(result.newTermMonths)}</td>
                     </tr>
-                  )}
-                  <tr>
-                    <th scope="row">Paid off</th>
-                    <td>{ends(result.newTermMonths)}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Without overpaying</th>
-                    <td>{ends(result.originalTermMonths)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            )}
-          </ResultPanel>
+                    <tr>
+                      <th scope="row">Total interest</th>
+                      <td>{formatGBP(result.standardTotalInterest)}</td>
+                      <td>{formatGBP(result.newTotalInterest)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-          {!problem && firstOver && (
-            <Notice warning>
-              Your overpayments would be over your lender's limit in {whichYears(over)}. In year{' '}
-              {firstOver.year} you would overpay {formatGBP(firstOver.overpaid)}, and the limit is{' '}
-              {formatGBP(firstOver.allowance)}, which is {percent(limit.value / 100)} of the{' '}
-              {formatGBP(firstOver.startBalance)} you would owe at the start of that year. You could
-              be charged an early repayment charge, so check your mortgage offer.
-            </Notice>
-          )}
-
-          {!problem && result.lumpSumNotAllUsed && (
-            <Notice>
-              {result.lumpSumPaid > 0 ? (
-                <>
-                  Only {formatGBP(result.lumpSumPaid)} of the lump sum is needed to pay off what is
-                  left.
-                </>
-              ) : (
-                <>
-                  Your mortgage would be paid off before year {lumpSumYear.value}, so the lump sum
-                  is not needed.
-                </>
-              )}
-            </Notice>
-          )}
-        </>
-      }
-      breakdown={
-        !problem && (
-          <>
-            <div className="breakdown__tables">
               <LineChart
                 id="balance-chart"
                 title="What you owe over time"
@@ -386,43 +463,45 @@ export default function MortgageOverpaymentCalculator() {
                   </tbody>
                 </table>
               )}
-            </div>
 
-            {hasLimit && (
-              <p className="breakdown__note">
-                The most you can overpay in year 1 without a charge is{' '}
-                {formatGBP(result.firstYearAllowance)}, or about{' '}
-                {formatGBP(result.firstYearAllowance / 12)} a month. Here the limit is{' '}
-                {percent(limit.value / 100)} of what you owe at the start of each year, so it falls
-                as the balance falls. Lenders work it out in different ways, so check your mortgage
-                offer.
-              </p>
-            )}
+              {hasLimit && (
+                <p className="result-card__line">
+                  The most you can overpay in year 1 without a charge is{' '}
+                  {formatGBP(result.firstYearAllowance)}, or about{' '}
+                  {formatGBP(result.firstYearAllowance / 12)} a month. Here the limit is{' '}
+                  {percent(limit.value / 100)} of what you owe at the start of each year, so it
+                  falls as the balance falls. Lenders work it out in different ways, so check your
+                  mortgage offer.
+                </p>
+              )}
 
-            <details>
-              <summary>Balance at the end of each year</summary>
-              <table className="result-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Year</th>
-                    <th scope="col">Without overpaying</th>
-                    <th scope="col">With your overpayments</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.years.map((row) => (
-                    <tr key={row.year}>
-                      <th scope="row">{row.year}</th>
-                      <td>{formatGBP(row.standardBalance)}</td>
-                      <td>{formatGBP(row.balance)}</td>
+              <details className="result-card__more">
+                <summary>Balance at the end of each year</summary>
+                <table className="result-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Year</th>
+                      <th scope="col">Without overpaying</th>
+                      <th scope="col">With your overpayments</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </details>
-          </>
-        )
+                  </thead>
+                  <tbody>
+                    {result.years.map((row) => (
+                      <tr key={row.year}>
+                        <th scope="row">{row.year}</th>
+                        <td>{formatGBP(row.standardBalance)}</td>
+                        <td>{formatGBP(row.balance)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </details>
+            </>
+          )}
+        </ResultCard>
       }
+      notices={notices.length > 0 ? notices : null}
+      working={problem ? null : result.working}
       guide={<MortgageOverpaymentGuide />}
       guides={['/guides/overpay-mortgage-or-save']}
       related={['/stamp-duty-calculator', '/isa-calculator', '/lifetime-isa-calculator']}

@@ -34,13 +34,15 @@ export function FieldRow({ tight = false, children }) {
 
 /**
  * The settings most people never change, in a row that opens. summary says
- * in a few words what they are set to now, such as "Paid monthly".
+ * in a few words what they are set to now, such as "Paid monthly". title
+ * names the row when "More options" would say too little, such as "Your deal
+ * and overpayment limit".
  */
-export function MoreOptions({ summary, children }) {
+export function MoreOptions({ title = 'More options', summary, children }) {
   return (
     <details className="input-more">
       <summary>
-        <span className="input-more__title">More options</span>
+        <span className="input-more__title">{title}</span>
         {summary && <span className="input-more__summary">{summary}</span>}
       </summary>
       <div className="input-more__body">{children}</div>

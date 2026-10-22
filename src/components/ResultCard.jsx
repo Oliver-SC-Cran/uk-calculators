@@ -9,8 +9,9 @@ import { WorkingLink } from './Working'
  * and the button that copies a link to the figures.
  *
  * - label says what the figures are ("You take home").
- * - figures is a list of { value, per }: value already formatted, and per the
- *   words under it ("a month").
+ * - figures is a list of { value, per }: value already formatted text, and
+ *   per the words under it ("a month"). per can hold markup, such as a
+ *   <span className="keep-together"> round a word that must not break.
  * - prompt, when there is no answer to show: a sentence saying what to enter
  *   or which step to check. The breakdown and the working link are hidden.
  * - children is the breakdown: a short table and any notes.
@@ -27,8 +28,8 @@ export default function ResultCard({ label, figures, prompt, children, shareLink
             <p className="result-card__prompt">{prompt}</p>
           ) : (
             <div className="result-card__figures">
-              {figures.map(({ value, per }) => (
-                <p key={per} className="result-card__figure">
+              {figures.map(({ value, per }, index) => (
+                <p key={index} className="result-card__figure">
                   <span
                     className={
                       value.length > 7

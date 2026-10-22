@@ -1,6 +1,6 @@
 // Checks on the page list in routes.js. Run with: npm test
 import assert from 'node:assert/strict'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { pageFiles } from './pageFiles.js'
 import { canonicalUrl, findRoute, notFoundRoute, routes } from './routes.js'
@@ -43,4 +43,15 @@ test('routes: every page, and the 404 page, has its own file in src/pages', () =
     routes.length + 1,
     'src/pageFiles.js lists a page not in routes.js',
   )
+})
+
+test('routes: sharedLinks marks exactly the pages that switch share links on', () => {
+  // The privacy policy lists the calculators with share links from routes.js,
+  // so a page that switches them on must be marked there too.
+  for (const route of [...routes, notFoundRoute]) {
+    const url = new URL(`./pages/${pageFiles[route.path]}.jsx`, import.meta.url)
+    const switchedOn = /sharedLinks: true/.test(readFileSync(url, 'utf8'))
+    assert.equal(Boolean(route.sharedLinks), switchedOn, `${route.path} sharedLinks`)
+    if (switchedOn) assert.ok(route.name, `${route.path} needs a name for the privacy policy`)
+  }
 })

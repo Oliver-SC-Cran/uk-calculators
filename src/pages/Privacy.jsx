@@ -1,10 +1,10 @@
 import TextPage from '../components/TextPage'
 import { Link } from 'react-router-dom'
-import { CONTACT_EMAIL, OWNER_NAME } from '../routes'
+import { CONTACT_EMAIL, OWNER_NAME, routes } from '../routes'
 import LastUpdated from '../components/LastUpdated'
 
 // Change this by hand whenever the policy changes.
-const LAST_UPDATED = '2026-10-21'
+const LAST_UPDATED = '2026-10-22'
 
 export default function Privacy() {
   return (
@@ -24,15 +24,24 @@ export default function Privacy() {
         The calculators run entirely in your browser. The numbers you type in are not sent to us,
         stored by us or seen by us.
       </p>
+      <p>These calculators have a "Copy link to these figures" button:</p>
+      <ul>
+        {routes
+          .filter((route) => route.sharedLinks)
+          .map((route) => (
+            <li key={route.path}>
+              <Link to={route.path}>{route.name}</Link>
+            </li>
+          ))}
+      </ul>
       <p>
-        On the take-home pay calculator, the "Copy link to these figures" button makes a link with
-        the figures you entered in it, after a # sign. Nothing is put in a link unless you press the
-        button. Browsers do not send the part of a link after # to any server, so the figures do not
-        reach us or Cloudflare. They are in the link itself, though, so anyone you send it to can
-        see them, and so can anywhere you paste or save it. When a page is opened from one of these
-        links, the calculator reads the figures and then takes them out of the address bar. Until
-        then, scripts running on the page, including Google's advertising script, can read the whole
-        address.
+        The button makes a link with the figures you entered in it, after a # sign. Nothing is put
+        in a link unless you press the button. Browsers do not send the part of a link after # to
+        any server, so the figures do not reach us or Cloudflare. They are in the link itself,
+        though, so anyone you send it to can see them, and so can anywhere you paste or save it.
+        When a page is opened from one of these links, the calculator reads the figures and then
+        takes them out of the address bar. Until then, scripts running on the page, including
+        Google's advertising script, can read the whole address.
       </p>
 
       <h2>Advertising</h2>
