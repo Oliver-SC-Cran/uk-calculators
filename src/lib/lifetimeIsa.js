@@ -123,12 +123,26 @@ export function projectLifetimeIsa({
 }
 
 /**
- * A regular payment written for the other frequency, to the penny, for when
- * someone switches between paying in each month and once a year.
+ * A regular payment written for the other frequency, unrounded: £1,000 a
+ * year is £83.333... a month. A field shows it to the penny.
  */
 export function contributionAs(frequency, amount) {
-  const converted = frequency === 'yearly' ? amount * 12 : amount / 12
-  return Math.round(converted * 100) / 100
+  return frequency === 'yearly' ? amount * 12 : amount / 12
+}
+
+/**
+ * A payment written for `to` ('monthly' or 'yearly'), for when someone
+ * switches how often they pay in. It is worked out from the payment as the
+ * person typed it (typed: { amount, frequency }), and switching back gives the
+ * typed amount itself: £1,000 a year is £83.33 a month on screen, and back to
+ * a year is £1,000 again. amount and from are the payment entered now and how
+ * often, which become the typed payment when there is none. Returns { amount,
+ * typed }, for the field's setExact.
+ */
+export function switchContribution({ amount, from, to, typed }) {
+  const source = typed ?? { amount, frequency: from }
+  const next = to === source.frequency ? source.amount : contributionAs(to, source.amount)
+  return { amount: next, typed: source }
 }
 
 /**

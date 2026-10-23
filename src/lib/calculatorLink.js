@@ -12,9 +12,12 @@
 
 import { parseIsoDate } from './dates.js'
 
-// What a number field may hold in a link: digits, with up to four decimal
-// places. Anything else is ignored, and the field keeps its starting value.
-const NUMBER_TEXT = /^\d{1,12}(\.\d{1,4})?$/
+// What a number field may hold in a link: digits, with up to 17 decimal
+// places. A field that holds an exact amount worked out for it, such as pay
+// for a week from pay for a year, is written in full, so the link gives the
+// same result (see useCalculatorState). Anything else is ignored, and the
+// field keeps its starting value.
+const NUMBER_TEXT = /^\d{1,12}(\.\d{1,17})?$/
 
 // What a text field, such as a tax code, may hold in a link: letters, digits,
 // spaces and a slash, up to 16 of them. The page's own check reads it after that.

@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
-import CalculatorPage from '../components/CalculatorPage'
-import { NumberField, SelectField, Steps } from '../components/Fields'
+import CalculatorLayout from '../components/CalculatorLayout'
+import { NumberField, SelectField } from '../components/Fields'
+import { FieldRow, InputCard, InputSection } from '../components/InputCard'
 import Notice from '../components/Notice'
-import ResultPanel from '../components/ResultPanel'
+import ResultCard from '../components/ResultCard'
 import {
   choiceInput,
   numberInput,
@@ -12,16 +13,22 @@ import {
 import RedundancyGuide from '../guides/RedundancyGuide'
 import { TAX_YEAR_START } from '../lib/rates/taxYear'
 import { calculateRedundancyPay } from '../lib/redundancy'
-import { formatGBP } from '../lib/format'
+import { formatGBP, formatNumber } from '../lib/format'
 import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
+// Change this by hand whenever the calculator's figures or rules change.
+const LAST_UPDATED = '2026-10-23'
+
 export default function RedundancyCalculator() {
-  const state = useCalculatorState({
-    age: numberInput('45', { label: 'Your age', ...WHOLE_YEARS }),
-    years: numberInput('10', { label: 'Your years with your employer', ...WHOLE_YEARS }),
-    weeklyPay: numberInput('600', { label: 'Your weekly pay', ...MONEY }),
-    region: choiceInput('GB', ['GB', 'NI']),
-  })
+  const state = useCalculatorState(
+    {
+      age: numberInput('45', { label: 'Your age', ...WHOLE_YEARS }),
+      years: numberInput('10', { label: 'Your years with your employer', ...WHOLE_YEARS }),
+      weeklyPay: numberInput('600', { label: 'Your weekly pay', ...MONEY, grouped: true }),
+      region: choiceInput('GB', ['GB', 'NI']),
+    },
+    { sharedLinks: true },
+  )
   const { age, years, weeklyPay } = state
   const region = state.region.value
 
@@ -44,38 +51,63 @@ export default function RedundancyCalculator() {
       ? 'Check your age and your years with your employer.'
       : 'Based on what you entered, you would not qualify yet.')
 
+  // Notes on why there is no figure.
+  const notices = []
+  if (!problem && result.reason === 'service-too-long') {
+    notices.push(
+      <Notice key="too-long">
+        Service that started before age {result.earliestServiceAge} does not count, and the official
+        gov.uk calculator will not accept it.
+      </Notice>,
+    )
+  }
+  if (!problem && result.reason === 'too-few-years') {
+    notices.push(
+      <Notice key="too-few">
+        Statutory redundancy pay requires at least {result.minYearsToQualify} full years of
+        continuous service.
+      </Notice>,
+    )
+  }
+
   return (
-    <CalculatorPage
+    <CalculatorLayout
       title="Statutory redundancy pay calculator"
-      meta={`Limits from ${TAX_YEAR_START} · checked against gov.uk and nidirect`}
+      lede={`The redundancy pay your employer must pay you by law, using the limits from ${TAX_YEAR_START}.`}
+      updated={LAST_UPDATED}
+      checkedAgainst="gov.uk and nidirect"
       inputs={
         <>
-          <Steps>
-            <NumberField id="age" hint="In whole years." size="short" field={age} />
-            <NumberField
-              id="years"
-              hint="Full years only, without a break."
-              size="short"
-              field={years}
-            />
-            <NumberField
-              id="weekly-pay"
-              hint="Before tax. Use your average over the 12 weeks before you were given notice."
-              before="£"
-              decimal
-              field={weeklyPay}
-            />
-            <SelectField
-              id="region"
-              label="Where in the UK"
-              hint="Northern Ireland has its own weekly pay limit."
-              value={region}
-              onChange={state.region.set}
-            >
-              <option value="GB">England, Scotland or Wales</option>
-              <option value="NI">Northern Ireland</option>
-            </SelectField>
-          </Steps>
+          <InputCard>
+            <InputSection title="You and your job">
+              <FieldRow>
+                <NumberField id="age" hint="In whole years." field={age} />
+                <NumberField id="years" hint="Full years only, without a break." field={years} />
+              </FieldRow>
+            </InputSection>
+
+            <InputSection title="Your pay">
+              <FieldRow>
+                <NumberField
+                  id="weekly-pay"
+                  hint="Before tax. Use your average over the 12 weeks before you were given notice."
+                  before="£"
+                  decimal
+                  field={weeklyPay}
+                />
+                <SelectField
+                  id="region"
+                  label="Where in the UK"
+                  hint="Northern Ireland has its own weekly pay limit."
+                  value={region}
+                  onChange={state.region.set}
+                >
+                  <option value="GB">England, Scotland or Wales</option>
+                  <option value="NI">Northern Ireland</option>
+                </SelectField>
+              </FieldRow>
+            </InputSection>
+          </InputCard>
 
           <Notice>
             This is the legal minimum. Your employer may pay more under your contract or a company
@@ -85,58 +117,42 @@ export default function RedundancyCalculator() {
         </>
       }
       result={
-        <>
-          <ResultPanel
-            label="Statutory redundancy pay"
-            figure={result.qualifies && formatGBP(result.pay)}
-            detail={
-              result.qualifies && (
-                <>
-                  for {result.totalWeeks} weeks' pay at {formatGBP(result.weeklyPayUsed)} a week
-                  {result.weeklyPayWasCapped ? ', the most that counts' : ''}
-                </>
-              )
-            }
-            prompt={problem ?? notQualifying}
-          >
-            {result.qualifies && (
-              <table className="result-table">
-                <tbody>
-                  <tr>
-                    <th scope="row">Weeks' pay awarded</th>
-                    <td>{result.totalWeeks}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Weekly pay used</th>
-                    <td>
-                      {formatGBP(result.weeklyPayUsed)}
-                      {result.weeklyPayWasCapped ? ' (capped)' : ''}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Tax-free up to</th>
-                    <td>{formatGBP(result.taxFreeThreshold)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            )}
-          </ResultPanel>
-
-          {!problem && result.reason === 'service-too-long' && (
-            <Notice>
-              Service that started before age {result.earliestServiceAge} does not count, and the
-              official gov.uk calculator will not accept it.
-            </Notice>
-          )}
-
-          {!problem && result.reason === 'too-few-years' && (
-            <Notice>
-              Statutory redundancy pay requires at least {result.minYearsToQualify} full years of
-              continuous service.
-            </Notice>
-          )}
-        </>
+        <ResultCard
+          label="Statutory redundancy pay"
+          figures={[
+            { value: formatGBP(result.pay ?? 0), per: 'the legal minimum' },
+            { value: formatNumber(result.totalWeeks ?? 0), per: "weeks' pay" },
+          ]}
+          prompt={problem ?? notQualifying}
+          shareLink={state.shareLink}
+        >
+          <p className="result-card__line">
+            For {result.totalWeeks} weeks' pay at {formatGBP(result.weeklyPayUsed)} a week
+            {result.weeklyPayWasCapped ? ', the most that counts' : ''}.
+          </p>
+          <table className="result-table">
+            <tbody>
+              <tr>
+                <th scope="row">Weeks' pay awarded</th>
+                <td>{result.totalWeeks}</td>
+              </tr>
+              <tr>
+                <th scope="row">Weekly pay used</th>
+                <td>
+                  {formatGBP(result.weeklyPayUsed)}
+                  {result.weeklyPayWasCapped ? ' (capped)' : ''}
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Tax-free up to</th>
+                <td>{formatGBP(result.taxFreeThreshold)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </ResultCard>
       }
+      notices={notices.length > 0 ? notices : null}
+      working={problem ? null : result.working}
       guide={<RedundancyGuide />}
       related={['/salary-calculator', '/maternity-pay-calculator', '/minimum-wage-calculator']}
     />

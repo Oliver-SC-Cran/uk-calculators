@@ -60,12 +60,14 @@ export const routes = [
   {
     path: '/redundancy-calculator',
     name: 'Statutory redundancy pay calculator',
+    sharedLinks: true,
     title: `Statutory redundancy pay calculator ${TAX_YEAR}`,
     description: `Work out your statutory redundancy pay from your age, years of service and weekly pay. Uses the ${TAX_YEAR} weekly pay cap of ${pounds(REDUNDANCY.weeklyPayCapGB)} (${pounds(REDUNDANCY.weeklyPayCapNI)} in Northern Ireland).`,
   },
   {
     path: '/maternity-pay-calculator',
     name: 'Maternity and paternity pay calculator',
+    sharedLinks: true,
     title: 'Maternity and paternity pay calculator: SMP and SPP 2026/27',
     description: `Work out Statutory Maternity Pay or Paternity Pay at the ${PARENTAL_PAY.ratesFrom} rate of £${PARENTAL_PAY.weeklyRate.toFixed(2)} a week, check if you qualify, and see your qualifying week.`,
   },
@@ -101,6 +103,7 @@ export const routes = [
   {
     path: '/minimum-wage-calculator',
     name: 'Minimum wage checker',
+    sharedLinks: true,
     title: `Minimum wage checker ${MINIMUM_WAGE.effectiveFrom.slice(-4)}: are you paid the legal minimum?`,
     description: `Check your hourly pay against the National Living Wage (£${MINIMUM_WAGE.nationalLivingWage.toFixed(2)}) and National Minimum Wage rates from ${MINIMUM_WAGE.effectiveFrom}, by age and for apprentices.`,
   },

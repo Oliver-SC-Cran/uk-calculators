@@ -1,25 +1,13 @@
-import { Children, cloneElement, useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { caretAfterGrouping, groupDigits } from '../lib/format'
-
-/**
- * The inputs on a calculator page, as numbered steps. Each child is one of the
- * fields below. Steps that are not shown (false or null) are skipped, so the
- * numbers always run 1, 2, 3 with no gaps.
- */
-export function Steps({ children }) {
-  return (
-    <div className="steps">
-      {Children.toArray(children).map((step, index) => cloneElement(step, { number: index + 1 }))}
-    </div>
-  )
-}
 
 /**
  * The label, hint and error message shared by every kind of field. describe
  * is the id of anything else on the page that explains the field, such as a
- * note under a row of fields.
+ * note under a row of fields. size="full" makes a field take a whole row of
+ * the input card (InputCard.jsx), such as a dropdown with long options.
  */
-function Field({ number, id, label, hint, optional, error, size, isGroup, describe, children }) {
+function Field({ id, label, hint, optional, error, size, isGroup, describe, children }) {
   const hintId = hint ? `${id}-hint` : undefined
   const errorId = error ? `${id}-error` : undefined
   const describedBy = [hintId, errorId, describe].filter(Boolean).join(' ') || undefined
@@ -32,7 +20,6 @@ function Field({ number, id, label, hint, optional, error, size, isGroup, descri
   return (
     <Box className={classes.filter(Boolean).join(' ')}>
       <Label className="field__label" htmlFor={isGroup ? undefined : id}>
-        {number && `${number}. `}
         {label}
         {optional && <span className="field__optional"> (optional)</span>}
       </Label>
@@ -57,7 +44,7 @@ function Field({ number, id, label, hint, optional, error, size, isGroup, descri
  * When the field's rules have grouped: true, commas go in as someone types and
  * the caret stays after the digit it was after.
  */
-export function NumberField({ field, before, after, decimal, size = 'medium', below, ...rest }) {
+export function NumberField({ field, before, after, decimal, size, below, ...rest }) {
   const inputRef = useRef(null)
   const caret = useRef(null)
 
@@ -117,7 +104,7 @@ export function NumberField({ field, before, after, decimal, size = 'medium', be
  * A text input for something that is not a number, such as a tax code. field
  * comes from useCalculatorState (textInput). Letters show in capitals.
  */
-export function TextField({ field, size = 'medium', below, ...rest }) {
+export function TextField({ field, size, below, ...rest }) {
   return (
     <Field label={field.label} {...rest} error={field.error} size={size}>
       {({ describedBy, invalid }) => (
@@ -197,7 +184,7 @@ export function SelectField({ value, onChange, children, below, ...rest }) {
 /** A date input. value is 'YYYY-MM-DD' text, or '' when blank. */
 export function DateField({ value, onChange, error, ...rest }) {
   return (
-    <Field {...rest} error={error} size="medium">
+    <Field {...rest} error={error}>
       {({ describedBy, invalid }) => (
         <div className="field__control">
           <input

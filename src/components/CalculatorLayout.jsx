@@ -13,6 +13,8 @@ import Working from './Working'
  *   Updated [date]". updated is a 'YYYY-MM-DD' date, changed by hand when the
  *   calculator's figures or rules change. A calculator that uses no official
  *   rates passes checked={false}, and the line says only when it was updated.
+ *   checkedAgainst names the sources when gov.uk is not the only one, such as
+ *   "gov.uk and nidirect".
  * - inputs: an InputCard (InputCard.jsx), and any note under it.
  * - result: a ResultCard (ResultCard.jsx). notices go under it, for
  *   warnings about what was entered and notes on the result.
@@ -26,6 +28,7 @@ export default function CalculatorLayout({
   lede,
   updated,
   checked = true,
+  checkedAgainst = 'gov.uk',
   inputs,
   result,
   notices,
@@ -49,7 +52,7 @@ export default function CalculatorLayout({
           <p className="calc-head__lede">{lede}</p>
         </div>
         <p className="calc-head__meta">
-          {checked && 'Checked against gov.uk · '}Updated{' '}
+          {checked && `Checked against ${checkedAgainst} · `}Updated{' '}
           <time dateTime={updated}>{formatDate(updated)}</time>
         </p>
       </header>

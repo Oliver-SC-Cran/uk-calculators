@@ -378,8 +378,7 @@ h2[tabindex='-1']:focus {
   color: var(--white);
 }
 
-.hero :focus-visible,
-.result :focus-visible {
+.hero :focus-visible {
   outline-color: var(--white);
 }
 
@@ -492,19 +491,6 @@ h2[tabindex='-1']:focus {
 
 /* Calculator pages */
 
-.page-head {
-  margin-bottom: var(--space-6);
-}
-
-.page-head h1 {
-  margin-bottom: var(--space-2);
-}
-
-.page-meta {
-  margin: 0;
-  color: var(--text-soft);
-}
-
 .calc {
   display: grid;
   gap: var(--space-6);
@@ -529,13 +515,6 @@ h2[tabindex='-1']:focus {
     position: sticky;
     top: var(--space-5);
   }
-}
-
-/* Inputs: numbered steps */
-
-.steps {
-  display: grid;
-  gap: var(--space-5);
 }
 
 .field {
@@ -626,14 +605,6 @@ h2[tabindex='-1']:focus {
   padding-right: var(--space-4);
 }
 
-.field--short .field__control {
-  max-width: 10rem;
-}
-
-.field--medium .field__control {
-  max-width: 18rem;
-}
-
 .field--error .field__control {
   border-color: var(--danger);
 }
@@ -664,78 +635,7 @@ h2[tabindex='-1']:focus {
   margin-top: var(--space-2);
 }
 
-/* Result panel */
-
-.result {
-  padding: var(--space-5);
-  border-radius: var(--radius-panel);
-  background: var(--navy);
-  color: var(--white);
-  --line: var(--line-on-navy);
-  --table-label: var(--text-soft-on-navy);
-}
-
-@media (min-width: 40rem) {
-  .result {
-    padding: var(--space-6);
-  }
-}
-
-.result__label {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-soft-on-navy);
-}
-
-.result__figure {
-  margin: var(--space-2) 0;
-  font-family: var(--font-display);
-  font-size: clamp(2.75rem, 1.9rem + 4.2vw, 4rem);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  overflow-wrap: anywhere;
-}
-
-/* Long figures, such as £1,234,567.89, drop a size so they stay on one line. */
-.result__figure--long {
-  font-size: clamp(2rem, 1.4rem + 3vw, 3rem);
-}
-
-.result__detail {
-  margin: 0;
-}
-
-.result__prompt {
-  margin: var(--space-3) 0 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.result__link {
-  margin: var(--space-5) 0 0;
-  font-weight: 600;
-}
-
-.result a {
-  color: var(--white);
-}
-
-.result__note {
-  margin: var(--space-5) 0 0;
-  font-size: 0.875rem;
-  color: var(--text-soft-on-navy);
-}
-
-.result + .result,
-.result + .notice,
-.notice + .result,
-.notice + .notice {
-  margin-top: var(--space-4);
-}
+/* Tables of figures, in the result card and in "How we worked this out". */
 
 .result-table {
   width: 100%;
@@ -747,7 +647,7 @@ h2[tabindex='-1']:focus {
 .result-table th,
 .result-table td {
   padding: var(--space-3) 0;
-  border-top: 1px solid var(--line, var(--border));
+  border-top: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
   vertical-align: top;
 }
@@ -756,7 +656,7 @@ h2[tabindex='-1']:focus {
   padding-right: var(--space-4);
   text-align: left;
   font-weight: 400;
-  color: var(--table-label, var(--text-soft));
+  color: var(--text-soft);
 }
 
 .result-table td {
@@ -795,51 +695,14 @@ h2[tabindex='-1']:focus {
   color: inherit;
 }
 
-/* The longer tables under the two columns */
+/* A row that opens in the result card, such as balances year by year. */
 
-.breakdown {
-  margin-top: var(--space-7);
-}
-
-.breakdown__tables {
-  display: grid;
-  gap: var(--space-6) var(--space-7);
-}
-
-@media (min-width: 60rem) {
-  .breakdown__tables {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
-  }
-}
-
-.breakdown .result-table {
-  margin-top: 0;
-}
-
-.breakdown__note {
-  max-width: var(--width-text);
-  margin: var(--space-5) 0 0;
-  font-size: 0.9375rem;
-  color: var(--text-soft);
-}
-
-.breakdown details {
-  margin-top: var(--space-6);
-}
-
-.breakdown summary,
 .result-card__more summary {
   width: fit-content;
   cursor: pointer;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-.breakdown details .result-table {
-  max-width: var(--width-text);
-  margin-top: var(--space-4);
 }
 
 /* A line chart (LineChart.jsx). The lines differ by style as well as colour:
@@ -941,8 +804,8 @@ h2[tabindex='-1']:focus {
   color: var(--text-soft);
 }
 
-.steps + .notice {
-  margin-top: var(--space-6);
+.notice + .notice {
+  margin-top: var(--space-4);
 }
 
 .notice ul {
@@ -1185,7 +1048,8 @@ h2[tabindex='-1']:focus {
   }
 }
 
-.field-row + .field-row {
+.field-row + .field-row,
+.input-card .field-row + .field--checkbox {
   margin-top: var(--space-4);
 }
 
@@ -1501,9 +1365,9 @@ h2[tabindex='-1']:focus {
   padding-left: var(--space-3);
 }
 
-/* A table with a column for each case, such as without and with overpaying.
-   Its cells hold dates as well as amounts, so they may wrap on a phone. */
-.result-table--compare td {
+/* A table whose cells hold dates as well as amounts, such as without and with
+   overpaying, or key dates. Its cells may wrap on a phone. */
+.result-table--wrap td {
   white-space: normal;
 }
 

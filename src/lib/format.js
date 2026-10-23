@@ -52,6 +52,13 @@ export function formatDeduction(value, { pence = false } = {}) {
   return shown > 0 ? format(-shown) : format(0)
 }
 
+/**
+ * The text a field shows for an amount the calculator worked out, such as pay
+ * for a week: to the penny, with no trailing zeros. 865.3846... shows as
+ * 865.38 and 3750 as 3750. The field keeps the exact amount.
+ */
+export const amountText = (value) => String(Number(value.toFixed(2)))
+
 /** 1950 becomes "1,950" and 37.5 stays "37.5". */
 export const formatNumber = (value) => value.toLocaleString('en-GB', { maximumFractionDigits: 2 })
 

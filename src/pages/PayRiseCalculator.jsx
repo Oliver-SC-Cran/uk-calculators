@@ -28,14 +28,14 @@ import { STUDENT_LOAN } from '../lib/rates/studentLoans'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, formatGBPPence, formatNumber, percent } from '../lib/format'
 import { MONEY, PERCENTAGE } from '../lib/validation'
-import { PAY_ENTERED_AS, payFor, yearlyPayFrom } from '../lib/payPeriods'
+import { PAY_ENTERED_AS, PAY_FREQUENCIES, switchPayPer, yearlyPayFrom } from '../lib/payPeriods'
 import { calculatePayRise, newSalaryFrom, riseEnteredAs } from '../lib/payRise'
-import { PENSION_TYPES } from '../lib/pensions'
+import { PENSION_TYPES, switchPension } from '../lib/pensions'
 import { incomeTaxLabel } from '../lib/incomeTax'
 import { readTaxCode, taxRatesFor } from '../lib/readTaxCode'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-22'
+const LAST_UPDATED = '2026-10-23'
 
 const PAY_PER_NAMES = { year: 'Year', month: 'Month', week: 'Week', day: 'Day', hour: 'Hour' }
 const PER_WORDS = {
@@ -56,9 +56,6 @@ const riseFields = {
 // Quick picks. They are common choices, not rates or advice.
 const RISE_PERCENTS = [3, 5, 10].map((value) => [value, `${value}%`])
 const PENSION_PERCENTS = [3, 5, 8, 10].map((value) => [value, `${value}%`])
-
-// What is in a field as text, without the trailing zeros payFor can leave.
-const asText = (value) => String(Number(value.toFixed(2)))
 
 function Warning({ code, result, plan, scottish }) {
   const { taperStart, taperFullyGoneAt, basicRate, higherRate } = INCOME_TAX
@@ -210,6 +207,7 @@ export default function PayRiseCalculator() {
         min: 1,
         max: 168,
       }),
+      payFrequency: choiceInput('monthly', Object.keys(PAY_FREQUENCIES)),
     },
     { sharedLinks: true },
   )
@@ -221,6 +219,8 @@ export default function PayRiseCalculator() {
   const region = state.region.value
   const payPer = state.payPer.value
   const pensionUnit = state.pensionUnit.value
+  const payFrequency = state.payFrequency.value
+  const { perYear: payDays, period } = PAY_FREQUENCIES[payFrequency]
 
   const code = taxCode.value
   const { scottish, welsh } = taxRatesFor(code, region)
@@ -264,12 +264,13 @@ export default function PayRiseCalculator() {
         plan,
         hasPostgraduateLoan,
         pensionPercent: pensionUnit === 'percent' ? pension.value : 0,
-        pensionYearlyAmount: pensionUnit === 'amount' ? pension.value * 12 : 0,
+        pensionYearlyAmount: pensionUnit === 'amount' ? pension.value * payDays : 0,
         pensionType,
         weeklyHours: hoursPerWeek,
         scottish,
         welsh,
         taxCode: code,
+        payFrequency,
       }),
     [
       current,
@@ -278,11 +279,13 @@ export default function PayRiseCalculator() {
       hasPostgraduateLoan,
       pensionUnit,
       pension.value,
+      payDays,
       pensionType,
       hoursPerWeek,
       scottish,
       welsh,
       code,
+      payFrequency,
     ],
   )
 
@@ -294,26 +297,49 @@ export default function PayRiseCalculator() {
   }
 
   // Keep the same pay and rise when switching what they are entered for, so
-  // £45,000 a year becomes £3,750 a month and not £45,000 a month.
+  // £45,000 a year becomes £3,750 a month and not £45,000 a month. The exact
+  // amounts are kept, so switching back gives £45,000 again.
   const changePayPer = (per) => {
+    const switchField = (field) => {
+      const switched = switchPayPer({
+        amount: field.value,
+        from: payPer,
+        to: per,
+        settings,
+        typed: field.typed,
+      })
+      field.setExact(switched.amount, switched.typed)
+    }
     if (currentSalary.valid && current > 0) {
-      currentSalary.setText(asText(payFor(per, current, settings)))
-      if (riseType !== 'percent' && rise.valid) {
-        const amount = riseType === 'pounds' ? next - current : next
-        rise.setText(asText(payFor(per, amount, settings)))
-      }
+      switchField(currentSalary)
+      if (riseType !== 'percent' && rise.valid) switchField(rise)
     }
     state.payPer.set(per)
   }
 
-  // The same for the pension, between a percentage and an amount a month.
-  const changePensionUnit = (unit) => {
+  // The same for the pension, between a percentage and an amount each pay
+  // day, and for an amount each pay day when pay days change.
+  const changePension = (toUnit, toPayDays) => {
     if (hasPension && current > 0) {
-      const yearly =
-        pensionUnit === 'percent' ? (current * pension.value) / 100 : pension.value * 12
-      pension.setText(asText(unit === 'percent' ? (yearly / current) * 100 : yearly / 12))
+      const switched = switchPension({
+        amount: pension.value,
+        unit: pensionUnit,
+        payDays,
+        pay: current,
+        toUnit,
+        toPayDays,
+        typed: pension.typed,
+      })
+      pension.setExact(switched.amount, switched.typed)
     }
+  }
+  const changePensionUnit = (unit) => {
+    changePension(unit, payDays)
     state.pensionUnit.set(unit)
+  }
+  const changePayFrequency = (frequency) => {
+    if (pensionUnit === 'amount') changePension('amount', PAY_FREQUENCIES[frequency].perYear)
+    state.payFrequency.set(frequency)
   }
 
   const { before, after, goesTo } = result
@@ -326,6 +352,13 @@ export default function PayRiseCalculator() {
     !isRise &&
     'Enter a new salary that is higher than your current one to see how much of the rise you keep.'
   const shows = !problem && !noRise
+
+  const optionsSummary = [
+    `Paid ${payFrequency}`,
+    asksHoursInOptions && `${formatNumber(hoursPerWeek)} hours a week`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   const goesRow = (label, amount) => (
     <tr>
@@ -493,7 +526,7 @@ export default function PayRiseCalculator() {
                   onChange={changePensionUnit}
                 >
                   <option value="percent">A percentage of pay</option>
-                  <option value="amount">Pounds a month</option>
+                  <option value="amount">Pounds a {period}</option>
                 </SelectField>
                 <SelectField
                   id="pension-type"
@@ -520,28 +553,37 @@ export default function PayRiseCalculator() {
               />
             </InputSection>
 
-            {asksHoursInOptions && (
-              <MoreOptions summary={`${formatNumber(hoursPerWeek)} hours a week`}>
-                <FieldRow>
+            <MoreOptions summary={optionsSummary}>
+              <FieldRow>
+                <SelectField
+                  id="pay-frequency"
+                  label="How often you are paid"
+                  hint="National Insurance and student loan are worked out on each pay day."
+                  value={payFrequency}
+                  onChange={changePayFrequency}
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="weekly">Weekly</option>
+                </SelectField>
+                {asksHoursInOptions && (
                   <NumberField
                     id="hours-options"
                     decimal
                     hint="A salary sacrifice cannot take your pay below the minimum wage for these hours."
                     field={hours}
                   />
-                </FieldRow>
-              </MoreOptions>
-            )}
+                )}
+              </FieldRow>
+            </MoreOptions>
           </InputCard>
 
           <Notice>
             {scottish
               ? 'This uses Scottish income tax rates. National Insurance and student loans are the same across the UK.'
               : REST_OF_UK_NOTE}{' '}
-            Your pension is a percentage of your full pay or an amount each month, and money your
-            employer pays in is left out because it does not change your take-home pay. National
-            Insurance is worked out on the year's pay, so it can differ by a few pounds from a
-            payslip, which works it out on each pay day.
+            It works out each salary the way the take-home pay calculator does, and assumes you are
+            paid the same on every pay day for the whole tax year. Money your employer pays into
+            your pension is left out because it does not change your take-home pay.
           </Notice>
         </>
       }

@@ -35,10 +35,41 @@ function perYear(per, { hoursPerWeek = 0, daysPerWeek = 0 } = {}) {
 export const yearlyPayFrom = (amount, per, settings) => finite(amount) * perYear(per, settings)
 
 /**
- * Yearly pay written as pay for each `per`, to the penny, for when someone
- * switches how they enter it. 0 when there are no hours or days to share it over.
+ * Yearly pay written as pay for each `per`, unrounded. A field shows it to
+ * the penny. 0 when there are no hours or days to share it over.
  */
 export function payFor(per, yearly, settings) {
   const count = perYear(per, settings)
-  return count > 0 ? Math.round((finite(yearly) / count) * 100) / 100 : 0
+  return count > 0 ? finite(yearly) / count : 0
+}
+
+// Whether the hours or days a week that turn each of `pers` into a year are
+// the same in both settings.
+function sameShare(a, b, pers) {
+  const hours = !pers.includes('hour') || a.hoursPerWeek === b.hoursPerWeek
+  const days = !pers.includes('day') || a.daysPerWeek === b.daysPerWeek
+  return hours && days
+}
+
+/**
+ * Pay written for another period, for when someone switches what pay is
+ * entered for. The new amount is worked out from the pay as the person typed
+ * it (typed: { amount, per, settings }), and switching back to that period
+ * gives the typed amount itself, so switching away and back never changes the
+ * figure: £45,000 a year is £865.3846... a week, shown as £865.38, and back to
+ * a year is £45,000 again.
+ *
+ * amount and from are the pay entered now and what it is for, which become
+ * the typed pay when there is none, or when the hours or days a week that
+ * matter have changed since it was typed (the pay on screen then stands for
+ * a different year). Returns { amount, typed }, for the field's setExact.
+ */
+export function switchPayPer({ amount, from, to, settings, typed }) {
+  const stands = typed && sameShare(typed.settings, settings, [typed.per, from, to])
+  const source = stands ? typed : { amount, per: from, settings }
+  const next =
+    to === source.per
+      ? source.amount
+      : payFor(to, yearlyPayFrom(source.amount, source.per, source.settings), settings)
+  return { amount: next, typed: source }
 }

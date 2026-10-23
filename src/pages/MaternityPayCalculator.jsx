@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
-import CalculatorPage from '../components/CalculatorPage'
-import { CheckboxField, DateField, NumberField, SelectField, Steps } from '../components/Fields'
+import CalculatorLayout from '../components/CalculatorLayout'
+import { CheckboxField, DateField, NumberField, SelectField } from '../components/Fields'
+import { FieldRow, InputCard, InputSection } from '../components/InputCard'
 import Notice from '../components/Notice'
-import ResultPanel from '../components/ResultPanel'
+import ResultCard from '../components/ResultCard'
 import {
   checkboxInput,
   choiceInput,
@@ -19,13 +20,20 @@ import {
   calculateMaternityPay,
   calculatePaternityPay,
 } from '../lib/parentalPay'
+import { switchPayPer } from '../lib/payPeriods'
 import { MONEY } from '../lib/validation'
+
+// Change this by hand whenever the calculator's figures or rules change.
+const LAST_UPDATED = '2026-10-23'
 
 const payLabels = {
   weekly: 'Your average weekly pay',
   monthly: 'Your monthly pay',
   annual: 'Your yearly salary',
 }
+
+// The pay periods in payPeriods.js, for switching how pay is entered.
+const PERIOD_PER = { annual: 'year', monthly: 'month', weekly: 'week' }
 
 function WhyNot({ result }) {
   const { lowerEarningsLimit, continuousWeeks } = PARENTAL_PAY
@@ -53,7 +61,7 @@ function WhyNot({ result }) {
 
 function KeyDates({ result, children }) {
   return (
-    <table className="result-table">
+    <table className="result-table result-table--wrap">
       <caption>Key dates</caption>
       <tbody>
         <tr>
@@ -73,16 +81,23 @@ function KeyDates({ result, children }) {
 }
 
 export default function MaternityPayCalculator() {
-  const state = useCalculatorState({
-    payType: choiceInput('maternity', ['maternity', 'paternity']),
-    // A fixed date, so the page is the same wherever and whenever it is built.
-    dueDate: dateInput('2027-03-01', { label: 'The date the baby is due' }),
-    leaveStart: dateInput('', { label: 'The date maternity pay starts', optional: true }),
-    payPeriod: choiceInput('annual', Object.keys(payLabels)),
-    workedContinuously: checkboxInput(true),
-    // The label says how the pay is entered.
-    pay: numberInput('30000', (fields) => ({ label: payLabels[fields.payPeriod.value], ...MONEY })),
-  })
+  const state = useCalculatorState(
+    {
+      payType: choiceInput('maternity', ['maternity', 'paternity']),
+      // A fixed date, so the page is the same wherever and whenever it is built.
+      dueDate: dateInput('2027-03-01', { label: 'The date the baby is due' }),
+      leaveStart: dateInput('', { label: 'The date maternity pay starts', optional: true }),
+      payPeriod: choiceInput('annual', Object.keys(payLabels)),
+      workedContinuously: checkboxInput(true),
+      // The label says how the pay is entered.
+      pay: numberInput('30,000', (fields) => ({
+        label: payLabels[fields.payPeriod.value],
+        ...MONEY,
+        grouped: true,
+      })),
+    },
+    { sharedLinks: true },
+  )
   const { pay } = state
   const due = state.dueDate
   const payType = state.payType.value
@@ -101,6 +116,23 @@ export default function MaternityPayCalculator() {
       : calculatePaternityPay(inputs)
   }, [isMaternity, dueDate, leaveStart, earnings, workedContinuously])
 
+  // Keep the same pay when switching how it is entered, so £30,000 a year
+  // becomes £2,500 a month and not £30,000 a month. The exact amount is kept,
+  // so switching back gives £30,000 again.
+  const changePayPeriod = (next) => {
+    if (pay.valid && pay.value > 0) {
+      const switched = switchPayPer({
+        amount: pay.value,
+        from: PERIOD_PER[payPeriod],
+        to: PERIOD_PER[next],
+        settings: {},
+        typed: pay.typed,
+      })
+      pay.setExact(switched.amount, switched.typed)
+    }
+    state.payPeriod.set(next)
+  }
+
   // The calculation returns nothing when the due date is missing or not a
   // real date, and the due date field then says so.
   const problem = problemWith(due, pay)
@@ -110,67 +142,172 @@ export default function MaternityPayCalculator() {
   const qualifies = !problem && result.qualifies
   const doesNotQualify = !problem && !result.qualifies
 
+  const figures = !qualifies
+    ? []
+    : isMaternity
+      ? [
+          {
+            value: formatGBPPence(result.total),
+            per: `over ${maternity.payWeeks} weeks, before tax`,
+          },
+          {
+            value: formatGBPPence(result.higherWeekly),
+            per: `a week for the first ${maternity.higherRateWeeks} weeks`,
+          },
+        ]
+      : [
+          {
+            value: formatGBPPence(result.total),
+            per: `for ${paternity.payWeeks} weeks, before tax`,
+          },
+          { value: formatGBPPence(result.weekly), per: 'a week' },
+        ]
+
+  // Maternity Allowance, shown under "you do not qualify" when it may apply.
+  const allowance = doesNotQualify && isMaternity && result.allowanceMayApply && (
+    <>
+      <table className="result-table result-table--total">
+        <caption>Maternity Allowance you might get instead</caption>
+        <tbody>
+          <tr>
+            <th scope="row">Each week</th>
+            <td>{formatGBPPence(result.allowanceWeekly)}</td>
+          </tr>
+          <tr>
+            <th scope="row">Total over {maternityAllowance.payWeeks} weeks</th>
+            <td>{formatGBPPence(result.allowanceTotal)}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="result-card__line">
+        Maternity Allowance is paid by the government, not your employer. You could get it if you
+        were employed or self-employed for at least {maternityAllowance.weeksWorked} of the{' '}
+        {maternityAllowance.testPeriodWeeks} weeks before the baby is due, and earned{' '}
+        {formatGBPPence(maternityAllowance.weeklyEarnings)} a week or more in at least{' '}
+        {maternityAllowance.weeksEarning} of them. You claim it yourself on{' '}
+        <a href="https://www.gov.uk/maternity-allowance" target="_blank" rel="noreferrer">
+          gov.uk
+        </a>
+        .
+      </p>
+    </>
+  )
+
+  // Why there is no figure, notes on the result, and warnings.
+  const notices = []
+  if (doesNotQualify) notices.push(<WhyNot key="why-not" result={result} />)
+  if (doesNotQualify && isMaternity && !result.allowanceMayApply) {
+    notices.push(
+      <Notice key="no-allowance">
+        Maternity Allowance needs earnings of at least{' '}
+        {formatGBPPence(maternityAllowance.weeklyEarnings)} a week in{' '}
+        {maternityAllowance.weeksEarning} of the {maternityAllowance.testPeriodWeeks} weeks before
+        the baby is due, so it may not apply either. Check on{' '}
+        <a href="https://www.gov.uk/maternity-allowance" target="_blank" rel="noreferrer">
+          gov.uk
+        </a>
+        , because the test looks at your best weeks, not your average.
+      </Notice>,
+    )
+  }
+  if (doesNotQualify && !isMaternity) {
+    notices.push(
+      <Notice key="unpaid-leave">
+        You can still take paternity leave, which you are entitled to from your first day in a job,
+        but it would be unpaid unless your employer has its own scheme. Maternity Allowance is only
+        for the person having the baby.
+      </Notice>,
+    )
+  }
+  if (qualifies && isMaternity && result.leaveStartTooEarly) {
+    notices.push(
+      <Notice key="too-early" warning>
+        Maternity leave usually cannot start before {formatDate(result.earliestLeaveStart)}, which
+        is {PARENTAL_PAY.earliestLeaveWeeksBeforeDue} weeks before the week the baby is due.
+      </Notice>,
+    )
+  }
+  if (!problem && result.limitMayDiffer) {
+    notices.push(
+      <Notice key="limit">
+        The {formatGBPPence(PARENTAL_PAY.lowerEarningsLimit)} earnings limit used here is for
+        qualifying weeks in the 2026/27 tax year. Your qualifying week falls outside it, so the
+        limit that applies to you may be different.
+      </Notice>,
+    )
+  }
+
   return (
-    <CalculatorPage
+    <CalculatorLayout
       title="Maternity and paternity pay calculator"
-      rates={`Rates from ${ratesFrom}`}
+      lede={`Statutory Maternity Pay or Paternity Pay, how much and when, at the rates from ${ratesFrom}.`}
+      updated={LAST_UPDATED}
       inputs={
         <>
-          <Steps>
-            <SelectField
-              id="pay-type"
-              label="The pay you want to work out"
-              value={payType}
-              onChange={state.payType.set}
-            >
-              <option value="maternity">Statutory Maternity Pay</option>
-              <option value="paternity">Statutory Paternity Pay</option>
-            </SelectField>
-            <DateField
-              id="due-date"
-              label="The date the baby is due"
-              value={dueDate}
-              onChange={due.setText}
-              error={due.error}
-            />
-            {isMaternity && (
-              <DateField
-                id="leave-start"
-                label="The date maternity pay starts"
-                hint="Leave it blank to use the due date."
-                optional
-                value={leaveStart}
-                onChange={state.leaveStart.setText}
-              />
-            )}
-            <SelectField
-              id="pay-period"
-              label="How to enter your pay"
-              value={payPeriod}
-              onChange={state.payPeriod.set}
-            >
-              <option value="annual">Yearly salary</option>
-              <option value="monthly">Monthly pay</option>
-              <option value="weekly">Average weekly pay</option>
-            </SelectField>
-            <NumberField
-              id="pay-amount"
-              hint="Before tax."
-              before="£"
-              decimal={payPeriod !== 'annual'}
-              field={pay}
-            />
-            <CheckboxField
-              id="worked-continuously"
-              label="Your time with your employer"
-              checked={workedContinuously}
-              onChange={state.workedContinuously.set}
-            >
-              {result
-                ? `I have worked for my employer continuously since ${formatDate(result.employedSince)} or earlier (at least ${PARENTAL_PAY.continuousWeeks} weeks by the qualifying week)`
-                : `I will have worked for my employer continuously for at least ${PARENTAL_PAY.continuousWeeks} weeks by the qualifying week`}
-            </CheckboxField>
-          </Steps>
+          <InputCard>
+            <InputSection title="What to work out">
+              <FieldRow>
+                <SelectField
+                  id="pay-type"
+                  label="The pay you want to work out"
+                  size="full"
+                  value={payType}
+                  onChange={state.payType.set}
+                >
+                  <option value="maternity">Statutory Maternity Pay</option>
+                  <option value="paternity">Statutory Paternity Pay</option>
+                </SelectField>
+              </FieldRow>
+            </InputSection>
+
+            <InputSection title="Dates">
+              <FieldRow>
+                <DateField
+                  id="due-date"
+                  label="The date the baby is due"
+                  value={dueDate}
+                  onChange={due.setText}
+                  error={due.error}
+                />
+                {isMaternity && (
+                  <DateField
+                    id="leave-start"
+                    label="The date maternity pay starts"
+                    hint="Leave it blank to use the due date."
+                    optional
+                    value={leaveStart}
+                    onChange={state.leaveStart.setText}
+                  />
+                )}
+              </FieldRow>
+            </InputSection>
+
+            <InputSection title="Your pay and job">
+              <FieldRow>
+                <NumberField id="pay-amount" hint="Before tax." before="£" decimal field={pay} />
+                <SelectField
+                  id="pay-period"
+                  label="How to enter your pay"
+                  value={payPeriod}
+                  onChange={changePayPeriod}
+                >
+                  <option value="annual">Yearly salary</option>
+                  <option value="monthly">Monthly pay</option>
+                  <option value="weekly">Average weekly pay</option>
+                </SelectField>
+              </FieldRow>
+              <CheckboxField
+                id="worked-continuously"
+                label="Your time with your employer"
+                checked={workedContinuously}
+                onChange={state.workedContinuously.set}
+              >
+                {result
+                  ? `I have worked for my employer continuously since ${formatDate(result.employedSince)} or earlier (at least ${PARENTAL_PAY.continuousWeeks} weeks by the qualifying week)`
+                  : `I will have worked for my employer continuously for at least ${PARENTAL_PAY.continuousWeeks} weeks by the qualifying week`}
+              </CheckboxField>
+            </InputSection>
+          </InputCard>
 
           <Notice>
             These are the legal minimums. Your employer can pay more under its own scheme, so check
@@ -181,151 +318,52 @@ export default function MaternityPayCalculator() {
         </>
       }
       result={
-        <>
-          {problem && <ResultPanel label={payName} prompt={problem} />}
-
-          {qualifies && isMaternity && (
-            <ResultPanel
-              label={payName}
-              figure={formatGBPPence(result.total)}
-              detail={<>over {maternity.payWeeks} weeks, before tax</>}
-              link={{ to: '/salary-calculator', text: 'See your usual take-home pay' }}
-            >
-              <table className="result-table result-table--total">
-                <caption>What you get</caption>
-                <tbody>
-                  <tr>
-                    <th scope="row">Average weekly earnings</th>
-                    <td>{formatGBPPence(result.averageWeeklyEarnings)}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">First {maternity.higherRateWeeks} weeks, each week</th>
-                    <td>{formatGBPPence(result.higherWeekly)}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Next {result.standardWeeks} weeks, each week</th>
-                    <td>{formatGBPPence(result.standardWeekly)}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Total over {maternity.payWeeks} weeks</th>
-                    <td>{formatGBPPence(result.total)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </ResultPanel>
-          )}
-
-          {qualifies && !isMaternity && (
-            <ResultPanel
-              label={payName}
-              figure={formatGBPPence(result.total)}
-              detail={<>for {paternity.payWeeks} weeks, before tax</>}
-              link={{ to: '/salary-calculator', text: 'See your usual take-home pay' }}
-            >
-              <table className="result-table result-table--total">
-                <caption>What you get</caption>
-                <tbody>
-                  <tr>
-                    <th scope="row">Average weekly earnings</th>
-                    <td>{formatGBPPence(result.averageWeeklyEarnings)}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Each week</th>
-                    <td>{formatGBPPence(result.weekly)}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Total for {paternity.payWeeks} weeks</th>
-                    <td>{formatGBPPence(result.total)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </ResultPanel>
-          )}
-
-          {doesNotQualify && (
+        <ResultCard
+          label={payName}
+          figures={figures}
+          prompt={problem ?? (doesNotQualify && 'Based on what you entered, you do not qualify.')}
+          withPrompt={allowance}
+          shareLink={state.shareLink}
+        >
+          {qualifies && (
             <>
-              <ResultPanel
-                label={payName}
-                prompt="Based on what you entered, you do not qualify."
-              />
-              <WhyNot result={result} />
-            </>
-          )}
-
-          {doesNotQualify && isMaternity && result.allowanceMayApply && (
-            <ResultPanel
-              label="Maternity Allowance you might get instead"
-              figure={formatGBPPence(result.allowanceTotal)}
-              detail={<>over {maternityAllowance.payWeeks} weeks</>}
-            >
               <table className="result-table result-table--total">
+                <caption>What you get</caption>
                 <tbody>
                   <tr>
-                    <th scope="row">Each week</th>
-                    <td>{formatGBPPence(result.allowanceWeekly)}</td>
+                    <th scope="row">Average weekly earnings</th>
+                    <td>{formatGBPPence(result.averageWeeklyEarnings)}</td>
                   </tr>
-                  <tr>
-                    <th scope="row">Total over {maternityAllowance.payWeeks} weeks</th>
-                    <td>{formatGBPPence(result.allowanceTotal)}</td>
-                  </tr>
+                  {isMaternity ? (
+                    <>
+                      <tr>
+                        <th scope="row">First {maternity.higherRateWeeks} weeks, each week</th>
+                        <td>{formatGBPPence(result.higherWeekly)}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Next {result.standardWeeks} weeks, each week</th>
+                        <td>{formatGBPPence(result.standardWeekly)}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Total over {maternity.payWeeks} weeks</th>
+                        <td>{formatGBPPence(result.total)}</td>
+                      </tr>
+                    </>
+                  ) : (
+                    <>
+                      <tr>
+                        <th scope="row">Each week</th>
+                        <td>{formatGBPPence(result.weekly)}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Total for {paternity.payWeeks} weeks</th>
+                        <td>{formatGBPPence(result.total)}</td>
+                      </tr>
+                    </>
+                  )}
                 </tbody>
               </table>
-              <p className="result__note">
-                Maternity Allowance is paid by the government, not your employer. You could get it
-                if you were employed or self-employed for at least {maternityAllowance.weeksWorked}{' '}
-                of the {maternityAllowance.testPeriodWeeks} weeks before the baby is due, and earned{' '}
-                {formatGBPPence(maternityAllowance.weeklyEarnings)} a week or more in at least{' '}
-                {maternityAllowance.weeksEarning} of them. You claim it yourself on{' '}
-                <a href="https://www.gov.uk/maternity-allowance" target="_blank" rel="noreferrer">
-                  gov.uk
-                </a>
-                .
-              </p>
-            </ResultPanel>
-          )}
 
-          {doesNotQualify && isMaternity && !result.allowanceMayApply && (
-            <Notice>
-              Maternity Allowance needs earnings of at least{' '}
-              {formatGBPPence(maternityAllowance.weeklyEarnings)} a week in{' '}
-              {maternityAllowance.weeksEarning} of the {maternityAllowance.testPeriodWeeks} weeks
-              before the baby is due, so it may not apply either. Check on{' '}
-              <a href="https://www.gov.uk/maternity-allowance" target="_blank" rel="noreferrer">
-                gov.uk
-              </a>
-              , because the test looks at your best weeks, not your average.
-            </Notice>
-          )}
-
-          {doesNotQualify && !isMaternity && (
-            <Notice>
-              You can still take paternity leave, which you are entitled to from your first day in a
-              job, but it would be unpaid unless your employer has its own scheme. Maternity
-              Allowance is only for the person having the baby.
-            </Notice>
-          )}
-
-          {qualifies && isMaternity && result.leaveStartTooEarly && (
-            <Notice warning>
-              Maternity leave usually cannot start before {formatDate(result.earliestLeaveStart)},
-              which is {PARENTAL_PAY.earliestLeaveWeeksBeforeDue} weeks before the week the baby is
-              due.
-            </Notice>
-          )}
-
-          {!problem && result.limitMayDiffer && (
-            <Notice>
-              The {formatGBPPence(PARENTAL_PAY.lowerEarningsLimit)} earnings limit used here is for
-              qualifying weeks in the 2026/27 tax year. Your qualifying week falls outside it, so
-              the limit that applies to you may be different.
-            </Notice>
-          )}
-        </>
-      }
-      breakdown={
-        qualifies && (
-          <>
-            <div className="breakdown__tables">
               {isMaternity ? (
                 <KeyDates result={result}>
                   <tr>
@@ -351,36 +389,38 @@ export default function MaternityPayCalculator() {
                   </tr>
                 </KeyDates>
               )}
-            </div>
 
-            {isMaternity && (
-              <details>
-                <summary>Week-by-week dates and amounts ({maternity.payWeeks} weeks)</summary>
-                <table className="result-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Week</th>
-                      <th scope="col">Dates</th>
-                      <th scope="col">Pay</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.weeks.map((week) => (
-                      <tr key={week.number}>
-                        <th scope="row">{week.number}</th>
-                        <td>
-                          {formatDateShort(week.start)} to {formatDateShort(week.end)}
-                        </td>
-                        <td>{formatGBPPence(week.amount)}</td>
+              {isMaternity && (
+                <details className="result-card__more">
+                  <summary>Week-by-week dates and amounts ({maternity.payWeeks} weeks)</summary>
+                  <table className="result-table result-table--wrap">
+                    <thead>
+                      <tr>
+                        <th scope="col">Week</th>
+                        <th scope="col">Dates</th>
+                        <th scope="col">Pay</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </details>
-            )}
-          </>
-        )
+                    </thead>
+                    <tbody>
+                      {result.weeks.map((week) => (
+                        <tr key={week.number}>
+                          <th scope="row">{week.number}</th>
+                          <td>
+                            {formatDateShort(week.start)} to {formatDateShort(week.end)}
+                          </td>
+                          <td>{formatGBPPence(week.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              )}
+            </>
+          )}
+        </ResultCard>
       }
+      notices={notices.length > 0 ? notices : null}
+      working={problem ? null : result.working}
       guide={<MaternityPayGuide />}
       related={['/salary-calculator', '/redundancy-calculator', '/minimum-wage-calculator']}
     />

@@ -5,7 +5,10 @@
 //   [own working] worked out by hand from the published rates and rules
 //
 // The tax, National Insurance and student loan steps underneath are tested
-// against gov.uk in calculations.test.js.
+// against gov.uk in calculations.test.js. Each salary is worked out by the
+// take-home calculator, so National Insurance is worked out on each pay day
+// with the monthly thresholds, £1,048 and £4,189 (£12,576 and £50,268 over 12
+// months), not the yearly £12,570 and £50,270.
 //
 // https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief
 // https://www.gov.uk/guidance/adjusted-net-income
@@ -14,9 +17,10 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { calculateIncomeTax, calculateTakeHome } from './incomeTax.js'
+import { calculateIncomeTax } from './incomeTax.js'
 import { calculatePayPackage, calculatePayRise, newSalaryFrom, riseEnteredAs } from './payRise.js'
-import { readTaxCode } from './readTaxCode.js'
+import { readTaxCode, taxRatesFor } from './readTaxCode.js'
+import { calculateTakeHomePay } from './takeHome.js'
 
 const near = (actual, expected, message) =>
   assert.ok(
@@ -34,25 +38,48 @@ const rise = (currentSalary, newSalary, settings = {}) =>
 // With no pension and no student loan
 // ---------------------------------------------------------------------------
 
-test('pay rise [own working] no pension or loan matches the take-home calculator', () => {
-  for (const salary of [0, 12570, 30000, 50270, 60000, 100000, 110000, 125140, 200000]) {
-    const result = calculatePayPackage({ salary })
-    const takeHome = calculateTakeHome(salary)
-    near(result.takeHomeAnnual, takeHome.takeHomeAnnual, `take-home on ${salary}:`)
-    near(result.incomeTax, takeHome.incomeTax, `income tax on ${salary}:`)
-    near(result.nationalInsurance, takeHome.nationalInsurance, `NI on ${salary}:`)
+test('pay rise [own working] the same salary gives the same take-home as the take-home page', () => {
+  const salaries = [0, 12570, 30000, 45000, 50270, 60000, 100000, 110000, 125140, 200000]
+  const settings = [
+    {},
+    { plan: 'plan2', hasPostgraduateLoan: true },
+    { pensionPercent: 5, pensionType: 'salarySacrifice', plan: 'plan1' },
+    { pensionPercent: 8, pensionType: 'netPay', plan: 'plan5' },
+    { pensionPercent: 5, pensionType: 'reliefAtSource', plan: 'plan4' },
+    { pensionYearlyAmount: 2400, pensionType: 'salarySacrifice' },
+    { payFrequency: 'weekly', plan: 'plan2', pensionPercent: 3 },
+    { taxCode: '1257L' },
+    { taxCode: 'K475', payFrequency: 'weekly' },
+    { taxCode: 'BR' },
+    { taxCode: 'S1257L', region: 'scotland', plan: 'plan4' },
+    { taxCode: 'C1257L' },
+    { region: 'scotland', pensionPercent: 5, pensionType: 'netPay' },
+  ]
+  for (const { taxCode: text, region = 'restOfUk', ...setting } of settings) {
+    const taxCode = text ? readTaxCode(text).value : null
+    const where = taxRatesFor(taxCode, region)
+    for (const salary of salaries) {
+      const ours = calculatePayPackage({ salary, taxCode, ...where, ...setting })
+      const page = calculateTakeHomePay({ pay: salary, taxCode, ...where, ...setting })
+      const label = `${salary} ${text ?? ''} ${JSON.stringify(setting)}:`
+      assert.equal(ours.takeHomeAnnual, page.takeHomeAnnual, `take-home on ${label}`)
+      assert.equal(ours.incomeTax, page.incomeTax, `income tax on ${label}`)
+      assert.equal(ours.nationalInsurance, page.nationalInsurance, `NI on ${label}`)
+      assert.equal(ours.studentLoan, page.studentLoan, `student loan on ${label}`)
+    }
   }
 })
 
 test('pay rise [own working] £45,000 to £55,000 crosses the higher rate at £50,270', () => {
   const result = rise(45000, 55000)
-  // Before: tax £6,486, NI £2,594.40. After: tax £9,432, NI £3,110.60.
-  near(result.before.takeHomeAnnual, 35919.6)
-  near(result.after.takeHomeAnnual, 42457.4)
+  // Before: tax £6,486, NI (£45,000 - £12,576) at 8% is £2,593.92.
+  // After: tax £9,432, NI £37,692 at 8% + £4,732 at 2% is £3,110.
+  near(result.before.takeHomeAnnual, 35920.08)
+  near(result.after.takeHomeAnnual, 42458)
   near(result.goesTo.incomeTax, 2946) // £5,270 at 20% + £4,730 at 40%
-  near(result.goesTo.nationalInsurance, 516.2) // £5,270 at 8% + £4,730 at 2%
-  near(result.kept, 6537.8)
-  near(result.keptShare, 0.65378)
+  near(result.goesTo.nationalInsurance, 516.08) // £5,268 at 8% + £4,732 at 2%
+  near(result.kept, 6537.92)
+  near(result.keptShare, 0.653792)
   assert.deepEqual(result.warnings, ['higher-rate'])
 })
 
@@ -121,7 +148,7 @@ test('pay rise [own working] no rise, a pay cut and blank input', () => {
   assert.equal(none.keptShare, 0)
   assert.deepEqual(none.warnings, [])
   const cut = rise(55000, 45000)
-  near(cut.kept, -6537.8)
+  near(cut.kept, -6537.92)
   assert.equal(cut.keptShare, 0)
   assert.deepEqual(cut.warnings, [])
   const blank = rise(NaN, -5)
@@ -162,9 +189,9 @@ test('pay rise [own working] salary sacrifice lowers tax, NI and student loan', 
   assert.equal(result.niablePay, 57000)
   assert.equal(result.adjustedNetIncome, 57000)
   near(result.incomeTax, 10232) // £7,540 + £6,730 at 40%
-  near(result.nationalInsurance, 3150.6) // £3,016 + £6,730 at 2%
+  near(result.nationalInsurance, 3150) // £3,015.36 + £6,732 at 2%
   assert.equal(result.studentLoan, 2484) // £4,750 - £2,448 = £2,302 a month, 9% is £207.18
-  near(result.takeHomeAnnual, 57000 - 10232 - 3150.6 - 2484)
+  near(result.takeHomeAnnual, 57000 - 10232 - 3150 - 2484)
   assert.equal(result.extraReliefToClaim, 0)
 })
 
@@ -175,9 +202,9 @@ test('pay rise [own working] net pay lowers income tax only', () => {
   assert.equal(result.taxablePay, 57000)
   assert.equal(result.niablePay, 60000)
   near(result.incomeTax, 10232)
-  near(result.nationalInsurance, 3210.6) // £3,016 + £9,730 at 2%
+  near(result.nationalInsurance, 3210) // £3,015.36 + £9,732 at 2%
   assert.equal(result.studentLoan, 2748) // £5,000 - £2,448 = £2,552 a month, 9% is £229.68
-  near(result.takeHomeAnnual, 60000 - 3000 - 10232 - 3210.6 - 2748)
+  near(result.takeHomeAnnual, 60000 - 3000 - 10232 - 3210 - 2748)
   assert.equal(result.extraReliefToClaim, 0)
 })
 
@@ -188,8 +215,8 @@ test('pay rise [own working] relief at source leaves the payslip alone', () => {
   assert.equal(result.pensionFromPay, 2400)
   assert.equal(result.hmrcTopUp, 600)
   near(result.incomeTax, 11432) // the same as with no pension
-  near(result.nationalInsurance, 3210.6)
-  near(result.takeHomeAnnual, 60000 - 11432 - 3210.6 - 2400)
+  near(result.nationalInsurance, 3210)
+  near(result.takeHomeAnnual, 60000 - 11432 - 3210 - 2400)
   // A higher rate taxpayer can claim another 20% of the £3,000.
   near(result.extraReliefToClaim, 600)
   assert.equal(result.adjustedNetIncome, 57000)
@@ -331,13 +358,13 @@ test('pay rise [own working] the worked examples in the £100,000 tax trap guide
 
 const scot = { scottish: true }
 
-test('Scottish pay rise [own working] no pension or loan matches the take-home calculator', () => {
+test('Scottish pay rise [own working] no pension or loan matches the take-home page', () => {
   for (const salary of [0, 12570, 16537, 29526, 43662, 47000, 50270, 75000, 110000, 200000]) {
     const result = calculatePayPackage({ salary, ...scot })
-    const takeHome = calculateTakeHome(salary, scot)
-    near(result.takeHomeAnnual, takeHome.takeHomeAnnual, `take-home on ${salary}:`)
-    near(result.incomeTax, takeHome.incomeTax, `income tax on ${salary}:`)
-    near(result.nationalInsurance, takeHome.nationalInsurance, `NI on ${salary}:`)
+    const takeHome = calculateTakeHomePay({ pay: salary, ...scot })
+    assert.equal(result.takeHomeAnnual, takeHome.takeHomeAnnual, `take-home on ${salary}:`)
+    assert.equal(result.incomeTax, takeHome.incomeTax, `income tax on ${salary}:`)
+    assert.equal(result.nationalInsurance, takeHome.nationalInsurance, `NI on ${salary}:`)
   }
 })
 
@@ -367,11 +394,11 @@ test('Scottish pay rise [own working] rises across the higher and advanced rates
   near(acrossHigher.goesTo.nationalInsurance, 480)
   near(acrossHigher.kept, 3769.02)
   assert.deepEqual(acrossHigher.warnings, ['higher-rate'])
-  // £45,000 to £55,000: all at 42%. NI is 8% on £5,270 and 2% on £4,730.
+  // £45,000 to £55,000: all at 42%. NI is 8% on £5,268 and 2% on £4,732.
   const acrossNiLimit = rise(45000, 55000, scot)
   near(acrossNiLimit.goesTo.incomeTax, 4200)
-  near(acrossNiLimit.goesTo.nationalInsurance, 516.2)
-  near(acrossNiLimit.kept, 5283.8)
+  near(acrossNiLimit.goesTo.nationalInsurance, 516.08)
+  near(acrossNiLimit.kept, 5283.92)
   assert.deepEqual(acrossNiLimit.warnings, []) // £50,270 is not a tax threshold in Scotland
   // £70,000 to £80,000: £5,000 at 42% and £5,000 at 45%, with 2% NI.
   const acrossAdvanced = rise(70000, 80000, scot)
@@ -434,12 +461,12 @@ test('Scottish pay rise [own working] salary sacrifice and net pay give relief a
   // £60,000 with 5%: tax on £57,000 is £6,320.09 + £13,338 at 42%.
   const sacrifice = pack(60000, 'salarySacrifice', 5, scot)
   near(sacrifice.incomeTax, 11922.05)
-  near(sacrifice.nationalInsurance, 3150.6) // the same as outside Scotland
-  near(sacrifice.takeHomeAnnual, 57000 - 11922.05 - 3150.6)
+  near(sacrifice.nationalInsurance, 3150) // the same as outside Scotland
+  near(sacrifice.takeHomeAnnual, 57000 - 11922.05 - 3150)
   assert.equal(sacrifice.extraReliefToClaim, 0)
   const netPay = pack(60000, 'netPay', 5, scot)
   near(netPay.incomeTax, 11922.05)
-  near(netPay.nationalInsurance, 3210.6)
+  near(netPay.nationalInsurance, 3210)
   assert.equal(netPay.extraReliefToClaim, 0)
   // Either way the £3,000 saves 42% tax: £1,260.
   near(pack(60000, 'netPay', 0, scot).incomeTax - netPay.incomeTax, 1260)
@@ -588,8 +615,8 @@ test('pay rise [own working] 1257L uses payroll tax-free pay of £12,579.12', ()
   // The higher rate starts £9.12 later than with the Personal Allowance.
   near(result.thresholds.higherRate, 50279.12)
   assert.deepEqual(result.warnings, ['higher-rate'])
-  // NI does not depend on the code: £516.20 of the rise, as without one.
-  near(result.goesTo.nationalInsurance, 516.2)
+  // NI does not depend on the code: £516.08 of the rise, as without one.
+  near(result.goesTo.nationalInsurance, 516.08)
 })
 
 test('pay rise [own working] a BR code taxes all pay at 20%, with no thresholds', () => {
@@ -636,8 +663,9 @@ test('pay rise [own working] a C code names the Welsh rates', () => {
 test('pay rise [own working] a pension in pounds', () => {
   const result = pack(45000, 'salarySacrifice', 0, { pensionYearlyAmount: 2400 })
   near(result.pensionIntoPot, 2400)
-  // Tax on £42,600: (£42,600 − £12,570) at 20% is £6,006. NI is £2,402.40.
+  // Tax on £42,600: (£42,600 − £12,570) at 20% is £6,006. NI is
+  // (£42,600 − £12,576) at 8%, £2,401.92.
   near(result.incomeTax, 6006)
-  near(result.nationalInsurance, 2402.4)
-  near(result.takeHomeAnnual, 34191.6)
+  near(result.nationalInsurance, 2401.92)
+  near(result.takeHomeAnnual, 34192.08)
 })

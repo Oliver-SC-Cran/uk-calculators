@@ -4,7 +4,7 @@ import { CONTACT_EMAIL, OWNER_NAME, routes } from '../routes'
 import LastUpdated from '../components/LastUpdated'
 
 // Change this by hand whenever the policy changes.
-const LAST_UPDATED = '2026-10-22'
+const LAST_UPDATED = '2026-10-23'
 
 export default function Privacy() {
   return (

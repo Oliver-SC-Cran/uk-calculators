@@ -90,3 +90,14 @@ test('share link [own working] values the inputs could not hold are ignored', ()
     postgrad: false,
   })
 })
+
+test('share link [own working] an exact amount goes into the link in full', () => {
+  // Pay for a week worked out from £45,000 a year is written in full, so the
+  // link gives the same pay. Up to 17 decimal places are read back.
+  assert.equal(linkHash(inputs, { ...starting, salary: '865.384615385' }), '#salary=865.384615385')
+  assert.deepEqual(readLinkHash('#salary=865.384615385', inputs), { salary: '865.384615385' })
+  assert.deepEqual(readLinkHash('#salary=865.3846153846154', inputs), {
+    salary: '865.3846153846154',
+  })
+  assert.equal(readLinkHash('#salary=1.123456789012345678', inputs), null)
+})

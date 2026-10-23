@@ -74,6 +74,29 @@ export function pensionContributions({
 }
 
 /**
+ * A pension contribution written another way, for when someone switches
+ * between a percentage of pay ('percent') and pounds each pay day ('amount'),
+ * or changes how often they are paid. It is worked out from the contribution
+ * as the person typed it (typed: { amount, unit, payDays, pay }, where pay is
+ * the year's pay), and switching back gives the typed amount itself: 7% of
+ * £45,123 is £263.2175 a month, shown as £263.22, and back to a percentage is
+ * 7% again.
+ *
+ * amount, unit, payDays and pay are the contribution entered now, which
+ * becomes the typed one when there is none, or when the pay has changed since
+ * it was typed. Returns { amount, typed }, for the field's setExact.
+ */
+export function switchPension({ amount, unit, payDays, pay, toUnit, toPayDays, typed }) {
+  const source = typed && typed.pay === pay ? typed : { amount, unit, payDays, pay }
+  const same = toUnit === source.unit && (toUnit === 'percent' || toPayDays === source.payDays)
+  if (same) return { amount: source.amount, typed: source }
+  const yearly =
+    source.unit === 'percent' ? (source.pay * source.amount) / 100 : source.amount * source.payDays
+  const next = toUnit === 'percent' ? (pay > 0 ? (yearly / pay) * 100 : 0) : yearly / toPayDays
+  return { amount: next, typed: source }
+}
+
+/**
  * Relief at source only: the extra relief a higher rate taxpayer can claim
  * from HMRC, which is not on the payslip. It is the tax on income worked out
  * the payslip's way, less the tax once the wider bands and the allowance

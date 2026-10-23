@@ -52,7 +52,7 @@ export default function ResultCard({ label, figures, prompt, children, withPromp
         {body && <div className="result-card__body">{body}</div>}
       </div>
       <div className="result-card__foot">
-        <ResultDisclaimer className="result-card__disclaimer" />
+        <ResultDisclaimer />
         <div className="result-card__actions">
           {!prompt && <WorkingLink />}
           {shareLink && <CopyLinkButton getLink={shareLink} />}

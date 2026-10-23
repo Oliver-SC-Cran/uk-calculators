@@ -12,7 +12,7 @@ import { calculatePayRise } from '../lib/payRise'
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-11'
+const LAST_UPDATED = '2026-10-23'
 
 // 0.72 becomes 72p, and 0.305 becomes 30.5p
 const pence = (share) => `${Number((share * 100).toFixed(1))}p`
@@ -21,6 +21,7 @@ export default function PayRiseGuide() {
   const { personalAllowance, basicRateLimit, taperStart, taperFullyGoneAt } = INCOME_TAX
   const { basicRate, higherRate, additionalRate } = INCOME_TAX
   const { mainRate, upperRate, upperEarningsLimit } = NATIONAL_INSURANCE
+  const monthlyNi = NATIONAL_INSURANCE.byPayPeriod.monthly
   const { plan2, postgraduate } = STUDENT_LOAN
   const scotland = SCOTTISH_INCOME_TAX
 
@@ -189,10 +190,12 @@ export default function PayRiseGuide() {
         {gbp(45000)} to {gbp(55000)}, across {gbp(basicRateLimit)}
       </h3>
       <p>
-        The first {gbp(ex1BelowLimit)} of the rise is taxed at {percent(basicRate)} with{' '}
-        {percent(mainRate)} NI. The other {gbp(ex1AboveLimit)} is over the limit, so it is taxed at{' '}
-        {percent(higherRate)} with {percent(upperRate)} NI. Tax takes {gbp(ex1.goesTo.incomeTax)}{' '}
-        and NI {gbp(ex1.goesTo.nationalInsurance)}. You keep {gbp(ex1.kept)}, which is{' '}
+        The first {gbp(ex1BelowLimit)} of the rise is taxed at {percent(basicRate)}. The other{' '}
+        {gbp(ex1AboveLimit)} is over the limit, so it is taxed at {percent(higherRate)}. NI is
+        worked out on each monthly payslip: {percent(mainRate)} up to{' '}
+        {gbp(monthlyNi.upperEarningsLimit)} a month ({gbp(monthlyNi.upperEarningsLimit * 12)} a
+        year) and {percent(upperRate)} above it. Tax takes {gbp(ex1.goesTo.incomeTax)} and NI{' '}
+        {gbp(ex1.goesTo.nationalInsurance)}. You keep {gbp(ex1.kept)}, which is{' '}
         {percent(ex1.keptShare)} of the rise.
       </p>
 
@@ -220,9 +223,9 @@ export default function PayRiseGuide() {
       </h3>
       <p>
         The rise takes you over the Plan 2 threshold of {gbp(plan2.threshold)}, so repayments start
-        at {gbp(ex4.after.undergradLoanMonthly)} a month, or {gbp(ex4.goesTo.studentLoan)} a year.
-        Tax takes {gbp(ex4.goesTo.incomeTax)} and NI {gbp(ex4.goesTo.nationalInsurance)}. You keep{' '}
-        {gbp(ex4.kept)}, which is {percent(ex4.keptShare)} of the rise.
+        at {gbp(ex4.after.undergradLoanEachPayDay)} a month, or {gbp(ex4.goesTo.studentLoan)} a
+        year. Tax takes {gbp(ex4.goesTo.incomeTax)} and NI {gbp(ex4.goesTo.nationalInsurance)}. You
+        keep {gbp(ex4.kept)}, which is {percent(ex4.keptShare)} of the rise.
       </p>
 
       <h3>

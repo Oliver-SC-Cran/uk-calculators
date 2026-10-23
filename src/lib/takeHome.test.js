@@ -105,14 +105,15 @@ test('take-home pay [own working] pay entered for a month, week, day or hour', (
 })
 
 test('take-home pay [own working] switching how pay is entered keeps the same pay', () => {
-  near(payFor('month', 35000), 2916.67)
-  near(payFor('week', 35000), 673.08)
-  near(payFor('hour', 35000, { hoursPerWeek: 37.5 }), 17.95)
-  near(payFor('day', 39000, { daysPerWeek: 5 }), 150)
-  near(payFor('year', 35002.5), 35002.5)
-  // No hours or days to share it over.
-  near(payFor('hour', 35000, { hoursPerWeek: 0 }), 0)
-  near(payFor('day', 35000, { daysPerWeek: 0 }), 0)
+  // payPeriods.test.js checks every switch. Here the calculator gives the same
+  // take-home for £35,000 a year as for the same pay a month, week or hour.
+  const settings = { hoursPerWeek: 37.5, daysPerWeek: 5 }
+  const year = calculateTakeHomePay({ pay: 35000 })
+  for (const payPer of ['month', 'week', 'day', 'hour']) {
+    const pay = payFor(payPer, 35000, settings)
+    const other = calculateTakeHomePay({ pay, payPer, ...settings })
+    near(other.takeHomeAnnual, year.takeHomeAnnual, `${payPer}:`)
+  }
 })
 
 test('take-home pay [own working] zero, blank, negative and very high pay', () => {

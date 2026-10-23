@@ -189,6 +189,8 @@ export function calculateTakeHomePay({
     topTaxRate: regular.topRate,
     nationalInsurance,
     studentLoan,
+    // Each loan's repayment on a usual pay day.
+    studentLoanEachPayDay: { undergrad: loanUsual.undergrad, postgrad: loanUsual.postgrad },
     takeHomeAnnual,
     takeHomeMonthly: takeHomeAnnual / 12,
     takeHomeWeekly: takeHomeAnnual / 52,

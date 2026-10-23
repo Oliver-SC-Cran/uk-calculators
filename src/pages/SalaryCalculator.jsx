@@ -17,8 +17,8 @@ import {
 } from '../components/useCalculatorState'
 import TakeHomePayGuide from '../guides/TakeHomePayGuide'
 import { formatDeduction, formatGBP, formatGBPPence, percent } from '../lib/format'
-import { PAY_ENTERED_AS, PAY_FREQUENCIES, payFor, yearlyPayFrom } from '../lib/payPeriods'
-import { PENSION_TYPES } from '../lib/pensions'
+import { PAY_ENTERED_AS, PAY_FREQUENCIES, switchPayPer } from '../lib/payPeriods'
+import { PENSION_TYPES, switchPension } from '../lib/pensions'
 import { CHILD_BENEFIT_CHARGE, INCOME_TAX } from '../lib/rates/incomeTax'
 import { FULL_TIME_HOURS, MINIMUM_WAGE } from '../lib/rates/minimumWage'
 import { TAX_YEAR } from '../lib/rates/taxYear'
@@ -33,9 +33,6 @@ const PAY_PER_NAMES = { year: 'Year', month: 'Month', week: 'Week', day: 'Day', 
 
 // Quick picks for the pension step. They are common choices, not rates.
 const PENSION_PERCENTS = [3, 5, 8, 10].map((value) => [value, `${value}%`])
-
-// What is in a field as text, without the trailing zeros payFor can leave.
-const asText = (value) => String(Number(value.toFixed(2)))
 
 export default function SalaryCalculator() {
   const state = useCalculatorState(
@@ -120,31 +117,44 @@ export default function SalaryCalculator() {
   })
 
   // Keep the same pay when switching what it is entered for, so £35,000 a
-  // year becomes £2,916.67 a month and not £35,000 a month.
+  // year becomes £2,916.67 a month and not £35,000 a month. The exact amount
+  // is kept, so switching back gives £35,000 again.
   const changePayPer = (per) => {
     if (pay.valid && pay.value > 0) {
-      const yearly = yearlyPayFrom(pay.value, payPer, settings)
-      pay.setText(asText(payFor(per, yearly, settings)))
+      const next = switchPayPer({
+        amount: pay.value,
+        from: payPer,
+        to: per,
+        settings,
+        typed: pay.typed,
+      })
+      pay.setExact(next.amount, next.typed)
     }
     state.payPer.set(per)
   }
 
-  // The same for the pension, between a percentage and an amount each pay day.
-  const changePensionUnit = (unit) => {
+  // The same for the pension, between a percentage and an amount each pay
+  // day, and for an amount each pay day when pay days change.
+  const changePension = (toUnit, toPayDays) => {
     if (hasPension && result.pay > 0) {
-      const yearly =
-        pensionUnit === 'percent' ? (result.pay * pension.value) / 100 : pension.value * payDays
-      pension.setText(asText(unit === 'percent' ? (yearly / result.pay) * 100 : yearly / payDays))
+      const next = switchPension({
+        amount: pension.value,
+        unit: pensionUnit,
+        payDays,
+        pay: result.pay,
+        toUnit,
+        toPayDays,
+        typed: pension.typed,
+      })
+      pension.setExact(next.amount, next.typed)
     }
+  }
+  const changePensionUnit = (unit) => {
+    changePension(unit, payDays)
     state.pensionUnit.set(unit)
   }
-
-  // An amount each pay day stays the same over the year when pay days change.
   const changePayFrequency = (frequency) => {
-    if (hasPension && pensionUnit === 'amount') {
-      const yearly = pension.value * payDays
-      pension.setText(asText(yearly / PAY_FREQUENCIES[frequency].perYear))
-    }
+    if (pensionUnit === 'amount') changePension('amount', PAY_FREQUENCIES[frequency].perYear)
     state.payFrequency.set(frequency)
   }
 

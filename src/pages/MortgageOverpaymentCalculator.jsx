@@ -361,7 +361,7 @@ export default function MortgageOverpaymentCalculator() {
                 </p>
               )}
               <div className="table-scroll">
-                <table className="result-table result-table--columns result-table--compare">
+                <table className="result-table result-table--columns result-table--wrap">
                   <thead>
                     <tr>
                       <td></td>

@@ -19,7 +19,7 @@ import { STUDENT_LOAN } from '../lib/rates/studentLoans'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { calculateStudentLoanRepayment } from '../lib/studentLoans'
 import { formatGBP } from '../lib/format'
-import { PAY_ENTERED_AS, payFor, yearlyPayFrom } from '../lib/payPeriods'
+import { PAY_ENTERED_AS, switchPayPer, yearlyPayFrom } from '../lib/payPeriods'
 import { MONEY } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
@@ -33,9 +33,6 @@ const PER_WORDS = {
   day: 'a day',
   hour: 'an hour',
 }
-
-// What is in a field as text, without the trailing zeros payFor can leave.
-const asText = (value) => String(Number(value.toFixed(2)))
 
 export default function StudentLoanCalculator() {
   const state = useCalculatorState(
@@ -76,7 +73,16 @@ export default function StudentLoanCalculator() {
   // Keep the same pay when switching what it is entered for, so £30,000 a
   // year becomes £2,500 a month and not £30,000 a month.
   const changePayPer = (per) => {
-    if (salary.valid && yearly > 0) salary.setText(asText(payFor(per, yearly, settings)))
+    if (salary.valid && yearly > 0) {
+      const next = switchPayPer({
+        amount: salary.value,
+        from: payPer,
+        to: per,
+        settings,
+        typed: salary.typed,
+      })
+      salary.setExact(next.amount, next.typed)
+    }
     state.payPer.set(per)
   }
 

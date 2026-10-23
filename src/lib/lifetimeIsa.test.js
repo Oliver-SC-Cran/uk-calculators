@@ -200,7 +200,9 @@ test('Lifetime ISA [own working] the worked examples in the guide', () => {
 test('Lifetime ISA [own working] switching between monthly and yearly keeps the same amount', () => {
   assert.equal(contributionAs('yearly', 200), 2400)
   assert.equal(contributionAs('monthly', 2400), 200)
-  // £4,000 a year is £333.33 a month, to the penny.
-  assert.equal(contributionAs('monthly', 4000), 333.33)
+  // £4,000 a year is £333.333... a month, shown as £333.33, and back to a
+  // year is £4,000 again. payPeriods.test.js checks more amounts.
+  assert.equal(contributionAs('monthly', 4000), 4000 / 12)
+  assert.equal(contributionAs('yearly', contributionAs('monthly', 4000)), 4000)
   assert.equal(contributionAs('yearly', 333.34), 4000.08)
 })

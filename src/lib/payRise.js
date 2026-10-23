@@ -1,26 +1,20 @@
-// The pay rise calculator. It adds pensions (pensions.js) on top of the tax,
-// National Insurance and student loan functions in incomeTax.js and
-// studentLoans.js, and contains no tax logic of its own.
+// The pay rise calculator. Each salary's take-home pay is worked out by the
+// take-home pay calculator (takeHome.js), so the same salary gives the same
+// take-home on both pages. This file compares two salaries and contains no
+// tax logic of its own.
 
-import {
-  calculateIncomeTax,
-  calculateNationalInsurance,
-  incomeTaxLabel,
-  incomeTaxOnCode,
-  payrollCodeAllowance,
-} from './incomeTax.js'
-import { atLeastZero } from './numbers.js'
-import { extraReliefToClaim as extraRelief, pensionContributions } from './pensions.js'
+import { incomeTaxLabel, payrollCodeAllowance } from './incomeTax.js'
 import { INCOME_TAX_RATES } from './rates/incomeTax.js'
 import { FULL_TIME_HOURS } from './rates/minimumWage.js'
 import { forTaxYear } from './rates/taxYear.js'
-import { calculateStudentLoanRepayment } from './studentLoans.js'
-import { add, info, part, subtract, total } from './working.js'
+import { calculateTakeHomePay } from './takeHome.js'
+import { add, part, subtract, total } from './working.js'
 
 /**
- * One salary with a student loan and a workplace pension. pensionContributions
- * in pensions.js says how each pension type changes the pay each deduction is
- * worked out on.
+ * One salary with a student loan and a workplace pension, worked out exactly
+ * as the take-home pay calculator does it (calculateTakeHomePay): income tax
+ * on the year's pay, and National Insurance and student loan on each pay day
+ * with gov.uk's weekly or monthly thresholds.
  *
  * pensionPercent is a percentage of full salary, and pensionYearlyAmount an
  * amount in pounds on top of it. For relief at source they are the total
@@ -30,9 +24,9 @@ import { add, info, part, subtract, total } from './working.js'
  * claimed by the provider at 20%, whatever rate of Scottish tax is paid.
  *
  * taxCode is what readTaxCode gives, or null. With a code, income tax is what
- * payroll takes on it over the year (incomeTaxOnCode), with the code used as
- * it is and no more than half the pay taken, as in the take-home calculator.
- * Without one, it uses the standard Personal Allowance with the taper.
+ * payroll takes on it over the year, with the code used as it is and no more
+ * than half the pay taken. Without one, it uses the standard Personal
+ * Allowance with the taper. payFrequency is 'monthly' or 'weekly'.
  */
 export function calculatePayPackage({
   salary,
@@ -45,102 +39,54 @@ export function calculatePayPackage({
   scottish = false,
   welsh = false,
   taxCode = null,
+  payFrequency = 'monthly',
   taxYear,
 }) {
-  const gross = atLeastZero(salary)
-  const isReliefAtSource = pensionType === 'reliefAtSource'
-  const {
-    pensionIntoPot,
-    pensionFromPay,
-    hmrcTopUp,
-    reliefAtSourceGross,
-    moreThanPay,
-    sacrificeCapped,
-    minimumCashPay,
-    taxablePay,
-    niablePay,
-    adjustedNetIncome,
-  } = pensionContributions({
-    gross,
+  const pay = calculateTakeHomePay({
+    pay: salary,
+    payPer: 'year',
+    payFrequency,
+    taxCode,
+    scottish,
+    welsh,
     pensionType,
     pensionPercent,
     pensionYearlyAmount,
     weeklyHours,
-    taxYear,
-  })
-
-  const where = { scottish, welsh, taxYear }
-  const {
-    tax: incomeTaxDue,
-    personalAllowanceUsed,
-    topRate: topTaxRate,
-  } = taxCode ? incomeTaxOnCode(taxablePay, taxCode, where) : calculateIncomeTax(taxablePay, where)
-  const { maxShareOfPayTaken } = forTaxYear(INCOME_TAX_RATES, taxYear).incomeTax
-  const incomeTax = taxCode ? Math.min(incomeTaxDue, maxShareOfPayTaken * taxablePay) : incomeTaxDue
-  const nationalInsurance = calculateNationalInsurance(niablePay, { taxYear })
-  const loan = calculateStudentLoanRepayment({
-    grossAnnual: niablePay,
     plan,
     hasPostgraduateLoan,
     taxYear,
   })
-
-  const extraReliefToClaim = extraRelief({
-    income: gross,
-    reliefAtSourceGross,
-    scottish,
-    welsh,
-    taxYear,
-  })
-
-  const takeHomeAnnual = gross - incomeTax - nationalInsurance - loan.totalAnnual - pensionFromPay
+  const { pension } = pay
 
   return {
-    salary: gross,
+    salary: pay.pay,
     pensionType,
-    pensionIntoPot,
-    pensionFromPay,
-    hmrcTopUp,
+    pensionIntoPot: pension.pensionIntoPot,
+    pensionFromPay: pension.pensionFromPay,
+    hmrcTopUp: pension.hmrcTopUp,
     // More was asked to go into the pension than the pay could cover.
-    moreThanPay,
-    sacrificeCapped,
-    minimumCashPay,
-    taxablePay,
-    niablePay,
-    adjustedNetIncome,
-    personalAllowanceUsed,
-    incomeTax,
+    moreThanPay: pension.moreThanPay,
+    sacrificeCapped: pension.sacrificeCapped,
+    minimumCashPay: pension.minimumCashPay,
+    taxablePay: pension.taxablePay,
+    niablePay: pension.niablePay,
+    adjustedNetIncome: pay.adjustedNetIncome,
+    personalAllowanceUsed: pay.personalAllowanceUsed,
+    incomeTax: pay.incomeTax,
     // Tax a K code asks for that payroll cannot take, because it would be
     // more than half the pay. HMRC collects it another way.
-    taxNotTaken: incomeTaxDue - incomeTax,
-    topTaxRate,
-    nationalInsurance,
-    studentLoan: loan.totalAnnual,
-    undergradLoanMonthly: loan.undergradMonthly,
-    postgradLoanMonthly: loan.postgradMonthly,
-    extraReliefToClaim,
-    takeHomeAnnual,
-    takeHomeMonthly: takeHomeAnnual / 12,
-    working: [
-      part(
-        'Take-home pay',
-        [
-          add('Salary', gross),
-          subtract(incomeTaxLabel(scottish, welsh), incomeTax),
-          subtract('National Insurance', nationalInsurance),
-          subtract('Student loan', loan.totalAnnual),
-          subtract('Pension paid from your pay', pensionFromPay),
-        ],
-        total('Take-home pay a year', takeHomeAnnual),
-      ),
-      part('Your pension', [
-        info('Paid into your pension', pensionIntoPot),
-        isReliefAtSource && info('Basic rate relief HMRC adds', hmrcTopUp),
-        info('Pay income tax is worked out on', taxablePay),
-        info('Pay National Insurance and student loan are worked out on', niablePay),
-        isReliefAtSource && info('Extra relief to claim from HMRC', extraReliefToClaim),
-      ]),
-    ],
+    taxNotTaken: pay.taxNotTaken,
+    topTaxRate: pay.topTaxRate,
+    nationalInsurance: pay.nationalInsurance,
+    studentLoan: pay.studentLoan,
+    // Each loan's repayment on one pay day, to see when a rise starts them.
+    undergradLoanEachPayDay: pay.studentLoanEachPayDay.undergrad,
+    postgradLoanEachPayDay: pay.studentLoanEachPayDay.postgrad,
+    extraReliefToClaim: pay.extraReliefToClaim,
+    takeHomeAnnual: pay.takeHomeAnnual,
+    takeHomeMonthly: pay.takeHomeMonthly,
+    working: pay.working,
   }
 }
 
@@ -174,9 +120,9 @@ export function riseEnteredAs(riseType, current, next, places = 0) {
  * place of the Personal Allowance (negative for a K code). null for a code
  * that taxes all pay at one rate, or none of it.
  */
-function codeAllowance(code) {
+function codeAllowance(code, payFrequency = 'monthly') {
   if (code.kind !== 'allowance' && code.kind !== 'k') return null
-  const { year } = payrollCodeAllowance(code.number)
+  const { year } = payrollCodeAllowance(code.number, payFrequency)
   return code.kind === 'k' ? -year : year
 }
 
@@ -203,7 +149,7 @@ export function calculatePayRise({ currentSalary, newSalary, ...settings }) {
   // tax-free pay and the Personal Allowance. A code that taxes everything at
   // one rate, or nothing, has no thresholds to cross.
   const code = settings.taxCode ?? null
-  const allowance = code ? codeAllowance(code) : personalAllowance
+  const allowance = code ? codeAllowance(code, settings.payFrequency) : personalAllowance
   const shift = allowance === null ? 0 : allowance - personalAllowance
 
   // The higher rate starts at a lower income in Scotland, which also has an
@@ -252,10 +198,10 @@ export function calculatePayRise({ currentSalary, newSalary, ...settings }) {
     warnings.push('child-benefit')
   }
 
-  if (before.undergradLoanMonthly === 0 && after.undergradLoanMonthly > 0) {
+  if (before.undergradLoanEachPayDay === 0 && after.undergradLoanEachPayDay > 0) {
     warnings.push('student-loan')
   }
-  if (before.postgradLoanMonthly === 0 && after.postgradLoanMonthly > 0) {
+  if (before.postgradLoanEachPayDay === 0 && after.postgradLoanEachPayDay > 0) {
     warnings.push('postgraduate-loan')
   }
   if (after.sacrificeCapped) warnings.push('minimum-wage')

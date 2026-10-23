@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { linkHash, readLinkHash } from '../lib/calculatorLink'
-import { groupDigits } from '../lib/format'
+import { amountText, groupDigits } from '../lib/format'
 import { parseDate, parseNumber } from '../lib/validation'
 
 // The inputs a calculator can have. Pass them to useCalculatorState by name:
@@ -44,7 +44,12 @@ const lowerFirst = (text) => text.charAt(0).toLowerCase() + text.slice(1)
  *   whether it can be used. error is the message to show under the field. A
  *   field that is still blank shows no message until the person has left it,
  *   so clearing a field to retype it does not flash red. problem is the same
- *   message without that wait, for the result panel.
+ *   message without that wait, for the result panel. setExact(amount, typed)
+ *   puts in an amount the page worked out, such as pay for a week from pay
+ *   for a year: the field shows it to the penny, but value stays exact until
+ *   the person types in the field. typed is what the person typed before the
+ *   switch, which the field gives back as typed, so switching back can use
+ *   it and the figure never changes (switchPayPer in payPeriods.js).
  * - a text field has the same, for <TextField />. value is what its read
  *   function gave.
  * - a date field has text and setText for <DateField />, value (the date, or
@@ -57,12 +62,19 @@ const lowerFirst = (text) => text.charAt(0).toLowerCase() + text.slice(1)
  *   scripts on the page have as little time as possible to see them.
  * - shareLink() gives the link to copy for what is entered now. Nothing is
  *   written to the address bar, so the figures are never there to be seen.
+ *   An exact amount goes into the link in full, and a link value with more
+ *   than four decimal places is read back as one, so the link gives the same
+ *   result.
  */
 export function useCalculatorState(inputs, { sharedLinks = false } = {}) {
   const [values, setValues] = useState(() =>
     Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.initial])),
   )
   const [left, setLeft] = useState({})
+  // Exact amounts the page worked out, as { text, value }: while a field still
+  // shows that text, its value is the exact amount behind it.
+  const [held, setHeld] = useState({})
+  const holds = (key) => held[key] !== undefined && held[key].text === values[key]
 
   // A shared link is read after the page has loaded, because the built HTML
   // must not depend on the address (see CLAUDE.md, "How pages are built").
@@ -74,7 +86,19 @@ export function useCalculatorState(inputs, { sharedLinks = false } = {}) {
     // #calculators, is left alone.
     if (!hash.includes('=')) return
     const found = readLinkHash(hash, inputsRef.current)
-    if (found) setValues((previous) => ({ ...previous, ...found }))
+    if (found) {
+      // An amount with more than four decimal places was an exact amount when
+      // the link was made: show it to the penny and keep it exact.
+      const exact = {}
+      for (const [key, text] of Object.entries(found)) {
+        if (inputsRef.current[key].kind === 'number' && /\.\d{5,}$/.test(text)) {
+          found[key] = amountText(Number(text))
+          exact[key] = { text: found[key], value: Number(text) }
+        }
+      }
+      setValues((previous) => ({ ...previous, ...found }))
+      setHeld(exact)
+    }
     // Take the figures out of the address bar, even if none could be used.
     // This keeps React Router's own state, so back and forward still work.
     window.history.replaceState(window.history.state, '', pathname + search)
@@ -101,9 +125,20 @@ export function useCalculatorState(inputs, { sharedLinks = false } = {}) {
         label,
         text,
         grouped,
-        setText: grouped ? (next) => set(groupDigits(next)) : set,
+        // Typing replaces any exact amount, even with the same figure.
+        setText: (next) => {
+          set(grouped ? groupDigits(next) : next)
+          if (held[key]) setHeld((previous) => ({ ...previous, [key]: undefined }))
+        },
+        setExact: (amount, typed) => {
+          const shown = amountText(amount)
+          set(shown)
+          setHeld((previous) => ({ ...previous, [key]: { text: shown, value: amount, typed } }))
+        },
+        typed: holds(key) ? held[key].typed : undefined,
         onBlur: () => setLeft((previous) => ({ ...previous, [key]: true })),
-        value: parsed.value,
+        value:
+          input.kind === 'number' && holds(key) && error === null ? held[key].value : parsed.value,
         valid: error === null,
         isBlank,
         problem: error,
@@ -117,7 +152,10 @@ export function useCalculatorState(inputs, { sharedLinks = false } = {}) {
   if ('shareLink' in fields) throw new Error('An input cannot be called shareLink')
   fields.shareLink = () => {
     const { origin, pathname } = window.location
-    return origin + pathname + linkHash(inputs, values)
+    // Exact amounts go in full, so the link gives the same result.
+    const inLink = { ...values }
+    for (const key of Object.keys(held)) if (holds(key)) inLink[key] = String(held[key].value)
+    return origin + pathname + linkHash(inputs, inLink)
   }
   return fields
 }
