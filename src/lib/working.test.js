@@ -11,7 +11,7 @@ import { calculateTakeHome } from './incomeTax.js'
 import { calculateISAAllowance } from './isa.js'
 import { projectLifetimeIsa } from './lifetimeIsa.js'
 import { checkMinimumWage } from './minimumWage.js'
-import { calculateMortgageOverpayment } from './mortgage.js'
+import { calculateMortgageOverpayment, overpaymentToBeMortgageFree } from './mortgage.js'
 import { calculateMaternityPay, calculatePaternityPay } from './parentalPay.js'
 import { calculatePayPackage, calculatePayRise } from './payRise.js'
 import { readTaxCode, taxRatesFor } from './readTaxCode.js'
@@ -261,6 +261,61 @@ test('working [own working] a mortgage overpayment adds up to the interest saved
       r.interestSaved,
       `mortgage ${balance} ${annualRatePercent} ${remainingYears}`,
     )
+  }
+})
+
+test('working [own working] a mortgage with offset savings adds up to the interest saved', () => {
+  for (const [
+    balance,
+    annualRatePercent,
+    remainingYears,
+    monthlyOverpayment,
+    offsetSavings,
+  ] of product([1, 200000, 1e6], [0, 4.5, 15], [1, 12.5, 25], [0, 200, 5000], [10000, 300000])) {
+    const r = calculateMortgageOverpayment({
+      balance,
+      annualRatePercent,
+      remainingYears,
+      monthlyOverpayment,
+      offsetSavings,
+    })
+    const where = `mortgage ${balance} ${annualRatePercent} ${remainingYears} offset ${offsetSavings}`
+    checkHeadline(r.working, r.interestSaved, where)
+    assert.ok(
+      r.working.some((each) => each.title === 'Your offset savings'),
+      where,
+    )
+  }
+})
+
+test('working [own working] mortgage-free by a target adds up to the monthly overpayment', () => {
+  for (const [
+    balance,
+    annualRatePercent,
+    remainingYears,
+    targetMonths,
+    offsetSavings,
+    lumpSum,
+  ] of product(
+    [1, 200000, 1e6],
+    [0, 4.5, 15],
+    [1, 12.5, 25],
+    [1, 60, 180, 400],
+    [0, 30000],
+    [0, 10000],
+  )) {
+    const r = overpaymentToBeMortgageFree({
+      balance,
+      annualRatePercent,
+      remainingYears,
+      targetMonths,
+      offsetSavings,
+      lumpSum,
+    })
+    const where = `mortgage-free ${balance} ${annualRatePercent} ${remainingYears} in ${targetMonths}`
+    checkHeadline(r.working, r.monthlyOverpayment, where)
+    // The second part is the interest saved with that amount.
+    assert.ok(Math.abs(r.working[1].total.value - r.result.interestSaved) < 0.005, where)
   }
 })
 

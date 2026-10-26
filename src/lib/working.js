@@ -16,8 +16,8 @@
 //   - rate and on, for "20% of £22,430": value is rate times on.
 //   - count and each, for "39 weeks at £194.32": value is count times each.
 //   - from and to, for a slice of an amount, such as part of a price.
-// - The total is { label, value, unit } and maybe rounding: 'down' when the
-//   sum is rounded down to the whole pound, or 'notBelowZero'.
+// - The total is { label, value, unit } and maybe rounding: 'down' or 'up'
+//   when the sum is rounded down or up to the whole pound, or 'notBelowZero'.
 // - A part can have a note: one sentence under it that explains a rule, such
 //   as how payroll turns a tax code into tax-free pay.
 //
@@ -65,6 +65,7 @@ export function sumOfLines({ lines, total: partTotal }) {
   let sum = 0
   for (const each of counted) sum += each.kind === 'add' ? each.value : -each.value
   if (partTotal.rounding === 'down') return Math.floor(sum + 1e-9)
+  if (partTotal.rounding === 'up') return Math.ceil(sum - 1e-9)
   if (partTotal.rounding === 'notBelowZero') return Math.max(0, sum)
   return sum
 }

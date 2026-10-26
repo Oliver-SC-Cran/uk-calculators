@@ -82,16 +82,16 @@ export const routes = [
     path: '/lifetime-isa-calculator',
     name: 'Lifetime ISA calculator',
     sharedLinks: true,
-    title: `Lifetime ISA calculator ${TAX_YEAR}: bonus, growth and charges`,
-    description: `Project your Lifetime ISA with the ${ISA.lisaBonusRate * 100}% government bonus, for a first home or for age ${ISA.lisaAccessAge}, and see what the ${ISA.lisaWithdrawalChargeRate * 100}% withdrawal charge would cost.`,
+    title: 'Lifetime ISA calculator: bonus, savings and withdrawal charge',
+    description: `Project your Lifetime ISA for ${TAX_YEAR} with the ${ISA.lisaBonusRate * 100}% government bonus, for a first home or age ${ISA.lisaAccessAge}, and see what you would get back after the ${ISA.lisaWithdrawalChargeRate * 100}% withdrawal charge.`,
   },
   {
     path: '/mortgage-overpayment-calculator',
     name: 'Mortgage overpayment calculator',
     sharedLinks: true,
-    title: 'Mortgage overpayment calculator: pay off your mortgage early',
+    title: 'Mortgage overpayment calculator: your mortgage-free date',
     description:
-      'See how soon you could pay off your mortgage early by overpaying each month or with a lump sum, the interest saved, and how much you can overpay each year.',
+      'Pay off your mortgage early: see your mortgage-free date and the interest saved by overpaying or offsetting savings, or what to overpay to clear it by a set year.',
   },
   {
     path: '/stamp-duty-calculator',

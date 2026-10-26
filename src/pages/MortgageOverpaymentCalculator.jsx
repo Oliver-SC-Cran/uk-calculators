@@ -1,25 +1,36 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import CalculatorLayout from '../components/CalculatorLayout'
-import { Chips, DateField, NumberField } from '../components/Fields'
+import { Chips, DateField, NumberField, RadioField, SelectField } from '../components/Fields'
 import { FieldRow, InputCard, InputSection, MoreOptions } from '../components/InputCard'
 import LineChart from '../components/LineChart'
 import Notice from '../components/Notice'
 import ResultCard from '../components/ResultCard'
 import {
+  choiceInput,
   dateInput,
   numberInput,
   problemWith,
   useCalculatorState,
 } from '../components/useCalculatorState'
 import MortgageOverpaymentGuide from '../guides/MortgageOverpaymentGuide'
-import { monthAfter } from '../lib/dates'
+import { monthAfter, paymentsByEndOf } from '../lib/dates'
 import { MORTGAGE } from '../lib/rates/mortgage'
 import { formatAmount, formatGBP, formatMonthYear, percent, yearsAndMonths } from '../lib/format'
-import { calculateMortgageOverpayment } from '../lib/mortgage'
+import {
+  calculateMortgageOverpayment,
+  compareOffsetAndOverpaying,
+  overpaymentToBeMortgageFree,
+} from '../lib/mortgage'
 import { MONEY, PERCENTAGE } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-22'
+const LAST_UPDATED = '2026-10-26'
+
+// What the calculator can work out, picked at the top of the inputs.
+const MODES = [
+  ['overpay', "I'll overpay a set amount", 'See what it saves'],
+  ['target', 'I want to be mortgage-free by a set date', 'See what to overpay each month'],
+]
 
 // Quick picks for the monthly overpayment. They are common amounts, not advice.
 const OVERPAYMENTS = [100, 200, 300, 500].map((value) => [value, formatGBP(value)])
@@ -43,7 +54,8 @@ function whichYears(list) {
 }
 
 // "4 years 2 months" for the result strip, where each number stays on the
-// same line as its unit, so a narrow strip breaks it into two lines at most.
+// same line as its unit (a non-breaking space), so a narrow strip breaks it
+// into two lines at most.
 const timeSaved = (months) =>
   yearsAndMonths(months)
     .replace(' and ', ' ')
@@ -74,8 +86,17 @@ function balanceLines(result, balance) {
 }
 
 export default function MortgageOverpaymentCalculator() {
+  // The date can only be read in the browser. The page is built with no date,
+  // and React fills in today once it has loaded. A date the visitor picks
+  // takes over from then on.
+  const todayInBrowser = useSyncExternalStore(neverChanges, today, () => '')
+
   const state = useCalculatorState(
     {
+      mode: choiceInput(
+        'overpay',
+        MODES.map(([value]) => value),
+      ),
       balance: numberInput('200,000', {
         label: 'What you still owe',
         ...MONEY,
@@ -117,40 +138,71 @@ export default function MortgageOverpaymentCalculator() {
         max: 50,
         optional: true,
       }),
+      offset: numberInput('', {
+        label: 'Savings in an offset account',
+        name: 'your offset savings',
+        ...MONEY,
+        optional: true,
+        grouped: true,
+      }),
+      targetType: choiceInput('years', ['years', 'year']),
+      targetYears: numberInput('15', {
+        label: 'Mortgage-free in',
+        name: 'how many years until you want to be mortgage-free',
+        min: 1,
+        max: 50,
+      }),
+      targetYear: numberInput('', {
+        label: 'Mortgage-free by the end of',
+        name: 'the year you want to be mortgage-free by',
+        min: 2000,
+        max: 2100,
+        whole: true,
+      }),
     },
     { sharedLinks: true },
   )
   const { balance, rate, years, overpayment, lumpSum, lumpSumYear, limit, dealYears } = state
-
-  // The date can only be read in the browser. The page is built with no date,
-  // and React fills in today once it has loaded. A date the visitor picks
-  // takes over from then on.
-  const todayInBrowser = useSyncExternalStore(neverChanges, today, () => '')
+  const { offset, targetYears, targetYear } = state
+  const isTarget = state.mode.value === 'target'
+  const targetType = state.targetType.value
   const startDate = state.startDate.text ?? todayInBrowser
 
   const hasLumpSum = lumpSum.valid && lumpSum.value > 0
   const hasLimit = limit.valid && !limit.isBlank
+  const hasOffset = offset.valid && offset.value > 0
 
-  const result = useMemo(
-    () =>
-      calculateMortgageOverpayment({
-        balance: balance.value,
-        annualRatePercent: rate.value,
-        remainingYears: years.value,
-        monthlyOverpayment: overpayment.value,
-        lumpSum: hasLumpSum ? lumpSum.value : 0,
-        lumpSumYear: lumpSumYear.value,
-        overpaymentLimit: hasLimit ? limit.value / 100 : null,
-        overpaymentLimitYears: dealYears.isBlank ? null : dealYears.value,
-      }),
+  // How many monthly payments there are until the target. A target year
+  // counts every payment up to the end of December that year.
+  let targetMonths = null
+  if (isTarget && targetType === 'years' && targetYears.valid) {
+    targetMonths = Math.round(targetYears.value * 12)
+  }
+  if (isTarget && targetType === 'year' && targetYear.valid && startDate) {
+    targetMonths = paymentsByEndOf(startDate, targetYear.value)
+  }
+
+  // Everything but the monthly overpayment, which the target mode works out.
+  const settings = useMemo(
+    () => ({
+      balance: balance.value,
+      annualRatePercent: rate.value,
+      remainingYears: years.value,
+      lumpSum: hasLumpSum ? lumpSum.value : 0,
+      lumpSumYear: lumpSumYear.value,
+      offsetSavings: hasOffset ? offset.value : 0,
+      overpaymentLimit: hasLimit ? limit.value / 100 : null,
+      overpaymentLimitYears: dealYears.isBlank ? null : dealYears.value,
+    }),
     [
       balance.value,
       rate.value,
       years.value,
-      overpayment.value,
       hasLumpSum,
       lumpSum.value,
       lumpSumYear.value,
+      hasOffset,
+      offset.value,
       hasLimit,
       limit.value,
       dealYears.isBlank,
@@ -158,25 +210,92 @@ export default function MortgageOverpaymentCalculator() {
     ],
   )
 
-  // The year of the lump sum only matters when there is one. The sums can
-  // still fail on figures that pass each check, such as a very high rate over
-  // a very long term.
+  const monthly = overpayment.value
+  const overpaid = useMemo(
+    () =>
+      isTarget ? null : calculateMortgageOverpayment({ ...settings, monthlyOverpayment: monthly }),
+    [isTarget, settings, monthly],
+  )
+  const target = useMemo(
+    () =>
+      isTarget && targetMonths >= 1
+        ? overpaymentToBeMortgageFree({ ...settings, targetMonths })
+        : null,
+    [isTarget, settings, targetMonths],
+  )
+  // With offset savings as well, what each saves on its own.
+  const compared = useMemo(
+    () =>
+      !isTarget && hasOffset && (monthly > 0 || hasLumpSum)
+        ? compareOffsetAndOverpaying({ ...settings, monthlyOverpayment: monthly })
+        : null,
+    [isTarget, hasOffset, monthly, hasLumpSum, settings],
+  )
+  // In the target mode, what would be needed without the offset savings.
+  const targetWithoutOffset = useMemo(
+    () =>
+      target && hasOffset
+        ? overpaymentToBeMortgageFree({ ...settings, offsetSavings: 0, targetMonths })
+        : null,
+    [target, hasOffset, settings, targetMonths],
+  )
+  const result = isTarget ? target?.result : overpaid
+
+  // Only the steps for the mode chosen are checked. The year of the lump sum
+  // only matters when there is one. A target year needs a start date, and
+  // must not be over before the first payment. The sums can still fail on
+  // figures that pass each check, such as a very high rate over a very long term.
+  const targetField = targetType === 'years' ? targetYears : targetYear
+  let targetProblem = null
+  if (isTarget && targetType === 'year' && targetYear.valid && !startDate) {
+    targetProblem = 'Enter a start date, or set your target as a number of years.'
+  } else if (isTarget && targetType === 'year' && targetMonths !== null && targetMonths < 1) {
+    const firstPayment = monthAfter(startDate, 1)
+    targetProblem = `Your first payment would be in ${formatMonthYear(firstPayment)}, so enter ${firstPayment.slice(0, 4)} or later.`
+  }
   const problem =
     problemWith(
       balance,
       rate,
       years,
-      overpayment,
+      ...(isTarget ? [targetField] : [overpayment]),
       lumpSum,
       ...(hasLumpSum ? [lumpSumYear] : []),
+      offset,
       limit,
       dealYears,
-    ) ?? (result ? null : 'These figures cannot be worked out. Check the rate and the years left.')
+    ) ??
+    targetProblem ??
+    (result ? null : 'These figures cannot be worked out. Check the rate and the years left.')
 
   const ends = (months) =>
     startDate ? formatMonthYear(monthAfter(startDate, months)) : `In ${yearsAndMonths(months)}`
-  const overpays = result && (result.monthsSaved > 0 || result.lumpSumPaid > 0)
+  // The same, in a sentence.
+  const endsIn = (months) =>
+    startDate
+      ? `in ${formatMonthYear(monthAfter(startDate, months))}`
+      : `in ${yearsAndMonths(months)}`
+  const changes = result && (result.monthsSaved > 0 || result.lumpSumPaid > 0 || hasOffset)
   const lines = result && balanceLines(result, balance.value)
+  // The tables of without and with. In the target mode there is nothing to
+  // compare when the mortgage meets the target with no changes at all.
+  const showColumns = !isTarget || changes
+
+  // What the schedule with the changes in it is called, in the table and the chart.
+  const overpaying = monthly > 0 || hasLumpSum
+  let withName = 'With your overpayments'
+  if (isTarget && target) {
+    if (target.monthlyOverpayment > 0) {
+      withName = `With ${formatGBP(target.monthlyOverpayment)} a month extra`
+    } else {
+      withName = hasOffset ? 'With your offset savings' : 'With your lump sum'
+    }
+  } else if (hasOffset) {
+    withName = overpaying ? 'With offset and overpayments' : 'With your offset savings'
+  }
+
+  // The chart's description, which has always said "With overpayments" on its own.
+  const chartName = withName === 'With your overpayments' ? 'With overpayments' : withName
 
   // For the chart summary: what is owed part way through, with and without.
   const checkYear = result && result.newTermMonths >= 60 ? 5 : 1
@@ -191,6 +310,13 @@ export default function MortgageOverpaymentCalculator() {
       : []
   const over = result ? result.yearsOverAllowance : []
   const firstOver = over.length > 0 && result.years[over[0] - 1]
+
+  // In the target mode, the figure and what it is for.
+  const targetLabel =
+    target &&
+    (startDate
+      ? `To be mortgage-free by ${formatMonthYear(monthAfter(startDate, target.targetMonths))}`
+      : `To be mortgage-free in ${yearsAndMonths(target.targetMonths)}`)
 
   // Warnings about what was entered, and notes on the result.
   const notices = []
@@ -222,15 +348,65 @@ export default function MortgageOverpaymentCalculator() {
     )
   }
 
+  // Switching to a target year fills it in from the number of years, if it is blank.
+  const changeTargetType = (next) => {
+    if (next === 'year' && targetYear.isBlank && targetYears.valid && startDate) {
+      targetYear.setText(monthAfter(startDate, Math.round(targetYears.value * 12)).slice(0, 4))
+    }
+    state.targetType.set(next)
+  }
+
+  const lumpSumFields = (hint) => (
+    <FieldRow>
+      <NumberField id="lump-sum" hint={hint} before="£" decimal optional field={lumpSum} />
+      <NumberField
+        id="lump-sum-year"
+        hint="Year 1 means straight away, year 2 a year after the start date."
+        field={lumpSumYear}
+      />
+    </FieldRow>
+  )
+
+  const figures = []
+  if (result && isTarget) {
+    figures.push({ value: formatGBP(target.monthlyOverpayment), per: 'extra each month' })
+    if (result.interestSaved >= 0.5) {
+      figures.push({ value: formatGBP(result.interestSaved), per: 'interest saved' })
+    }
+  } else if (result) {
+    figures.push({ value: formatGBP(result.interestSaved), per: 'interest saved' })
+    if (result.monthsSaved > 0) {
+      figures.push({
+        value: timeSaved(result.monthsSaved),
+        per: (
+          <>
+            sooner <span className="keep-together">mortgage-free</span>
+          </>
+        ),
+      })
+    }
+  }
+
   return (
     <CalculatorLayout
       title="Mortgage overpayment and early repayment calculator"
-      lede="See how much interest overpaying could save and how much sooner you could be mortgage-free. It works from the figures you enter."
+      lede="See how much interest overpaying or an offset account could save and when you could be mortgage-free, or what to overpay each month to be mortgage-free by a set date. It works from the figures you enter."
       updated={LAST_UPDATED}
       checked={false}
       inputs={
         <>
           <InputCard>
+            <InputSection title="What you want to work out">
+              <RadioField
+                id="mode"
+                label="What you want to work out"
+                hideLabel
+                value={state.mode.value}
+                onChange={state.mode.set}
+                options={MODES}
+              />
+            </InputSection>
+
             <InputSection title="Your mortgage">
               <FieldRow>
                 <NumberField
@@ -263,39 +439,71 @@ export default function MortgageOverpaymentCalculator() {
               </FieldRow>
             </InputSection>
 
-            <InputSection title="What you'll overpay">
+            {isTarget ? (
+              <InputSection title="Your target">
+                <FieldRow>
+                  <SelectField
+                    id="target-type"
+                    label="Set your target as"
+                    value={targetType}
+                    onChange={changeTargetType}
+                  >
+                    <option value="years">A number of years</option>
+                    <option value="year">A year</option>
+                  </SelectField>
+                  {targetType === 'years' ? (
+                    <NumberField
+                      id="target-years"
+                      hint="From the start date. Part years are fine."
+                      after="years"
+                      decimal
+                      field={targetYears}
+                    />
+                  ) : (
+                    <NumberField
+                      id="target-year"
+                      hint="Your last payment falls in this year or before."
+                      field={targetYear}
+                    />
+                  )}
+                </FieldRow>
+                {lumpSumFields('Paid once, as well as the monthly overpayment worked out here.')}
+              </InputSection>
+            ) : (
+              <InputSection title="What you'll overpay">
+                <FieldRow>
+                  <NumberField
+                    id="overpayment"
+                    hint="On top of your normal monthly payment."
+                    before="£"
+                    decimal
+                    optional
+                    size="full"
+                    field={overpayment}
+                    below={
+                      <Chips
+                        label="Common monthly amounts"
+                        options={OVERPAYMENTS}
+                        current={overpayment.text}
+                        onPick={overpayment.setText}
+                      />
+                    }
+                  />
+                </FieldRow>
+                {lumpSumFields('Paid once, as well as any monthly overpayment.')}
+              </InputSection>
+            )}
+
+            <InputSection title="Offset mortgage">
               <FieldRow>
                 <NumberField
-                  id="overpayment"
-                  hint="On top of your normal monthly payment."
+                  id="offset"
+                  hint="Savings linked to your mortgage, so you pay no interest on that much of what you owe. Leave it blank if you do not have an offset mortgage."
                   before="£"
                   decimal
                   optional
                   size="full"
-                  field={overpayment}
-                  below={
-                    <Chips
-                      label="Common monthly amounts"
-                      options={OVERPAYMENTS}
-                      current={overpayment.text}
-                      onPick={overpayment.setText}
-                    />
-                  }
-                />
-              </FieldRow>
-              <FieldRow>
-                <NumberField
-                  id="lump-sum"
-                  hint="Paid once, as well as any monthly overpayment."
-                  before="£"
-                  decimal
-                  optional
-                  field={lumpSum}
-                />
-                <NumberField
-                  id="lump-sum-year"
-                  hint="Year 1 means straight away, year 2 a year after the start date."
-                  field={lumpSumYear}
+                  field={offset}
                 />
               </FieldRow>
             </InputSection>
@@ -334,96 +542,163 @@ export default function MortgageOverpaymentCalculator() {
       }
       result={
         <ResultCard
-          label="With your overpayments"
-          figures={
-            result
-              ? [
-                  { value: formatGBP(result.interestSaved), per: 'interest saved' },
-                  result.monthsSaved > 0 && {
-                    value: timeSaved(result.monthsSaved),
-                    per: (
-                      <>
-                        sooner <span className="keep-together">mortgage-free</span>
-                      </>
-                    ),
-                  },
-                ].filter(Boolean)
-              : []
-          }
+          label={isTarget ? targetLabel : withName}
+          figures={figures}
           prompt={problem}
           shareLink={state.shareLink}
         >
           {result && (
             <>
-              {!overpays && (
+              {!isTarget && !changes && (
                 <p className="result-card__line">
-                  Enter a monthly overpayment or a lump sum to see what it could save.
+                  Enter a monthly overpayment, a lump sum or offset savings to see what it could
+                  save.
                 </p>
               )}
-              <div className="table-scroll">
-                <table className="result-table result-table--columns result-table--wrap">
-                  <thead>
-                    <tr>
-                      <td></td>
-                      <th scope="col">Without overpaying</th>
-                      <th scope="col">With your overpayments</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th scope="row">Monthly payment</th>
-                      <td>{formatGBP(result.standardPayment)}</td>
-                      <td>{formatGBP(result.newPayment)}</td>
-                    </tr>
-                    {result.lumpSumPaid > 0 && (
+              {isTarget && (
+                <p className="result-card__line">
+                  {target.onTrack ? (
+                    <>
+                      Your mortgage would be paid off {endsIn(result.newTermMonths)} without paying
+                      more each month, so you would meet your target.
+                    </>
+                  ) : (
+                    <>
+                      Paying {formatGBP(target.monthlyOverpayment)} a month on top of your normal
+                      payment clears your mortgage {endsIn(result.newTermMonths)}. That is the
+                      smallest whole-pound amount that meets your target.
+                    </>
+                  )}
+                  {!target.onTrack &&
+                    hasLimit &&
+                    (over.length === 0 ? (
+                      <>
+                        {' '}
+                        It stays within your lender's {percent(limit.value / 100)} yearly
+                        overpayment limit
+                        {dealYears.isBlank ? ' in every year' : ' for the rest of your deal'}.
+                      </>
+                    ) : (
+                      <>
+                        {' '}
+                        It goes over your lender's {percent(limit.value / 100)} yearly overpayment
+                        limit in {whichYears(over)}.
+                      </>
+                    ))}
+                </p>
+              )}
+              {showColumns && (
+                <div className="table-scroll">
+                  <table className="result-table result-table--columns result-table--wrap">
+                    <thead>
                       <tr>
-                        <th scope="row">Lump sum in year {lumpSumYear.value}</th>
-                        <td>None</td>
-                        <td>{formatGBP(result.lumpSumPaid)}</td>
+                        <td></td>
+                        <th scope="col">Without overpaying</th>
+                        <th scope="col">{withName}</th>
                       </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Monthly payment</th>
+                        <td>{formatGBP(result.standardPayment)}</td>
+                        <td>{formatGBP(result.newPayment)}</td>
+                      </tr>
+                      {result.lumpSumPaid > 0 && (
+                        <tr>
+                          <th scope="row">Lump sum in year {lumpSumYear.value}</th>
+                          <td>None</td>
+                          <td>{formatGBP(result.lumpSumPaid)}</td>
+                        </tr>
+                      )}
+                      <tr>
+                        <th scope="row">Paid off</th>
+                        <td>{ends(result.originalTermMonths)}</td>
+                        <td>{ends(result.newTermMonths)}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Total interest</th>
+                        <td>{formatGBP(result.standardTotalInterest)}</td>
+                        <td>{formatGBP(result.newTotalInterest)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {hasOffset && (
+                <p className="result-card__line">
+                  {result.savingsCoverMonth === 0 ? (
+                    <>Your offset savings cover everything you owe, so no interest is charged.</>
+                  ) : (
+                    <>
+                      This assumes your {formatGBP(result.offsetSavings)} of savings stays in the
+                      offset account for the whole term and earns no interest. What you owe would be
+                      down to that much {endsIn(result.savingsCoverMonth)}, so you could clear the
+                      mortgage with your savings then.
+                    </>
+                  )}
+                  {targetWithoutOffset &&
+                    targetWithoutOffset.monthlyOverpayment !== target.monthlyOverpayment && (
+                      <>
+                        {' '}
+                        Without the offset you would need to pay{' '}
+                        {formatGBP(targetWithoutOffset.monthlyOverpayment)} a month extra.
+                      </>
                     )}
-                    <tr>
-                      <th scope="row">Paid off</th>
-                      <td>{ends(result.originalTermMonths)}</td>
-                      <td>{ends(result.newTermMonths)}</td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Total interest</th>
-                      <td>{formatGBP(result.standardTotalInterest)}</td>
-                      <td>{formatGBP(result.newTotalInterest)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                </p>
+              )}
+
+              {compared && (
+                <div className="table-scroll">
+                  <table className="result-table result-table--columns result-table--wrap">
+                    <caption>What each one saves</caption>
+                    <thead>
+                      <tr>
+                        <td></td>
+                        <th scope="col">Interest saved</th>
+                        <th scope="col">Sooner mortgage-free</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        [`Offsetting ${formatGBP(offset.value)}`, compared.offsetOnly],
+                        ['Your overpayments', compared.overpayingOnly],
+                        ['Both together', compared.both],
+                      ].map(([name, each]) => (
+                        <tr key={name}>
+                          <th scope="row">{name}</th>
+                          <td>{formatGBP(each.interestSaved)}</td>
+                          <td>{each.monthsSaved > 0 ? timeSaved(each.monthsSaved) : 'None'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               <LineChart
                 id="balance-chart"
                 title="What you owe over time"
                 description={
-                  overpays
-                    ? `A line chart of your mortgage balance by year. With overpayments it reaches £0 after ${yearsAndMonths(result.newTermMonths)}. Without, it takes ${yearsAndMonths(result.originalTermMonths)}.`
+                  changes
+                    ? `A line chart of your mortgage balance by year. ${chartName} it reaches £0 after ${yearsAndMonths(result.newTermMonths)}. Without, it takes ${yearsAndMonths(result.originalTermMonths)}.`
                     : `A line chart of your mortgage balance by year. It reaches £0 after ${yearsAndMonths(result.originalTermMonths)}.`
                 }
                 xLabel="Years from the start date"
                 yLabel="What you owe"
                 series={
-                  overpays
+                  changes
                     ? [
                         { name: 'Without overpaying', points: lines.without, variant: 'compare' },
-                        {
-                          name: 'With your overpayments',
-                          points: lines.overpaying,
-                          variant: 'main',
-                        },
+                        { name: withName, points: lines.overpaying, variant: 'main' },
                       ]
                     : [{ name: 'Your balance', points: lines.without, variant: 'main' }]
                 }
               >
-                {overpays ? (
+                {changes ? (
                   <>
-                    With your overpayments the balance reaches £0 after{' '}
-                    {yearsAndMonths(result.newTermMonths)}, against{' '}
-                    {yearsAndMonths(result.originalTermMonths)} without.
+                    {withName} the balance reaches £0 after {yearsAndMonths(result.newTermMonths)},
+                    against {yearsAndMonths(result.originalTermMonths)} without.
                     {checkRow && checkRow.balance > 0 && (
                       <>
                         {' '}
@@ -475,33 +750,35 @@ export default function MortgageOverpaymentCalculator() {
                 </p>
               )}
 
-              <details className="result-card__more">
-                <summary>Balance at the end of each year</summary>
-                <table className="result-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Year</th>
-                      <th scope="col">Without overpaying</th>
-                      <th scope="col">With your overpayments</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.years.map((row) => (
-                      <tr key={row.year}>
-                        <th scope="row">{row.year}</th>
-                        <td>{formatGBP(row.standardBalance)}</td>
-                        <td>{formatGBP(row.balance)}</td>
+              {showColumns && (
+                <details className="result-card__more">
+                  <summary>Balance at the end of each year</summary>
+                  <table className="result-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Year</th>
+                        <th scope="col">Without overpaying</th>
+                        <th scope="col">{withName}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </details>
+                    </thead>
+                    <tbody>
+                      {result.years.map((row) => (
+                        <tr key={row.year}>
+                          <th scope="row">{row.year}</th>
+                          <td>{formatGBP(row.standardBalance)}</td>
+                          <td>{formatGBP(row.balance)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              )}
             </>
           )}
         </ResultCard>
       }
       notices={notices.length > 0 ? notices : null}
-      working={problem ? null : result.working}
+      working={problem ? null : isTarget ? target.working : result.working}
       guide={<MortgageOverpaymentGuide />}
       guides={['/guides/overpay-mortgage-or-save']}
       related={['/stamp-duty-calculator', '/isa-calculator', '/lifetime-isa-calculator']}

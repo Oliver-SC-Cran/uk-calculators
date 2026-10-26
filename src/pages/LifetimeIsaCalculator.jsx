@@ -169,8 +169,8 @@ export default function LifetimeIsaCalculator() {
 
   return (
     <CalculatorLayout
-      title="Lifetime ISA calculator"
-      lede={`What a Lifetime ISA could grow to with the ${percent(lisaBonusRate)} government bonus, using the ${TAX_YEAR} rules.`}
+      title="Lifetime ISA calculator: bonus, savings and withdrawal charge"
+      lede={`What a Lifetime ISA could grow to with the ${percent(lisaBonusRate)} government bonus, and what you would get back after the ${percent(lisaWithdrawalChargeRate)} withdrawal charge, using the ${TAX_YEAR} rules.`}
       updated={LAST_UPDATED}
       inputs={
         <>
@@ -305,40 +305,43 @@ export default function LifetimeIsaCalculator() {
             less than you put in.
           </p>
 
-          <table className="result-table">
-            <caption>If you took it all out {atGoal} for another reason</caption>
-            <tbody>
-              <tr>
-                <th scope="row">Projected value</th>
-                <td>{formatGBP(result.value)}</td>
-              </tr>
-              <tr>
-                <th scope="row">{percent(lisaWithdrawalChargeRate)} withdrawal charge</th>
-                <td>{formatGBP(-withdrawal.charge || 0)}</td>
-              </tr>
-              <tr>
-                <th scope="row">You would get</th>
-                <td>{formatGBP(withdrawal.afterCharge)}</td>
-              </tr>
-              <tr>
-                <th scope="row">You put in</th>
-                <td>{formatGBP(withdrawal.putIn)}</td>
-              </tr>
-              <tr>
-                <th scope="row">
-                  {withdrawal.shortfall > 0 ? 'Less than you put in' : 'More than you put in'}
-                </th>
-                <td>{formatGBP(Math.abs(withdrawal.shortfall))}</td>
-              </tr>
-            </tbody>
-          </table>
-          <p className="result-card__line">
-            The charge is {percent(lisaWithdrawalChargeRate)} of everything you take out, including
-            the bonus and any growth, so with little or no growth you get back less than you paid
-            in. It does not apply if you use the money for your first home, take it out from{' '}
-            {lisaAccessAge}, or are terminally ill with less than {lisaTerminalIllnessMonths} months
-            to live. What is already in your account counts here as money you put in.
-          </p>
+          <section className="result-card__section" aria-labelledby="withdrawal-heading">
+            <h3 id="withdrawal-heading">Withdrawing for another reason</h3>
+            <table className="result-table">
+              <caption>If you took it all out {atGoal}</caption>
+              <tbody>
+                <tr>
+                  <th scope="row">Projected value</th>
+                  <td>{formatGBP(result.value)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">{percent(lisaWithdrawalChargeRate)} withdrawal charge</th>
+                  <td>{formatGBP(-withdrawal.charge || 0)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">You would get</th>
+                  <td>{formatGBP(withdrawal.afterCharge)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">You put in</th>
+                  <td>{formatGBP(withdrawal.putIn)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    {withdrawal.shortfall > 0 ? 'Less than you put in' : 'More than you put in'}
+                  </th>
+                  <td>{formatGBP(Math.abs(withdrawal.shortfall))}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="result-card__line">
+              The charge is {percent(lisaWithdrawalChargeRate)} of everything you take out,
+              including the bonus and any growth, so with little or no growth you get back less than
+              you paid in. It does not apply if you use the money for your first home, take it out
+              from {lisaAccessAge}, or are terminally ill with less than {lisaTerminalIllnessMonths}{' '}
+              months to live. What is already in your account counts here as money you put in.
+            </p>
+          </section>
         </ResultCard>
       }
       notices={notices}

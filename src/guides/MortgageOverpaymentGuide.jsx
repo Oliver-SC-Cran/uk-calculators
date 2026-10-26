@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 import { MORTGAGE } from '../lib/rates/mortgage'
 import { formatGBP as gbp, percent, yearsAndMonths } from '../lib/format'
-import { calculateMortgageOverpayment } from '../lib/mortgage'
+import { calculateMortgageOverpayment, overpaymentToBeMortgageFree } from '../lib/mortgage'
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-20'
+const LAST_UPDATED = '2026-10-26'
 
 const example = (balance, annualRatePercent, remainingYears, extra = {}) => ({
   balance,
@@ -35,6 +35,29 @@ export default function MortgageOverpaymentGuide() {
 
   // MoneyHelper's own example, worked out here.
   const moneyHelper = example(250000, 5, 25, { lumpSum: 5000 })
+
+  // The extra needed to clear the same mortgage in 20, 15, 10 or 5 years,
+  // with the limit checked over a 5-year deal.
+  const [in20, in15, in10, in5] = [20, 15, 10, 5].map((targetYears) => ({
+    targetYears,
+    ...overpaymentToBeMortgageFree({
+      balance: none.balance,
+      annualRatePercent: none.annualRatePercent,
+      remainingYears: none.remainingYears,
+      targetMonths: targetYears * 12,
+      overpaymentLimitYears: 5,
+    }),
+  }))
+  const in10Limits = in10.result.years.slice(0, 5)
+  const in5FirstYear = in5.result.years[0]
+
+  // Offset or overpay: the same mortgage, and savings of £20,000 overpaid
+  // straight away or kept in an offset account.
+  const savings = 20000
+  const overpaid = example(200000, 4.5, 25, { lumpSum: savings })
+  const offset = example(200000, 4.5, 25, { offsetSavings: savings })
+  const offsetDearer = example(200000, 4.75, 25, { offsetSavings: savings })
+  const limitYear1Allowance = overpaid.years[0].allowance
 
   const ex2 = example(150000, 5, 20, { monthlyOverpayment: 100 })
   const ex3 = example(300000, 4, 30, { monthlyOverpayment: 500 })
@@ -137,6 +160,98 @@ export default function MortgageOverpaymentGuide() {
         different ways.
       </p>
 
+      <h2>How much extra do you need to pay to clear your mortgage in a set number of years?</h2>
+      <p>
+        The monthly payment that clears a mortgage in a set number of payments comes from the same
+        sum that sets your normal payment, with the shorter term in place of the one you have left.
+        The extra you need is the difference between the two. Choose "I want to be mortgage-free by
+        a set date" in the calculator to work it out for your mortgage. It rounds the amount up to
+        the next pound, so paying it clears the mortgage by your target.
+      </p>
+      <p>
+        For {gbp(none.balance)} at {none.annualRatePercent}% with {none.remainingYears} years left,
+        where the normal payment is {gbp(none.standardPayment)} a month, clearing it in:
+      </p>
+      <ul>
+        {[in20, in15, in10, in5].map((each) => (
+          <li key={each.targetYears}>
+            {each.targetYears} years takes {gbp(each.monthlyOverpayment)} a month extra and saves{' '}
+            {gbp(each.result.interestSaved)} in interest.
+          </li>
+        ))}
+      </ul>
+      <p>
+        Each 5 years taken off costs more than the last, because there are fewer payments to spread
+        what you owe over. Check the yearly limit as well. {gbp(in10.monthlyOverpayment)} a month is{' '}
+        {gbp(in10.monthlyOverpayment * 12)} a year, inside a {percent(typicalOverpaymentLimit)}{' '}
+        limit in each of the first 5 years, although the limit falls from{' '}
+        {gbp(in10Limits[0].allowance)} to {gbp(in10Limits[4].allowance)} as the balance falls.{' '}
+        {gbp(in5.monthlyOverpayment)} a month is {gbp(in5FirstYear.overpaid)} a year, over the{' '}
+        {gbp(in5FirstYear.allowance)} limit from the first year, so clearing the mortgage in 5 years
+        could mean an early repayment charge while the limit applies.
+      </p>
+
+      <h2>Offset or overpay?</h2>
+      <p>
+        An offset mortgage links your mortgage to a savings account. MoneyHelper explains that you
+        do not pay interest on the part of your mortgage equal to your savings, and that the savings
+        usually earn no interest themselves. In its example, with a £200,000 offset mortgage at 3%
+        and £10,000 in the savings account, you would only pay interest on £190,000.
+      </p>
+      <p>
+        So each pound in an offset account stops interest being charged on a pound of your mortgage,
+        just as a pound overpaid does. The difference is what happens to the money:
+      </p>
+      <ul>
+        <li>
+          An overpayment comes off your balance for good. You usually cannot take it back unless you
+          have a flexible mortgage: MoneyHelper says flexible mortgages, offset mortgages included,
+          let you draw back what you have overpaid without a charge.
+        </li>
+        <li>
+          Offset savings stay in your account. MoneyHelper says you can still take them out if you
+          need to. Once you do, you pay interest on that part of the mortgage again.
+        </li>
+      </ul>
+
+      <h3>A worked example</h3>
+      <p>
+        Take {gbp(overpaid.balance)} at {overpaid.annualRatePercent}% with {overpaid.remainingYears}{' '}
+        years left and {gbp(savings)} of savings, with the monthly payment kept the same:
+      </p>
+      <ul>
+        <li>
+          Overpaying the {gbp(savings)} straight away saves {gbp(overpaid.interestSaved)} in
+          interest, and the mortgage ends after {yearsAndMonths(overpaid.newTermMonths)}.
+        </li>
+        <li>
+          Keeping the {gbp(savings)} in an offset account for the whole term saves the same{' '}
+          {gbp(offset.interestSaved)}. After {yearsAndMonths(offset.savingsCoverMonth)} what you owe
+          is down to {gbp(savings)}, the point at which the overpaid mortgage ends, so you could
+          clear it with your savings then. If you leave the savings where they are, your payments
+          clear the rest {yearsAndMonths(offset.newTermMonths - offset.savingsCoverMonth)} later,
+          with no more interest to pay.
+        </li>
+      </ul>
+      <p>
+        The interest saved is the same only while the rate is the same and the savings stay in the
+        account. MoneyHelper lists limited access to discounted-rate deals as a drawback of offset
+        mortgages, so compare the rates too. If the offset deal in this example charged{' '}
+        {offsetDearer.annualRatePercent}% rather than {overpaid.annualRatePercent}%, you would pay{' '}
+        {gbp(offsetDearer.newTotalInterest)} in interest in all, against{' '}
+        {gbp(overpaid.newTotalInterest)} by overpaying.
+      </p>
+      <p>
+        An overpayment also counts towards your lender's yearly limit. With a{' '}
+        {percent(typicalOverpaymentLimit)} limit, the most you could overpay in the first year here
+        is {gbp(limitYear1Allowance)}. The calculator does not count offset savings towards the
+        limit, because they are not paid off the mortgage. Enter your savings in the calculator, on
+        their own or with overpayments, to see what they could save. If you would rather earn
+        interest on your savings, the guide{' '}
+        <Link to="/guides/overpay-mortgage-or-save">should I overpay my mortgage or save?</Link>{' '}
+        compares the two after tax. This is general information, not advice on what you should do.
+      </p>
+
       <h3>When overpaying may not make sense</h3>
       <ul>
         <li>
@@ -198,6 +313,13 @@ export default function MortgageOverpaymentGuide() {
         compares the two after tax.
       </p>
 
+      <h3>How do I work out my mortgage-free date?</h3>
+      <p>
+        Enter what you owe, your interest rate, the years left and a start date. The calculator
+        shows the month of your last payment without overpaying, and with your overpayments or
+        offset savings. It assumes the rate stays the same, so check again when your deal ends.
+      </p>
+
       <h3>Will I be charged for overpaying?</h3>
       <p>
         Only if you go over the limit in your mortgage deal, or pay the mortgage off early while a
@@ -221,8 +343,8 @@ export default function MortgageOverpaymentGuide() {
       <h2>Where this information comes from</h2>
       <p>
         The figures in the examples come from the calculator on this page. The guidance on limits,
-        charges and what to weigh up is from MoneyHelper, the free service run by the
-        government-backed Money and Pensions Service. See{' '}
+        charges, offset mortgages and what to weigh up is from MoneyHelper, the free service run by
+        the government-backed Money and Pensions Service. See{' '}
         <a
           href="https://www.moneyhelper.org.uk/en/homes/buying-a-home/should-you-pay-off-your-mortgage-early"
           target="_blank"

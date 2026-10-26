@@ -41,7 +41,7 @@ export const ISA = forTaxYear(ISA_RATES)
 // Sources: https://www.gov.uk/government/consultations/first-time-buyer-isa-consultation
 //          https://www.gov.uk/government/publications/budget-2025-document/budget-2025-html
 export const LIFETIME_ISA_REFORM = {
-  checkedOn: '20 October 2026',
+  checkedOn: '26 October 2026',
   consultationOpened: '22 June 2026',
   consultationClosed: '18 August 2026',
   lisaLimitFixedUntil: '5 April 2031', // the £4,000 limit stays the same until then

@@ -31,3 +31,14 @@ export function monthAfter(startDate, months) {
   const index = year * 12 + (month - 1) + months
   return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`
 }
+
+/**
+ * How many monthly payments fall in or before December of a year, when the
+ * first is a month after startDate ('YYYY-MM-DD'). From '2026-10-26' to the
+ * end of 2040 is 170: November 2026 to December 2040. 0 or less when the
+ * year is over before the first payment.
+ */
+export function paymentsByEndOf(startDate, endYear) {
+  const [year, month] = startDate.split('-').map(Number)
+  return (endYear - year) * 12 + (12 - month)
+}

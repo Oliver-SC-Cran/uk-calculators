@@ -158,6 +158,37 @@ export function Chips({ label, options, current, onPick }) {
   )
 }
 
+/**
+ * A choice between two or three answers shown as boxes side by side, for a
+ * choice that changes what the rest of the page asks, such as what a
+ * calculator works out. options are [value, text, detail] pairs, detail being
+ * a few words under the text. It is a group of radio buttons, so the arrow
+ * keys move between the answers. The radio buttons are hidden, and the box
+ * picked is filled in navy, as a pressed chip is.
+ */
+export function RadioField({ id, label, hideLabel = false, value, onChange, options }) {
+  return (
+    <fieldset className="field field--choice">
+      <legend className={hideLabel ? 'visually-hidden' : 'field__label'}>{label}</legend>
+      <div className="choice">
+        {options.map(([optionValue, text, detail]) => (
+          <label key={optionValue} className="choice__option">
+            <input
+              type="radio"
+              name={id}
+              value={optionValue}
+              checked={value === optionValue}
+              onChange={() => onChange(optionValue)}
+            />
+            <span className="choice__text">{text}</span>
+            {detail && <span className="choice__detail">{detail}</span>}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
 /** A dropdown. children are its <option> elements. */
 export function SelectField({ value, onChange, children, below, ...rest }) {
   return (

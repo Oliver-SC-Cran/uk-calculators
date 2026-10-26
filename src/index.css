@@ -1220,6 +1220,73 @@ h2[tabindex='-1']:focus {
   color: var(--white);
 }
 
+/* A choice between a few answers shown as boxes (RadioField in Fields.jsx),
+   such as what a calculator works out. The radio buttons are hidden but can
+   still be reached with the keyboard, and the box picked is filled in navy. */
+.choice {
+  display: grid;
+  gap: var(--space-2);
+}
+
+@container (min-width: 26rem) {
+  .choice {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+.field__label + .choice {
+  margin-top: var(--space-2);
+}
+
+.choice__option {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--field-border);
+  border-radius: var(--radius-control);
+  background: var(--white);
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.choice__option:hover {
+  border-color: var(--navy);
+}
+
+.choice__option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choice__option:has(input:checked) {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: var(--white);
+}
+
+.choice__option:has(input:focus-visible) {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+.choice__text {
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.choice__detail {
+  font-size: 0.875rem;
+  color: var(--text-soft);
+}
+
+.choice__option:has(input:checked) .choice__detail {
+  color: var(--text-soft-on-navy);
+}
+
 /* The result card (ResultCard.jsx): a navy strip with the headline figures,
    the breakdown on white, then the footer. */
 
@@ -1369,6 +1436,22 @@ h2[tabindex='-1']:focus {
    overpaying, or key dates. Its cells may wrap on a phone. */
 .result-table--wrap td {
   white-space: normal;
+}
+
+/* A part of the breakdown with a heading of its own, such as what a
+   withdrawal would cost. */
+.result-card__section {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-strong);
+}
+
+.result-card__section h3 {
+  margin: 0;
+}
+
+.result-card__section .result-table {
+  margin-top: var(--space-3);
 }
 
 /* A chart in the result card, under its table. */
