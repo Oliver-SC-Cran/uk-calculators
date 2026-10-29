@@ -319,7 +319,7 @@ export default function MaternityPayCalculator() {
   return (
     <CalculatorLayout
       title="Maternity and paternity pay calculator"
-      lede={`Statutory Maternity Pay or Paternity Pay for ${TAX_YEAR}: how much and when, at the rates from ${ratesFrom}, and what an employer can reclaim.`}
+      lede={`Statutory Maternity or Paternity Pay for ${TAX_YEAR}: how much, when, and what an employer can reclaim.`}
       updated={LAST_UPDATED}
       inputs={
         <>
