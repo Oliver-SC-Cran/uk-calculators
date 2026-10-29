@@ -178,7 +178,7 @@ Share links (`src/lib/calculatorLink.js`) are switched on for the take-home pay 
 - If a new third-party script or host is added, add it to the policy in the same batch, and to the privacy and cookie policies. The fonts are served from this site's own address, so `'self'` already covers them. Cloudflare Web Analytics loads its script from `static.cloudflareinsights.com` and sends its counts to `cloudflareinsights.com`, and both are in the policy.
 - Files under `/assets/` have a hash in their names, so `public/_headers` lets browsers keep them for a year. Do not put files there by hand. Vite writes them, and so does `scripts/prerender.js` for `clearShareLink-<hash>.js`, the one script that is not a module.
 - Keep the site free of inline scripts and inline styles, so the policy stays simple.
-- The site uses no secrets or environment variables. `.env` files are ignored by git. Never commit a key or token. The one exception is the Cloudflare Web Analytics site token in `scripts/prerender.js`, which the owner agreed to commit on 11 October 2026. It is not a secret: it is printed in the HTML of every page, like the AdSense publisher ID in `public/ads.txt`, and it only says which site a page view belongs to.
+- The site uses no secrets. The build reads only the two variables Cloudflare Pages sets itself, `CF_PAGES` and `CF_PAGES_BRANCH`, to tell the live build from previews. `.env` files are ignored by git. Never commit a key or token. The one exception is the Cloudflare Web Analytics site token in `scripts/prerender.js`, which the owner agreed to commit on 11 October 2026. It is not a secret: it is printed in the HTML of every page, like the AdSense publisher ID in `public/ads.txt`, and it only says which site a page view belongs to.
 - Do not turn on source maps for the production build.
 
 ## Site checklist
@@ -260,7 +260,7 @@ None of these may appear on the site:
 ### 4. Security
 
 - Hide API keys: N/A. The site has none. The AdSense publisher ID in `public/ads.txt` and the Cloudflare Web Analytics token in `scripts/prerender.js` are public by design
-- Check env variables: N/A. None are used
+- Check env variables: the build reads only `CF_PAGES` and `CF_PAGES_BRANCH`, which Cloudflare Pages sets itself. Neither is a secret
 - Protect admin routes: N/A. There is no admin area
 - Proper authentication: N/A. There are no accounts
 - Check user access: N/A. Every page is public
