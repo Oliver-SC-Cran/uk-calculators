@@ -108,15 +108,22 @@ export function calculateStampDuty({
 
 /**
  * The net present value of the rent on a lease, as HMRC works it out for
- * stamp duty: each year's rent is discounted at 3.5% a year, compounded, so
- * the rent in year 2 is divided by 1.035 twice.
+ * stamp duty (SDLTM13075): each year's rent is discounted at 3.5% a year,
+ * compounded, so the rent in year 2 is divided by 1.035 twice.
  *
  * yearlyRent is the rent in the first year. It goes up by yearlyRise (0.03
- * for 3%) at the start of each year up to the fifth. After the fifth year
- * every year counts at the highest rent in the first five, so later rises
- * are left out.
+ * for 3%) at the start of each year up to the fifth. firstYearsRents, a list
+ * of the rent for each of the first five years, can be given instead. After
+ * the fifth year every year counts at the highest rent in the first five, so
+ * later rises are left out.
  */
-export function rentNetPresentValue({ yearlyRent, years, yearlyRise = 0, taxYear }) {
+export function rentNetPresentValue({
+  yearlyRent,
+  years,
+  yearlyRise = 0,
+  firstYearsRents,
+  taxYear,
+}) {
   const { rentDiscountRate, rentYearsKnown } = forTaxYear(STAMP_DUTY_RATES, taxYear).sharedOwnership
   const rent = atLeastZero(yearlyRent)
   const leaseYears = Math.floor(atLeastZero(years))
@@ -125,7 +132,9 @@ export function rentNetPresentValue({ yearlyRent, years, yearlyRise = 0, taxYear
 
   const knownYears = []
   for (let year = 1; year <= Math.min(rentYearsKnown, leaseYears); year += 1) {
-    const yearRent = rent * (1 + rise) ** (year - 1)
+    const yearRent = firstYearsRents
+      ? atLeastZero(firstYearsRents[year - 1])
+      : rent * (1 + rise) ** (year - 1)
     knownYears.push({ year, rent: yearRent, presentValue: yearRent / discount(year) })
   }
   const highestRent = knownYears.reduce((highest, each) => Math.max(highest, each.rent), 0)
@@ -211,7 +220,9 @@ function rentWorking(npv, { monthlyRent, yearlyRent, leaseYears, rates }) {
  * sharePercent is 40 for 40%, and rentRisePercent 3 for 3% a year for the
  * first five years. monthlyRent left out (null) means it is estimated at
  * 2.75% a year of the value of the landlord's share, to the penny. The tax on
- * the price and the tax on the rent are each rounded down to the pound.
+ * the price and the tax on the rent are each rounded down to the pound before
+ * they are added up, as HMRC's online SDLT calculator does (checked on 29
+ * October 2026).
  */
 export function calculateSharedOwnershipStampDuty({
   marketValue,

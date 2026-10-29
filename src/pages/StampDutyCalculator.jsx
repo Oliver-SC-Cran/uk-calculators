@@ -280,9 +280,9 @@ export default function StampDutyCalculator() {
             {shared.rentRise > 0
               ? `, rising ${formatAmount(shared.rentRise, 'percent')} a year for the first ${sharedOwnership.rentYearsKnown} years,`
               : ''}{' '}
-            is worth {formatGBP(shared.rent.netPresentValue)} over the {shared.leaseYears}-year
-            lease. Tax on the rent is {percent(sharedOwnership.rentRate)} of anything over{' '}
-            {formatGBP(sharedOwnership.rentNilBand)}.
+            is worth {formatGBP(Math.floor(shared.rent.netPresentValue))} over the{' '}
+            {shared.leaseYears}-year lease. Tax on the rent is {percent(sharedOwnership.rentRate)}{' '}
+            of anything over {formatGBP(sharedOwnership.rentNilBand)}.
           </>
         ) : (
           <>With first-time buyer relief the rent is not taxed, whichever way you pay.</>
@@ -455,7 +455,9 @@ export default function StampDutyCalculator() {
               additional properties or the surcharge for buyers who are not UK resident. Buying a
               share from someone who already owns it is a resale: you take over their lease, so it
               is taxed like any other purchase on the price you pay. Choose "Buying outright" for
-              that.
+              that. If the freehold is not available under your lease, a market value election is
+              charged on the open market premium and minimum rent stated in the lease, so enter that
+              premium as the full market value. This does not work out any tax on the minimum rent.
             </Notice>
           ) : (
             <Notice>

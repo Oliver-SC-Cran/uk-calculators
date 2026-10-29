@@ -198,15 +198,19 @@ test('stamp duty [own working] breakdown, effective rate and odd inputs', () => 
 // Shared ownership: a new lease from a housing association, council or other
 // approved body. Each test name says where its expected values came from:
 //   [gov.uk]      an example on gov.uk's shared ownership guide or in HMRC's Stamp Duty
-//                 Land Tax Manual, recorded on 29 October 2026
+//                 Land Tax Manual, or a result from HMRC's online SDLT calculator, all
+//                 checked on 29 October 2026
 //   [own working] worked out by hand, or with the closed-form sums below
 //
 // https://www.gov.uk/stamp-duty-land-tax/shared-ownership-property
+// https://www.tax.service.gov.uk/calculate-stamp-duty-land-tax
 // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm27060 (in stages)
 // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm27030 (election)
 // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm27065 (staircasing)
-// https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm29880 (first-time buyers)
+// https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm29880 (first-time
+//   buyers, election), sdltm29885 (in stages) and sdltm29890 (buying more shares)
 // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm13075 (net present value)
+// https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm13080 (worked example)
 
 const shared = (marketValue, sharePercent, settings = {}) =>
   calculateSharedOwnershipStampDuty({
@@ -232,8 +236,10 @@ function npvClosedForm(yearlyRent, years, rise) {
 }
 
 test('shared ownership [gov.uk] a market value election taxes the full market value', () => {
-  // A home with a market value of £280,000: £2,500 on £125,000 to £250,000 and £1,500 on the rest.
-  for (const share of [10, 25, 40, 75]) {
+  // gov.uk's example: "You pay £140,000 to buy a 50% share of a property with a market value of
+  // £280,000 ... total SDLT = £4,000". The share makes no difference to the election.
+  assert.equal(shared(280000, 50, { monthlyRent: 500 }).sharePrice, 140000)
+  for (const share of [10, 25, 40, 50, 75]) {
     const result = shared(280000, share, { monthlyRent: 500 })
     assert.equal(result.election.tax, 4000, `${share}% share`)
     assert.equal(result.election.price, 280000)
@@ -241,16 +247,61 @@ test('shared ownership [gov.uk] a market value election taxes the full market va
 })
 
 test('shared ownership [gov.uk] first-time buyers, both ways of paying', () => {
-  // Market value £450,000. With the election, first-time buyer rates on the full value:
-  // 5% of £150,000 = £7,500. Paying in stages on a £180,000 share: nothing, and no tax on rent.
+  // SDLTM29880: a first-time buyer pays £225,000 for a 50% share of a £450,000 home and makes
+  // the election: "0% on the first £300,000 and 5% on the remaining £150,000, paying a total of
+  // £7,500 ... No SDLT is payable on the rental payments."
+  const elected = shared(450000, 50, { buyerType: 'firstTimeBuyer', monthlyRent: 700 })
+  assert.equal(elected.sharePrice, 225000)
+  assert.equal(elected.election.tax, 7500)
+  // SDLTM29885: £180,000 for a 40% share of a £450,000 home, paying in stages: "No SDLT will be
+  // due on the £180,000", and the relief also applies to the rent.
   const result = shared(450000, 40, { buyerType: 'firstTimeBuyer', monthlyRent: 700 })
-  assert.equal(result.election.tax, 7500)
   assert.equal(result.sharePrice, 180000)
   assert.equal(result.inStages.priceTax, 0)
   assert.equal(result.inStages.rentTax, 0)
   assert.equal(result.inStages.tax, 0)
   assert.equal(result.reliefApplies, true)
   assert.equal(result.rent.taxed, false)
+})
+
+test("shared ownership [gov.uk] HMRC's online calculator on gov.uk's £400,000 home", () => {
+  // HMRC's online SDLT calculator on 29 October 2026, for a new 990-year lease (29 October 2026
+  // to 28 October 3016) with a £160,000 premium, rent of £6,600 a year and an individual buyer
+  // who is UK resident and will own one property. gov.uk's rent example is this home: a 40%
+  // share of £400,000, with £550 a month (2.75% of the £240,000 share the landlord keeps).
+  const results = [
+    // settings, total, SDLT on premium, SDLT on rent, net present value as HMRC shows it
+    [{}, 1335, 700, 635, 188571],
+    [{ rentRisePercent: 3 }, 1552, 700, 852, 210276], // HMRC was given the rents to the penny
+    [{ buyerType: 'firstTimeBuyer' }, 0, 0, 0, 188571], // shared ownership, paying in stages
+    [{ buyerType: 'firstTimeBuyer', rentRisePercent: 3 }, 0, 0, 0, 210276],
+  ]
+  for (const [settings, totalTax, premiumTax, rentTax, npv] of results) {
+    const result = shared(400000, 40, { monthlyRent: 550, ...settings })
+    const where = JSON.stringify(settings)
+    assert.equal(result.inStages.tax, totalTax, where)
+    assert.equal(result.inStages.priceTax, premiumTax, where)
+    assert.equal(result.inStages.rentTax, rentTax, where)
+    assert.equal(Math.floor(result.rent.netPresentValue), npv, where)
+  }
+  // A first-time buyer making the election, with £400,000 as the market value: £5,000.
+  assert.equal(shared(400000, 40, { buyerType: 'firstTimeBuyer' }).election.tax, 5000)
+  // HMRC's calculator asks about shared ownership only for first-time buyers. A home mover's
+  // election is a lease with a £400,000 premium and no rent there: £10,000.
+  assert.equal(shared(400000, 40, { monthlyRent: 550 }).election.tax, 10000)
+  // HMRC rounds the tax on the premium and the tax on the rent down separately. With a £160,045
+  // premium the tax on it is £700.90 and on the rent £635.71: HMRC's total is £1,335, where
+  // rounding the total would give £1,336.
+  const probe = calculateSharedOwnershipStampDuty({
+    marketValue: 400000,
+    sharePercent: (160045 / 400000) * 100,
+    monthlyRent: 550,
+    leaseYears: 990,
+  })
+  assert.equal(probe.sharePrice, 160045)
+  assert.equal(probe.inStages.priceTax, 700)
+  assert.equal(probe.inStages.rentTax, 635)
+  assert.equal(probe.inStages.tax, 1335)
 })
 
 test("shared ownership [own working] gov.uk's £400,000 home, 40% share and £550 a month rent", () => {
@@ -266,9 +317,9 @@ test("shared ownership [own working] gov.uk's £400,000 home, 40% share and £55
   // With the election: £2,500 + 5% of £150,000 = £10,000, and no tax on the rent.
   assert.equal(flat.election.tax, 10000)
   // With a 3% rise for the first five years the rent is £6,600, £6,798, £7,001.94, £7,212.00
-  // and £7,428.36, then £7,428.36 every year after: about £210,277, so £852 on the rent.
+  // and £7,428.36, then £7,428.36 every year after: £210,276.86, so £852 on the rent.
   const rising = shared(400000, 40, { monthlyRent: 550, rentRisePercent: 3 })
-  assert.ok(Math.abs(rising.rent.netPresentValue - 210277) < 1)
+  assert.ok(Math.abs(rising.rent.netPresentValue - 210276.86) < 0.01)
   assert.equal(rising.inStages.rentTax, 852)
   assert.equal(rising.inStages.tax, 1552)
   assert.deepEqual(
@@ -300,6 +351,20 @@ test('shared ownership [own working] the rent is taxed only above £125,000 of n
   assert.equal(shared(400000, 40, { monthlyRent: 364 }).inStages.rentTax, 0)
   // £366 a month is £4,392 a year, worth £125,485.71: 1% of £485.71 is £4.86, so £4.
   assert.equal(shared(400000, 40, { monthlyRent: 366 }).inStages.rentTax, 4)
+})
+
+test('shared ownership [gov.uk] the net present value worked example in SDLTM13080', () => {
+  // A ten-year lease with rent of £4,000, £5,000, £6,000, £7,000 and £8,000 in the first five
+  // years. Years 6 to 10 count at £8,000, the highest of the first five. "Total £57192.25".
+  const npv = rentNetPresentValue({ firstYearsRents: [4000, 5000, 6000, 7000, 8000], years: 10 })
+  assert.ok(Math.abs(npv.value - 57192.25) < 0.005, `got ${npv.value}`)
+  assert.deepEqual(
+    npv.knownYears.map((each) => Math.round(each.presentValue * 100) / 100),
+    [3864.73, 4667.55, 5411.66, 6100.1, 6735.79],
+  )
+  assert.equal(npv.highestRent, 8000)
+  // £6,508.00 + £6,287.93 + £6,075.29 + £5,869.85 + £5,671.35 for years 6 to 10.
+  assert.ok(Math.abs(npv.laterValue - 30412.42) < 0.01, `got ${npv.laterValue}`)
 })
 
 test('shared ownership [own working] the net present value matches the closed-form sums', () => {
@@ -446,6 +511,27 @@ test('shared ownership [own working] blank, zero, negative and very large figure
   }
 })
 
+test("staircasing [gov.uk] gov.uk's example of a share that takes you over 80%", () => {
+  // "if you've paid £260,000 in total so far, the total SDLT due is £3,000 ... if you're paying
+  // £65,000 for this share, divide £65,000 by £260,000 = 0.25 ... SDLT of £3000 multiplied by
+  // 0.25 = £750."
+  const quarter = staircasingStampDuty({
+    paidBefore: 195000,
+    sharePrice: 65000,
+    shareAfterPercent: 85,
+  })
+  assert.equal(quarter.totalPaid, 260000)
+  assert.equal(quarter.taxOnTotal, 3000)
+  assert.equal(quarter.fraction, 0.25)
+  assert.equal(quarter.tax, 750)
+  // "you do not have to pay any more SDLT or send a return to HMRC until you own more than an
+  // 80% share."
+  assert.equal(
+    staircasingStampDuty({ paidBefore: 195000, sharePrice: 65000, shareAfterPercent: 80 }).tax,
+    0,
+  )
+})
+
 test('staircasing [own working] buying more shares after paying in stages', () => {
   // gov.uk's method: nothing until your share goes over 80%. Then the tax on everything paid
   // so far, times this share's price over the total paid.
@@ -467,16 +553,11 @@ test('staircasing [own working] buying more shares after paying in stages', () =
     staircasingStampDuty({ paidBefore: 320000, sharePrice: 80000, shareAfterPercent: 100 }).tax,
     2000,
   )
-  // Just over 80% is taxed. £3,000 of tax on £260,000 paid, and a £65,000 share is a quarter
-  // of it: £750.
-  const quarter = staircasingStampDuty({
-    paidBefore: 195000,
-    sharePrice: 65000,
-    shareAfterPercent: 81,
-  })
-  assert.equal(quarter.taxOnTotal, 3000)
-  assert.equal(quarter.fraction, 0.25)
-  assert.equal(quarter.tax, 750)
+  // Just over 80% is taxed.
+  assert.equal(
+    staircasingStampDuty({ paidBefore: 195000, sharePrice: 65000, shareAfterPercent: 80.5 }).taxed,
+    true,
+  )
   // With a market value election nothing more is due.
   const elected = staircasingStampDuty({
     paidBefore: 160000,

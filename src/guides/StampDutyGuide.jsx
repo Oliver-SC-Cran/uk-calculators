@@ -172,6 +172,10 @@ export default function StampDutyGuide() {
         stamp duty return, or by amending the return within {so.electionAmendMonths} months of the
         filing date. It cannot be undone.
       </p>
+      <p>
+        If the freehold is not available to you under the lease, the lease states an open market
+        premium and a minimum rent instead of a market value, and the election is charged on those.
+      </p>
 
       <h3>First-time buyers and shared ownership</h3>
       <p>
@@ -179,7 +183,9 @@ export default function StampDutyGuide() {
         {gbp(firstTimeBuyer.maxPrice)} or less. Paying in stages, the first-time buyer rates apply
         to the price of your share and the rent is not taxed. With the election, they apply to the
         full market value. The relief does not apply to shares you buy later, and it is not taken
-        back if what you pay in total goes over {gbp(firstTimeBuyer.maxPrice)}.
+        back if what you pay in total goes over {gbp(firstTimeBuyer.maxPrice)}. If the lease means
+        you can never own all of the home, HMRC's calculator compares the{' '}
+        {gbp(firstTimeBuyer.maxPrice)} limit with the value of the largest share you can own.
       </p>
 
       <h3>The tax on the rent</h3>
@@ -206,6 +212,10 @@ export default function StampDutyGuide() {
         and any after it, work out the stamp duty on everything you have paid so far, at the rates
         on the day. Then multiply it by the price of this share divided by the total you have paid.
         If you made a market value election, nothing more is due.
+      </p>
+      <p>
+        If you paid in stages, you may also have to pay more on earlier shares if they become linked
+        to later ones. Shares only become linked once you own over {over} of the home.
       </p>
 
       <h3>Buying a resale</h3>
@@ -250,13 +260,14 @@ export default function StampDutyGuide() {
         The share costs {gbp(flatRent.sharePrice)} and the rent is {gbp(flatRent.monthlyRent)} a
         month, or {gbp(flatRent.yearlyRent)} a year, on a {flatRent.leaseYears}-year lease. Paying
         in stages, a home mover pays {gbp(flatRent.inStages.priceTax)} on the share. If the rent
-        never went up, its net present value would be {gbp(flatRent.rent.netPresentValue)}.{' '}
-        {percent(so.rentRate)} of the {gbp(flatRent.rent.taxable)} over {gbp(so.rentNilBand)} is{' '}
+        never went up, its net present value would be{' '}
+        {gbp(Math.floor(flatRent.rent.netPresentValue))}. {percent(so.rentRate)} of the{' '}
+        {gbp(flatRent.rent.taxable)} over {gbp(so.rentNilBand)} is{' '}
         {formatGBPPence(flatRent.rent.taxable * so.rentRate)}, which rounds down to{' '}
         {gbp(flatRent.inStages.rentTax)}, so the bill is {gbp(flatRent.inStages.tax)}. With a{' '}
         {percent(so.typicalRentRise)} rise for the first {years} years, the rent is worth{' '}
-        {gbp(risingRent.rent.netPresentValue)}, the tax on it is {gbp(risingRent.inStages.rentTax)}{' '}
-        and the bill is {gbp(risingRent.inStages.tax)}.
+        {gbp(Math.floor(risingRent.rent.netPresentValue))}, the tax on it is{' '}
+        {gbp(risingRent.inStages.rentTax)} and the bill is {gbp(risingRent.inStages.tax)}.
       </p>
       <p>
         With a market value election the bill is {gbp(flatRent.election.tax)}, on the full{' '}
@@ -363,10 +374,14 @@ export default function StampDutyGuide() {
         , and HMRC's Stamp Duty Land Tax Manual on{' '}
         <Source href={`${MANUAL}sdltm27060`}>paying in stages</Source>,{' '}
         <Source href={`${MANUAL}sdltm27030`}>the market value election</Source>,{' '}
-        <Source href={`${MANUAL}sdltm29880`}>first-time buyers</Source>,{' '}
-        <Source href={`${MANUAL}sdltm27065`}>buying more shares</Source> and{' '}
-        <Source href={`${MANUAL}sdltm13075`}>the net present value of rent</Source>. HMRC also has
-        an{' '}
+        <Source href={`${MANUAL}sdltm27050`}>leases where the freehold is not available</Source>,
+        first-time buyers making the <Source href={`${MANUAL}sdltm29880`}>election</Source>, paying{' '}
+        <Source href={`${MANUAL}sdltm29885`}>in stages</Source> and{' '}
+        <Source href={`${MANUAL}sdltm29890`}>buying more shares</Source>,{' '}
+        <Source href={`${MANUAL}sdltm27065`}>linked shares</Source>,{' '}
+        <Source href={`${MANUAL}sdltm13075`}>the net present value of rent</Source>,{' '}
+        <Source href={`${MANUAL}sdltm13155`}>looking again at an estimated rent</Source> and{' '}
+        <Source href={`${MANUAL}sdltm13190`}>rent that rises with RPI</Source>. HMRC also has an{' '}
         <a
           href="https://www.tax.service.gov.uk/calculate-stamp-duty-land-tax"
           target="_blank"

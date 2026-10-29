@@ -46,6 +46,8 @@ export const STAMP_DUTY_RATES = {
       // Each year's rent is discounted at this rate a year, compounded.
       rentDiscountRate: 0.035,
       // After this many years, every year counts at the highest rent in them.
+      // An estimated rent is looked at again at the end of the fifth year.
+      // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm13155
       rentYearsKnown: 5,
       // Buying more shares is not taxed until your share goes over this.
       // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm27065
