@@ -1,14 +1,16 @@
 import { checkMinimumWage } from '../lib/minimumWage'
-import { MINIMUM_WAGE } from '../lib/rates/minimumWage'
+import { MINIMUM_WAGE, MINIMUM_WAGE_FROM_APRIL_2027 } from '../lib/rates/minimumWage'
 import { formatGBP as gbp, formatGBPPence as gbpPence } from '../lib/format'
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-08'
+const LAST_UPDATED = '2026-10-29'
 
 export default function MinimumWageGuide() {
   const { effectiveFrom, nationalLivingWage, age18to20, under18, apprentice, minAge } = MINIMUM_WAGE
+  const { accommodationOffsetDaily } = MINIMUM_WAGE
   const year = effectiveFrom.slice(-4)
+  const next = MINIMUM_WAGE_FROM_APRIL_2027
 
   // Example 1: paid below the rate.
   const ex1 = checkMinimumWage({ age: 22, hourlyRate: 11.5, isApprentice: false })
@@ -51,6 +53,23 @@ export default function MinimumWageGuide() {
         The apprentice rate applies if you are under 19, or if you are 19 or over and in the first
         year of your apprenticeship. After that you get the rate for your age. An apprentice aged 21
         who has finished their first year is entitled to {gbpPence(nationalLivingWage)}.
+      </p>
+
+      <h3>Rates from {next.effectiveFrom}</h3>
+      <p>
+        The government announced these rates on {next.announced}. The checker uses the rates from{' '}
+        {effectiveFrom} until they start.
+      </p>
+      <ul>
+        <li>Aged 21 and over: {gbpPence(next.nationalLivingWage)} an hour</li>
+        <li>Aged 18 to 20: {gbpPence(next.age18to20)} an hour</li>
+        <li>Under 18: {gbpPence(next.under18)} an hour</li>
+        <li>Apprentices: {gbpPence(next.apprentice)} an hour</li>
+      </ul>
+      <p>
+        If your employer provides your accommodation, up to {gbpPence(accommodationOffsetDaily)} a
+        day of it can count towards your minimum wage pay (the accommodation offset). From{' '}
+        {next.effectiveFrom} that goes up to {gbpPence(next.accommodationOffsetDaily)} a day.
       </p>
 
       <h3>Who is not covered</h3>
@@ -158,14 +177,30 @@ export default function MinimumWageGuide() {
           rel="noreferrer"
         >
           what counts as working time
-        </a>{' '}
-        and how to{' '}
+        </a>
+        , how to{' '}
         <a
           href="https://www.gov.uk/government/publications/pay-and-work-rights-complaints"
           target="_blank"
           rel="noreferrer"
         >
           complain about pay and work rights
+        </a>
+        ,{' '}
+        <a
+          href="https://www.gov.uk/national-minimum-wage-accommodation"
+          target="_blank"
+          rel="noreferrer"
+        >
+          accommodation and the minimum wage
+        </a>{' '}
+        and the{' '}
+        <a
+          href="https://www.gov.uk/government/news/lpc-recommendations-take-the-national-living-wage-to-1321"
+          target="_blank"
+          rel="noreferrer"
+        >
+          rates from April 2027
         </a>
         .
       </p>

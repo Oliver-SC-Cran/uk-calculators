@@ -7,7 +7,7 @@
 // lists them from here, and routes.test.js checks the two agree.
 
 import { INCOME_TAX } from './lib/rates/incomeTax.js'
-import { ISA } from './lib/rates/isa.js'
+import { CASH_ISA_CUT_SCRAPPED, ISA } from './lib/rates/isa.js'
 import { MINIMUM_WAGE } from './lib/rates/minimumWage.js'
 import { PARENTAL_PAY } from './lib/rates/parentalPay.js'
 import { REDUNDANCY } from './lib/rates/redundancy.js'
@@ -119,7 +119,7 @@ export const routes = [
   {
     path: '/guides',
     title: 'Guides to UK tax, pay and savings | UK Money Calculators',
-    description: `Plain guides to the rules behind the calculators: the ${pounds(INCOME_TAX.taperStart)} tax trap, how to read your payslip, and the Cash ISA changes from April 2027.`,
+    description: `Plain guides to the rules behind the calculators: the ${pounds(INCOME_TAX.taperStart)} tax trap, how to read your payslip, and the scrapped cut to the cash ISA limit.`,
   },
   {
     path: '/guides/100k-tax-trap',
@@ -145,10 +145,10 @@ export const routes = [
   },
   {
     path: '/guides/cash-isa-changes-april-2027',
-    guide: 'Cash ISA changes from April 2027',
-    summary: `The new ${pounds(ISA.cashLimitUnder65AfterChange)} cash limit for under-${ISA.cashLimitFullAllowanceAge}s, what stays the same, and where the rules stand.`,
-    title: `Cash ISA changes from April 2027: the ${pounds(ISA.cashLimitUnder65AfterChange)} limit`,
-    description: `From ${ISA.cashLimitChangeDate}, under-${ISA.cashLimitFullAllowanceAge}s can pay no more than ${pounds(ISA.cashLimitUnder65AfterChange)} a year into cash ISAs. What changes, what stays the same and where the rules stand.`,
+    guide: 'Cash ISA limit cut scrapped: what happens in April 2027',
+    summary: `The planned ${pounds(CASH_ISA_CUT_SCRAPPED.plannedCashLimit)} cash limit was dropped at Budget 2026, so you can still put all ${pounds(ISA.overallAllowance)} in cash. What had been planned, and what is still to be confirmed.`,
+    title: 'Cash ISA limit cut scrapped: what happens in April 2027',
+    description: `Budget 2026 scrapped the planned ${pounds(CASH_ISA_CUT_SCRAPPED.plannedCashLimit)} cash ISA limit. From April 2027 the limit stays ${pounds(ISA.overallAllowance)} and you can still save it all in cash.`,
   },
   {
     path: '/about',

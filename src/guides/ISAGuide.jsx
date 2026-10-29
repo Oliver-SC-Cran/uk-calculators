@@ -1,18 +1,18 @@
 import { Link } from 'react-router-dom'
 import { calculateISAAllowance } from '../lib/isa'
-import { ISA } from '../lib/rates/isa'
+import { CASH_ISA_CUT_SCRAPPED, ISA } from '../lib/rates/isa'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../lib/format'
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-20'
+const LAST_UPDATED = '2026-10-29'
 
 export default function ISAGuide() {
   const { overallAllowance, minAge, lisaLimit, lisaBonusRate } = ISA
   const { lisaMinOpenAge, lisaMaxOpenAge, lisaMaxContributionAge, lisaAccessAge } = ISA
   const { lisaWithdrawalChargeRate, lisaPropertyCap, lisaMonthsBeforePurchase } = ISA
-  const { cashLimitChangeDate, cashLimitUnder65AfterChange, cashLimitFullAllowanceAge } = ISA
+  const { lisaOverCapChargeRate, lisaOverCapChargeFrom } = ISA
 
   const maxBonus = lisaLimit * lisaBonusRate
 
@@ -21,6 +21,8 @@ export default function ISAGuide() {
   const pot = saved + saved * lisaBonusRate
   const charge = pot * lisaWithdrawalChargeRate
   const left = pot - charge
+  // The same pot used for a first home that costs more than the cap.
+  const overCapCharge = pot * lisaOverCapChargeRate
 
   const full = calculateISAAllowance({ cashISA: 10000, stocksISA: 6000, lisa: 4000, age: 30 })
   const part = calculateISAAllowance({ cashISA: 5000, stocksISA: 5000, lisa: 4000, age: 28 })
@@ -77,23 +79,26 @@ export default function ISAGuide() {
         {gbp(saved - left)} less than you put in.
       </p>
       <p>
+        From {lisaOverCapChargeFrom}, if your first home costs more than {gbp(lisaPropertyCap)} and
+        you meet the other rules, the charge is {percent(lisaOverCapChargeRate)} instead. On the
+        same {gbp(pot)} that is {gbp(overCapCharge)}, leaving {gbp(pot - overCapCharge)}: the bonus
+        goes back, and you keep what you put in.
+      </p>
+      <p>
         The <Link to="/lifetime-isa-calculator">Lifetime ISA calculator</Link> projects what your
         payments, the bonus and any growth could add up to by the time you buy a home or reach{' '}
         {lisaAccessAge}.
       </p>
 
-      <h3>The Cash ISA change from April 2027</h3>
+      <h3>The cash ISA cut has been scrapped</h3>
       <p>
-        From {cashLimitChangeDate}, people under {cashLimitFullAllowanceAge} will only be able to
-        pay {gbp(cashLimitUnder65AfterChange)} a year into cash ISAs. The overall allowance stays at{' '}
-        {gbp(overallAllowance)}, so the rest can still go into a stocks and shares, innovative
-        finance or Lifetime ISA. People aged {cashLimitFullAllowanceAge} and over keep the full{' '}
-        {gbp(overallAllowance)} for cash.
-      </p>
-      <p>
-        The regulations were laid before Parliament on 14 September 2026 and come into force on{' '}
-        {cashLimitChangeDate}. They include rules to stop people getting round the lower cash limit.
-        Nothing changes for {TAX_YEAR}, which is the year this calculator covers.
+        A cut to {gbp(CASH_ISA_CUT_SCRAPPED.plannedCashLimit)} a year for cash ISAs, for people
+        under {CASH_ISA_CUT_SCRAPPED.plannedFullAllowanceAge}, had been planned from{' '}
+        {CASH_ISA_CUT_SCRAPPED.wouldHaveStarted}. Budget 2026 scrapped it on{' '}
+        {CASH_ISA_CUT_SCRAPPED.scrapped}. The limit stays at {gbp(overallAllowance)}, so you can
+        still put all of it in cash. Our{' '}
+        <Link to="/guides/cash-isa-changes-april-2027">guide to the scrapped cut</Link> explains
+        what had been planned.
       </p>
 
       <h2>Worked examples</h2>
@@ -154,11 +159,11 @@ export default function ISAGuide() {
         </a>{' '}
         and the{' '}
         <a
-          href="https://www.gov.uk/government/publications/reduction-in-the-cash-individual-savings-account-isa-limit"
+          href="https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar"
           target="_blank"
           rel="noreferrer"
         >
-          reduction in the cash ISA limit
+          Budget 2026 overview of tax legislation and rates
         </a>
         .
       </p>

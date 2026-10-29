@@ -80,16 +80,19 @@ export const INCOME_TAX_RATES = {
     // Interest on cash in an ISA is not taxed.
     // Sources: https://www.gov.uk/apply-tax-free-interest-on-savings
     //          https://www.gov.uk/individual-savings-accounts/how-isas-work
-    //          https://www.gov.uk/government/publications/budget-2025-document/budget-2025-html
+    //          https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
     savingsTax: {
       // The Personal Savings Allowance, by income tax band.
       personalSavingsAllowance: { basic: 1000, higher: 500, additional: 0 },
       startingRateForSavings: 5000, // for people whose other income is low
       startingRateIncomeLimit: 17570, // other income below which the starting rate applies
-      // Announced at Budget 2025: the tax rates on savings income go up by this
-      // much in every band.
-      rateRiseFrom: 'April 2027',
-      rateRise: 0.02,
+      // The tax rates on savings income go up by this much in every band from
+      // this date: 2 percentage points announced at Budget 2025 and 2 more at
+      // Budget 2026, giving 24%, 44% and 49% in 2027/28 (Annex A of Budget
+      // 2026's overview of tax legislation and rates, checked on 29 October
+      // 2026). The allowances above do not change.
+      rateRiseFrom: '6 April 2027',
+      rateRise: 0.04,
     },
 
     // The High Income Child Benefit Charge, on adjusted net income.

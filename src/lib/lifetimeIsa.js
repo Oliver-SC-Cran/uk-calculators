@@ -146,6 +146,20 @@ export function switchContribution({ amount, from, to, typed }) {
 }
 
 /**
+ * Taking a whole pot out to buy a first home that costs more than the property
+ * cap (£450,000) and meets the other rules. From 29 October 2026 the charge is
+ * 20%, not 25%. The bonus is added at 25% of each payment, so 20% of the pot
+ * is exactly the bonus and its growth: what is left is what was paid in, plus
+ * its growth. value and putIn are the projection's value and withdrawal.putIn.
+ */
+export function homeOverCapWithdrawal({ value, putIn, taxYear }) {
+  const pot = atLeastZero(value)
+  const charge = pot * forTaxYear(ISA_RATES, taxYear).lisaOverCapChargeRate
+  const afterCharge = pot - charge
+  return { charge, afterCharge, putIn, shortfall: atLeastZero(putIn) - afterCharge }
+}
+
+/**
  * How much to take out to be left with a sum in cash after the 25% charge.
  * gov.uk: "Withdrawing £160 means you pay a 25% withdrawal charge of £40 and
  * receive £120 in cash".

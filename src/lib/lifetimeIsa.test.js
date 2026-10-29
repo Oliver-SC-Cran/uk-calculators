@@ -1,14 +1,22 @@
 // Tests for the Lifetime ISA calculator. Run with: npm test
 //
 // Each test name says where its expected values came from:
-//   [gov.uk]      a worked example or published rule on gov.uk, checked on 20 October 2026
+//   [gov.uk]      a worked example or published rule on gov.uk, checked on 20 October 2026,
+//                 and the 20% charge for a home over the price cap on 29 October 2026
 //   [own working] worked out by hand from the published rules
 //
 // https://www.gov.uk/lifetime-isa
+// https://www.gov.uk/lifetime-isa/withdrawing-money-from-your-lifetime-isa
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { contributionAs, projectLifetimeIsa, withdrawalFor } from './lifetimeIsa.js'
+import {
+  contributionAs,
+  homeOverCapWithdrawal,
+  projectLifetimeIsa,
+  withdrawalFor,
+} from './lifetimeIsa.js'
+import { ISA } from './rates/isa.js'
 
 const near = (actual, expected, message) =>
   assert.ok(
@@ -146,6 +154,57 @@ test('Lifetime ISA [own working] the withdrawal charge', () => {
   near(grown.withdrawal.shortfall, -449.19)
   // Money already in the account counts as put in.
   assert.equal(lisa({ currentBalance: 2000, contribution: 0 }).withdrawal.putIn, 2000)
+})
+
+test('Lifetime ISA [gov.uk] a home over £450,000 has a 20% charge', () => {
+  // "If the property costs more than £450,000, you'll pay a 20% withdrawal
+  // charge. There's no withdrawal charge for properties costing £450,000 and under."
+  assert.equal(ISA.lisaPropertyCap, 450000)
+  assert.equal(ISA.lisaOverCapChargeRate, 0.2)
+  assert.equal(ISA.lisaWithdrawalChargeRate, 0.25) // still the charge for other reasons
+})
+
+test('Lifetime ISA [own working] the 20% charge takes back the bonus and no more', () => {
+  const overCap = (result) =>
+    homeOverCapWithdrawal({ value: result.value, putIn: result.withdrawal.putIn })
+  // gov.uk's £800 example at 20%: a charge of £200 on the £1,000 pot leaves the
+  // £800 paid in. At 25% it leaves £750, £50 less (6.25% of £800).
+  const govExample = lisa({ contribution: 800, frequency: 'yearly', purchaseAge: 31 })
+  const example = overCap(govExample)
+  assert.equal(example.charge, 200)
+  assert.equal(example.afterCharge, 800)
+  assert.equal(example.shortfall, 0)
+  assert.equal(govExample.withdrawal.shortfall / govExample.paidIn, 0.0625)
+  // With no growth, any payments come back exactly: 1.25 x 0.8 = 1.
+  for (const contribution of [50, 200, 333]) {
+    const result = lisa({ contribution })
+    near(overCap(result).afterCharge, result.paidIn)
+    near(overCap(result).charge, result.bonus)
+  }
+  // £200 a month for 5 years at 4% is worth £16,598.92. 20% is £3,319.78, the
+  // £3,000 bonus and its growth, leaving £13,279.14: the same £200 a month grown
+  // at 4% with no bonus. The 25% charge leaves 6.25% less than that, £12,449.19.
+  const grown = lisa({ contribution: 200, growthPercent: 4 })
+  const i = 1.04 ** (1 / 12) - 1
+  const withoutBonus = ((200 * ((1 + i) ** 60 - 1)) / i) * (1 + i)
+  near(overCap(grown).charge, 3319.78)
+  near(overCap(grown).afterCharge, 13279.14)
+  near(overCap(grown).afterCharge, withoutBonus)
+  near(overCap(grown).shortfall, -1279.14)
+  near(grown.withdrawal.afterCharge, overCap(grown).afterCharge * 0.9375)
+})
+
+test('Lifetime ISA [own working] the 20% charge with odd inputs', () => {
+  assert.deepEqual(homeOverCapWithdrawal({ value: 0, putIn: 0 }), {
+    charge: 0,
+    afterCharge: 0,
+    putIn: 0,
+    shortfall: 0,
+  })
+  assert.equal(homeOverCapWithdrawal({ value: NaN, putIn: 100 }).afterCharge, 0)
+  assert.equal(homeOverCapWithdrawal({ value: -500, putIn: 0 }).charge, 0)
+  assert.equal(homeOverCapWithdrawal({ value: 1000000, putIn: 800000 }).charge, 200000)
+  assert.equal(homeOverCapWithdrawal({ value: 1000000, putIn: 800000 }).shortfall, 0)
 })
 
 test('Lifetime ISA [own working] the goal sets when payments and growth stop', () => {

@@ -7,10 +7,9 @@ import { forTaxYear } from './rates/taxYear.js'
 import { add, info, part, subtract, total } from './working.js'
 
 /**
- * ISA & LISA allowance check for one tax year.
- * NOTE: from April 2027, the Cash ISA allowance is due to reduce to £12,000 for
- * under-65s (Stocks & Shares stays at £20,000). This calculator covers the
- * 2026/27 rules, which have not changed. Revisit before April 2027.
+ * ISA & LISA allowance check for one tax year. Cash ISAs can take the whole
+ * overall allowance: the cut to the cash limit planned for April 2027 was
+ * scrapped at Budget 2026 (CASH_ISA_CUT_SCRAPPED in rates/isa.js).
  */
 export function calculateISAAllowance({ cashISA, stocksISA, lisa, age, taxYear }) {
   const rules = forTaxYear(ISA_RATES, taxYear)

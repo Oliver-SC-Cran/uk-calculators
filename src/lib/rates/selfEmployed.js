@@ -43,3 +43,14 @@ export const SELF_EMPLOYED_RATES = {
 
 // The current tax year's figures, for page copy and guides.
 export const SELF_EMPLOYED = forTaxYear(SELF_EMPLOYED_RATES)
+
+// Not yet in force, so not in the table above: Budget 2026 (28 October 2026)
+// raised the trading allowance from the 2027/28 tax year. Used in the guide
+// only. Move it into the 2027/28 entry when that year is added in April 2027.
+// Sources: https://www.gov.uk/government/publications/budget-2026-document/budget-2026-html
+//          https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar (paragraph 1.5)
+export const TRADING_ALLOWANCE_RISE = {
+  taxYear: '2027/28',
+  from: '6 April 2027',
+  tradingAllowance: 3000,
+}

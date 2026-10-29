@@ -7,13 +7,13 @@ import ResultCard from '../components/ResultCard'
 import { numberInput, problemWith, useCalculatorState } from '../components/useCalculatorState'
 import ISAGuide from '../guides/ISAGuide'
 import { calculateISAAllowance } from '../lib/isa'
-import { ISA } from '../lib/rates/isa'
+import { CASH_ISA_CUT_SCRAPPED, ISA } from '../lib/rates/isa'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP, percent } from '../lib/format'
 import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-22'
+const LAST_UPDATED = '2026-10-29'
 
 export default function ISACalculator() {
   const state = useCalculatorState(
@@ -131,9 +131,10 @@ export default function ISACalculator() {
           </InputCard>
 
           <Notice>
-            From {ISA.cashLimitChangeDate}, people under {ISA.cashLimitFullAllowanceAge} will only
-            be able to pay {formatGBP(ISA.cashLimitUnder65AfterChange)} a year into cash ISAs. This
-            calculator uses the {TAX_YEAR} rules. The guide below explains the change.
+            The planned cut to {formatGBP(CASH_ISA_CUT_SCRAPPED.plannedCashLimit)} for cash ISAs
+            from {CASH_ISA_CUT_SCRAPPED.wouldHaveStarted} was scrapped at Budget 2026. The limit
+            stays at {formatGBP(ISA.overallAllowance)}, so you can still put it all in cash. This
+            calculator uses the {TAX_YEAR} rules.
           </Notice>
         </>
       }

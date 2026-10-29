@@ -15,6 +15,7 @@ import { test } from 'node:test'
 import { calculateTakeHome, taperedPersonalAllowance } from './incomeTax.js'
 import { calculateISAAllowance } from './isa.js'
 import { checkMinimumWage } from './minimumWage.js'
+import { MINIMUM_WAGE_FROM_APRIL_2027 } from './rates/minimumWage.js'
 import { STUDENT_LOAN } from './rates/studentLoans.js'
 import { calculateRedundancyPay } from './redundancy.js'
 import { calculateTakeHomePay } from './takeHome.js'
@@ -459,6 +460,27 @@ test('minimum wage [gov.uk] rates from 1 April 2026 by age', () => {
   assert.equal(wage(20).applicableRate, 10.85)
   assert.equal(wage(21).applicableRate, 12.71)
   assert.equal(wage(67).applicableRate, 12.71)
+})
+
+test('minimum wage [gov.uk] rates announced from April 2027, for the guide only', () => {
+  // gov.uk news of 28 October 2026, "LPC recommendations take the National Living
+  // Wage to £13.21": 21 and over £13.21, 18 to 20 £11.27, 16 to 17 £8.31,
+  // apprentice £8.31, accommodation offset £11.53 "per day". The Budget 2026
+  // document gives the date: "On 1 April 2027, the National Living Wage will
+  // increase by 3.9% to £13.21 per hour".
+  const { announced, ...rates } = MINIMUM_WAGE_FROM_APRIL_2027
+  assert.equal(announced, '28 October 2026')
+  assert.deepEqual(rates, {
+    effectiveFrom: '1 April 2027',
+    nationalLivingWage: 13.21,
+    age18to20: 11.27,
+    under18: 8.31,
+    apprentice: 8.31,
+    accommodationOffsetDaily: 11.53,
+  })
+  // The checker keeps the rates from 1 April 2026.
+  assert.equal(wage(21).applicableRate, 12.71)
+  assert.equal(wage(17, 9, true).applicableRate, 8)
 })
 
 test('minimum wage [gov.uk] apprentices and school leaving age', () => {

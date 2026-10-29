@@ -18,7 +18,7 @@ import { projectLifetimeIsa, switchContribution } from '../lib/lifetimeIsa'
 import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-22'
+const LAST_UPDATED = '2026-10-29'
 
 // Quick picks for what is paid in. They are common amounts, not advice. The
 // last one each month is the most that keeps within the yearly limit.
@@ -36,6 +36,7 @@ export default function LifetimeIsaCalculator() {
   const { lisaLimit, lisaBonusRate, lisaMinOpenAge, lisaMaxOpenAge } = ISA
   const { lisaMaxContributionAge, lisaAccessAge, lisaWithdrawalChargeRate } = ISA
   const { lisaPropertyCap, lisaMonthsBeforePurchase, lisaTerminalIllnessMonths } = ISA
+  const { lisaOverCapChargeRate, lisaOverCapChargeFrom } = ISA
 
   const state = useCalculatorState(
     {
@@ -121,8 +122,8 @@ export default function LifetimeIsaCalculator() {
   const { withdrawal } = result
   const shows = !problem && !cannotOpen
 
-  // Warnings about what was entered, and notes on the result. The planned
-  // change to the Lifetime ISA is always shown.
+  // Warnings about what was entered, and notes on the result. The note on the
+  // First Time Buyer ISA is always shown.
   const notices = []
   if (shows && result.overLimit) {
     notices.push(
@@ -143,25 +144,26 @@ export default function LifetimeIsaCalculator() {
   if (shows && isHome) {
     notices.push(
       <Notice key="home">
-        To use it for your first home, the home must cost {formatGBP(lisaPropertyCap)} or less, you
-        must buy with a mortgage, and a conveyancer or solicitor must act for you. Otherwise the{' '}
-        {percent(lisaWithdrawalChargeRate)} charge applies.
+        To use it for your first home with no charge, the home must cost{' '}
+        {formatGBP(lisaPropertyCap)} or less, you must buy with a mortgage, and a conveyancer or
+        solicitor must act for you. From {lisaOverCapChargeFrom}, a home that costs more but meets
+        the other rules has a {percent(lisaOverCapChargeRate)} charge, which takes back the bonus
+        and leaves what you paid in. Otherwise the {percent(lisaWithdrawalChargeRate)} charge
+        applies.
       </Notice>,
     )
   }
   notices.push(
     <Notice key="reform">
-      A planned change, checked on {LIFETIME_ISA_REFORM.checkedOn}: the government is planning a new
-      First Time Buyer ISA, which will be offered in place of the Lifetime ISA once it is available.
-      Its limits, bonus and property price cap will be announced later. Until then you can still
-      open a Lifetime ISA, and anyone who has one can keep paying in under the current rules
-      indefinitely. These figures use today's rules. See the{' '}
+      Checked on {LIFETIME_ISA_REFORM.checkedOn}: from {LIFETIME_ISA_REFORM.firstTimeBuyerIsa.from},
+      a new First Time Buyer ISA replaces the Lifetime ISA for new savers. A Lifetime ISA opened
+      before then carries on under the current rules, which these figures use. See HM Treasury's{' '}
       <a
         href="https://www.gov.uk/government/consultations/first-time-buyer-isa-consultation"
         target="_blank"
         rel="noreferrer"
       >
-        First Time Buyer ISA consultation
+        response on the First Time Buyer ISA
       </a>{' '}
       on gov.uk.
     </Notice>,
@@ -339,7 +341,9 @@ export default function LifetimeIsaCalculator() {
               including the bonus and any growth, so with little or no growth you get back less than
               you paid in. It does not apply if you use the money for your first home, take it out
               from {lisaAccessAge}, or are terminally ill with less than {lisaTerminalIllnessMonths}{' '}
-              months to live. What is already in your account counts here as money you put in.
+              months to live. A first home over {formatGBP(lisaPropertyCap)} has a{' '}
+              {percent(lisaOverCapChargeRate)} charge instead. What is already in your account
+              counts here as money you put in.
             </p>
           </section>
         </ResultCard>

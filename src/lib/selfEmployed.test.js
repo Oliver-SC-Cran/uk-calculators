@@ -15,6 +15,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { calculateTakeHome } from './incomeTax.js'
 import { calculateClass4NationalInsurance, calculateSelfEmployedTax } from './selfEmployed.js'
+import { TRADING_ALLOWANCE_RISE } from './rates/selfEmployed.js'
 import { calculateStudentLoanForYear } from './studentLoans.js'
 
 const near = (actual, expected, message) =>
@@ -117,6 +118,19 @@ test('self-employed [gov.uk] trading income of £1,000 or less is covered in ful
   }
   assert.equal(soleTrader(1001, { useTradingAllowance: true }).profit, 1)
   assert.equal(soleTrader(1001, { useTradingAllowance: true }).underTradingAllowance, false)
+})
+
+test('self-employed [gov.uk] the trading allowance rises to £3,000 from 2027/28', () => {
+  // Budget 2026 document, checked on 29 October 2026: "Increase the Income Tax
+  // Trading Allowance to £3,000 from £1,000 from 6 April 2027". It is used in the
+  // guide only. The 2026/27 calculation keeps £1,000.
+  assert.deepEqual(TRADING_ALLOWANCE_RISE, {
+    taxYear: '2027/28',
+    from: '6 April 2027',
+    tradingAllowance: 3000,
+  })
+  assert.equal(soleTrader(3000, { useTradingAllowance: true }).profit, 2000)
+  assert.equal(soleTrader(3000, { useTradingAllowance: true }).underTradingAllowance, false)
 })
 
 test('self-employed [gov.uk] income over £1,000 must be registered even with no tax due', () => {

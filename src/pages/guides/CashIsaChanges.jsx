@@ -1,157 +1,157 @@
 import { Link } from 'react-router-dom'
 import GuidePage from '../../components/GuidePage'
-import { ISA } from '../../lib/rates/isa'
+import { CASH_ISA_CUT_SCRAPPED, ISA, LIFETIME_ISA_REFORM } from '../../lib/rates/isa'
+import { SAVINGS_TAX } from '../../lib/rates/incomeTax'
 import { SELF_EMPLOYED } from '../../lib/rates/selfEmployed'
-import { TAX_YEAR, TAX_YEAR_END } from '../../lib/rates/taxYear'
+import { TAX_YEAR } from '../../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../../lib/format'
+import { TAX_BANDS_AFTER_RISE } from '../../lib/overpayOrSave'
 import Source from '../../components/Source'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-11'
+const LAST_UPDATED = '2026-10-29'
 
 export default function CashIsaChanges() {
-  const { overallAllowance, lisaLimit, cashLimitChangeDate } = ISA
-  const cashLimit = ISA.cashLimitUnder65AfterChange
-  const fullAge = ISA.cashLimitFullAllowanceAge
-  const chargeRate = ISA.cashInterestChargeRateAfterChange
-  const firstYear = SELF_EMPLOYED.nextTaxYear
-
-  const monthlySaver = 500
-  const earlySaver = 15000
-  const interest = 100
+  const { overallAllowance, minAge, lisaOverCapChargeRate, lisaPropertyCap } = ISA
+  const plan = CASH_ISA_CUT_SCRAPPED
+  const cutTo = plan.plannedCashLimit
+  const fullAge = plan.plannedFullAllowanceAge
+  const nextYear = SELF_EMPLOYED.nextTaxYear
+  const firstTimeBuyerIsaFrom = LIFETIME_ISA_REFORM.firstTimeBuyerIsa.from
 
   return (
     <GuidePage
       path="/guides/cash-isa-changes-april-2027"
       updated={LAST_UPDATED}
-      calculators={['/isa-calculator', '/mortgage-overpayment-calculator', '/salary-calculator']}
+      calculators={[
+        '/isa-calculator',
+        '/lifetime-isa-calculator',
+        '/mortgage-overpayment-calculator',
+      ]}
       intro={
         <>
-          From {cashLimitChangeDate}, people under {fullAge} will be able to pay no more than{' '}
-          {gbp(cashLimit)} a year into cash ISAs. The overall {gbp(overallAllowance)} allowance is
-          not changing. This guide sets out what the regulations and HMRC's notes say so far.
+          The cut to the cash ISA limit planned for {plan.wouldHaveStarted} has been scrapped. At
+          Budget 2026 on {plan.scrapped}, the government said the overall ISA allowance stays at{' '}
+          {gbp(overallAllowance)} and you can still put all of it in cash, whatever your age.
         </>
       }
     >
-      <h2>What is changing</h2>
+      <h2>What Budget 2026 changed</h2>
       <p>
-        In {TAX_YEAR} you can pay up to {gbp(overallAllowance)} into ISAs and put all of it in cash
-        if you want to. From {cashLimitChangeDate}:
+        At the Autumn Budget in {plan.announced}, the government announced that from{' '}
+        {plan.wouldHaveStarted} people under {fullAge} could pay no more than {gbp(cutTo)} a year
+        into cash ISAs. At Budget 2026 it decided not to go ahead. So from {plan.wouldHaveStarted}:
       </p>
       <ul>
+        <li>the overall ISA allowance stays at {gbp(overallAllowance)} a year</li>
         <li>
-          if you are under {fullAge}, no more than {gbp(cashLimit)} of your {gbp(overallAllowance)}{' '}
-          can go into cash ISAs in a tax year
-        </li>
-        <li>
-          if you are {fullAge} or over, you keep the full {gbp(overallAllowance)} for cash. This
-          applies from the start of the tax year in which you turn {fullAge}
+          you can put all {gbp(overallAllowance)} into cash ISAs, as you can in {TAX_YEAR}, at any
+          age from {minAge}
         </li>
       </ul>
       <p>
-        The change was announced at the Autumn Budget in 2025. HMRC's note gives the aim as
-        encouraging more people to invest and improving long-term returns for savers. It also says
-        that in 2022 to 2023, 22% of cash ISA savers under {fullAge} paid in more than{' '}
-        {gbp(cashLimit)}.
+        The regulations for the cut had already been laid before Parliament on{' '}
+        {plan.regulationsLaid}. The government says it will lay new regulations in{' '}
+        {plan.newRegulationsDue} to keep the limit at {gbp(overallAllowance)}.
       </p>
 
-      <h2>What stays the same</h2>
-      <ul>
-        <li>The overall limit of {gbp(overallAllowance)} a year across all your ISAs.</li>
-        <li>
-          The limits for stocks and shares ISAs, innovative finance ISAs and Lifetime ISAs. A
-          Lifetime ISA still takes up to {gbp(lisaLimit)} a year, inside the {gbp(overallAllowance)}
-          .
-        </li>
-        <li>
-          The rules for {TAX_YEAR}. Until {TAX_YEAR_END} you can still pay the whole{' '}
-          {gbp(overallAllowance)} into cash.
-        </li>
-        <li>Transfers from one cash ISA to another.</li>
-        <li>ISA interest is still tax-free, and you still do not declare it to HMRC.</li>
-      </ul>
+      <h2>What had been planned</h2>
       <p>
-        The new figure is a limit on what you pay in during a tax year. It is not a limit on what
-        you hold, so money already in cash ISAs does not count towards it.
-      </p>
-
-      <h2>The rules that stop people getting round it</h2>
-      <p>
-        The regulations add three rules, so that the lower limit cannot be avoided by using another
-        type of ISA to hold cash.
+        If you read about the change earlier in 2026, this is what it would have done from{' '}
+        {plan.wouldHaveStarted}:
       </p>
       <ul>
         <li>
-          No transfers into cash. If you are under {fullAge}, you will not be able to transfer money
-          from a stocks and shares ISA or an innovative finance ISA into a cash ISA. You can still
-          transfer the other way, from cash into investments.
+          if you were under {fullAge}, no more than {gbp(cutTo)} of your {gbp(overallAllowance)}{' '}
+          could have gone into cash ISAs in a tax year. The other {gbp(overallAllowance - cutTo)}{' '}
+          could only have gone into a stocks and shares ISA, an innovative finance ISA or a Lifetime
+          ISA
         </li>
         <li>
-          A charge on interest. Interest paid on cash held inside a stocks and shares ISA or an
-          innovative finance ISA will have a flat {percent(chargeRate)} charge. On {gbp(interest)}{' '}
-          of interest that is {gbp(interest * chargeRate)}. Your ISA provider pays it to HMRC, and
-          it applies whatever your age.
-        </li>
-        <li>
-          A limit on money market funds. A stocks and shares ISA cannot be made up entirely of money
-          market funds. Shares, funds, investment trusts and bonds, including gilts, are not treated
-          as cash-like. This rule does not apply to Junior ISAs.
+          if you were {fullAge} or over, you would have kept the full {gbp(overallAllowance)} for
+          cash, from the start of the tax year in which you turned {fullAge}
         </li>
       </ul>
+      <p>
+        HMRC gave the aim as encouraging more people to invest. Three more rules were planned to
+        stop people getting round the lower limit:
+      </p>
+      <ul>
+        <li>
+          no transfers into cash ISAs from a stocks and shares or innovative finance ISA for people
+          under {fullAge}
+        </li>
+        <li>
+          a flat {percent(plan.plannedCashInterestChargeRate)} charge on interest paid on cash held
+          in a stocks and shares or innovative finance ISA, paid by the ISA provider
+        </li>
+        <li>a rule that a stocks and shares ISA could not hold only money market funds</li>
+      </ul>
 
-      <h2>Worked examples for {firstYear}</h2>
+      <h2>What happens to the other planned rules</h2>
+      <p>
+        When this guide was updated on {plan.checkedOn}, the Budget 2026 documents did not say
+        whether those three rules will still start on {plan.wouldHaveStarted}. They were written to
+        protect the {gbp(cutTo)} limit, which is no longer happening. HM Treasury's response on the
+        new First Time Buyer ISA says that, because the cash limit is staying at{' '}
+        {gbp(overallAllowance)}, the rules no longer need to apply to that account. It does not say
+        what happens for other ISAs. This guide will be updated when the new regulations are
+        published.
+      </p>
+
+      <h2>What it means for you</h2>
       <h3>
-        You are under {fullAge} and want {gbp(overallAllowance)} in cash
+        You want to save {gbp(overallAllowance)} in cash in {nextYear}
       </h3>
       <p>
-        You can pay {gbp(cashLimit)} into cash ISAs. The other {gbp(overallAllowance - cashLimit)}{' '}
-        of your allowance can only go into a stocks and shares ISA, an innovative finance ISA or, if
-        you are eligible, a Lifetime ISA (up to {gbp(lisaLimit)}). Cash saved outside an ISA is not
-        affected by any of this, but the interest on it can be taxed.
+        You can, in one cash ISA or several, whatever your age. Nothing changes from {TAX_YEAR}.
       </p>
-      <h3>You save {gbp(monthlySaver)} a month into a cash ISA</h3>
+      <h3>You moved money into investments because of the planned limit</h3>
       <p>
-        That is {gbp(monthlySaver * 12)} a year, which is under {gbp(cashLimit)}. Nothing changes
-        for you.
+        You do not have to do anything. gov.uk says you can transfer an ISA to a different type of
+        ISA, and that is still true in {TAX_YEAR}. The planned ban on transfers into cash from{' '}
+        {plan.wouldHaveStarted} is one of the rules whose future is not yet confirmed.
       </p>
-      <h3>You turn {fullAge} in January 2028</h3>
+      <h3>You are saving for your first home</h3>
       <p>
-        Your birthday falls in the {firstYear} tax year, so you have the full{' '}
-        {gbp(overallAllowance)} for cash from {cashLimitChangeDate}, the first day of that tax year.
-      </p>
-      <h3>
-        You pay {gbp(earlySaver)} into a cash ISA in {TAX_YEAR}
-      </h3>
-      <p>
-        That is allowed. The {gbp(cashLimit)} limit does not apply until {cashLimitChangeDate}.
+        Budget 2026 also confirmed a new First Time Buyer ISA from {firstTimeBuyerIsaFrom}, which
+        replaces the Lifetime ISA for new savers. And from {ISA.lisaOverCapChargeFrom}, taking money
+        out of a Lifetime ISA to buy a first home that costs more than {gbp(lisaPropertyCap)} has a{' '}
+        {percent(lisaOverCapChargeRate)} charge instead of {percent(ISA.lisaWithdrawalChargeRate)}.
+        The <Link to="/lifetime-isa-calculator">Lifetime ISA calculator</Link> explains both.
       </p>
 
       <h2>Where things stand</h2>
       <ul>
-        <li>November 2025: the change is announced at the Autumn Budget.</li>
-        <li>23 June 2026: the government publishes the rules to stop the limit being avoided.</li>
-        <li>25 June to 2 August 2026: the draft regulations are put out for consultation.</li>
+        <li>{plan.announced}: the cut is announced at the Autumn Budget.</li>
+        <li>{plan.regulationsLaid}: the regulations for the cut are laid before Parliament.</li>
         <li>
-          14 September 2026: the Individual Savings Account (Amendment) (No. 2) Regulations 2026 are
-          laid before Parliament. They come into force on {cashLimitChangeDate}.
+          {plan.scrapped}: Budget 2026 scraps the cut. The limit stays at {gbp(overallAllowance)}.
         </li>
-        <li>17 September 2026: HMRC publishes its note on who is affected.</li>
+        <li>{plan.newRegulationsDue}: new regulations are due to keep the limit as it is.</li>
       </ul>
-      <p>
-        HMRC says it will publish updated guidance for ISA providers before {cashLimitChangeDate}.
-        When this guide was last updated, gov.uk's main ISA pages still described the {TAX_YEAR}{' '}
-        rules and did not mention the change.
-      </p>
 
       <h2>Common questions</h2>
-      <h3>Do I have to move money out of my cash ISAs?</h3>
-      <p>No. The limit is on new money you pay in each tax year.</p>
-      <h3>I am 64. When do I get the higher limit?</h3>
-      <p>From the start of the tax year in which you turn {fullAge}, not from your birthday.</p>
-      <h3>Is the Lifetime ISA limit changing?</h3>
-      <p>No. It stays at {gbp(lisaLimit)} a year.</p>
-      <h3>Will I have to pay the {percent(chargeRate)} charge myself?</h3>
-      <p>No. Your ISA provider pays it to HMRC. You do not need to declare ISA interest.</p>
+      <h3>Is the cash ISA limit still going down to {gbp(cutTo)}?</h3>
+      <p>
+        No. It stays at {gbp(overallAllowance)} for everyone aged {minAge} and over, the same as the
+        overall allowance.
+      </p>
+      <h3>Do I need to do anything?</h3>
+      <p>No. You can keep paying into cash ISAs as you do now.</p>
+      <h3>Is the overall ISA allowance changing?</h3>
+      <p>
+        No. It is {gbp(overallAllowance)} in {TAX_YEAR} and in {nextYear}.
+      </p>
+      <h3>Is tax on savings outside an ISA changing?</h3>
+      <p>
+        Yes. From {SAVINGS_TAX.rateRiseFrom}, interest above your Personal Savings Allowance is
+        taxed at {percent(TAX_BANDS_AFTER_RISE.basic)}, {percent(TAX_BANDS_AFTER_RISE.higher)} or{' '}
+        {percent(TAX_BANDS_AFTER_RISE.additional)}, depending on your income tax band. The
+        allowances stay the same, and interest in a cash ISA is still not taxed. The guide{' '}
+        <Link to="/guides/overpay-mortgage-or-save">Should I overpay my mortgage or save?</Link> has
+        examples.
+      </p>
 
       <h2>Check your allowance</h2>
       <p>
@@ -162,21 +162,25 @@ export default function CashIsaChanges() {
 
       <h2>Where this comes from</h2>
       <p>
-        All from gov.uk: HMRC's{' '}
+        All from gov.uk: the{' '}
+        <Source href="https://www.gov.uk/government/publications/budget-2026-document/budget-2026-html">
+          Budget 2026 document
+        </Source>
+        , the{' '}
+        <Source href="https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar">
+          overview of tax legislation and rates
+        </Source>{' '}
+        and its{' '}
+        <Source href="https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances">
+          rates and allowances
+        </Source>
+        , HM Treasury's{' '}
+        <Source href="https://www.gov.uk/government/consultations/first-time-buyer-isa-consultation">
+          response on the First Time Buyer ISA
+        </Source>
+        , HMRC's{' '}
         <Source href="https://www.gov.uk/government/publications/reduction-in-the-cash-individual-savings-account-isa-limit">
-          note on the reduction in the cash ISA limit
-        </Source>
-        , the{' '}
-        <Source href="https://www.gov.uk/government/publications/fiscal-events-2026-factsheets/isa-reform-2027-anti-circumvention-rules-factsheet">
-          factsheet on the rules for 2027
-        </Source>
-        ,{' '}
-        <Source href="https://www.gov.uk/government/publications/tax-free-savings-newsletter-23/tax-free-savings-newsletter-23-september-2026">
-          Tax-free savings newsletter 23
-        </Source>
-        , the{' '}
-        <Source href="https://www.gov.uk/government/consultations/the-individual-savings-account-amendment-regulations-2026">
-          consultation on the draft regulations
+          note on the planned reduction in the cash ISA limit
         </Source>{' '}
         and the pages on{' '}
         <Source href="https://www.gov.uk/individual-savings-accounts">

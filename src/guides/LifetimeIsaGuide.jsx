@@ -1,18 +1,22 @@
 import { Link } from 'react-router-dom'
 import { ISA, LIFETIME_ISA_REFORM } from '../lib/rates/isa'
 import { TAX_YEAR } from '../lib/rates/taxYear'
-import { formatGBP as gbp, percent } from '../lib/format'
-import { projectLifetimeIsa, withdrawalFor } from '../lib/lifetimeIsa'
+import { formatAmount, formatGBP as gbp, percent } from '../lib/format'
+import { homeOverCapWithdrawal, projectLifetimeIsa, withdrawalFor } from '../lib/lifetimeIsa'
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-20'
+const LAST_UPDATED = '2026-10-29'
 
 export default function LifetimeIsaGuide() {
   const { overallAllowance, lisaLimit, lisaBonusRate, lisaMinOpenAge, lisaMaxOpenAge } = ISA
   const { lisaMaxContributionAge, lisaAccessAge, lisaWithdrawalChargeRate } = ISA
   const { lisaPropertyCap, lisaMonthsBeforePurchase, lisaTerminalIllnessMonths } = ISA
+  const { lisaOverCapChargeRate, lisaOverCapChargeFrom } = ISA
   const maxBonus = lisaLimit * lisaBonusRate
+  const newAccount = LIFETIME_ISA_REFORM.firstTimeBuyerIsa
+  const overCap = (result) =>
+    homeOverCapWithdrawal({ value: result.value, putIn: result.withdrawal.putIn })
 
   // gov.uk's example of the withdrawal charge, with no growth.
   const govExample = projectLifetimeIsa({
@@ -22,6 +26,7 @@ export default function LifetimeIsaGuide() {
     goal: 'home',
     purchaseAge: 31,
   })
+  const govExampleOverCap = overCap(govExample)
   const cashNeeded = 120
   const toWithdraw = withdrawalFor(cashNeeded)
 
@@ -30,6 +35,8 @@ export default function LifetimeIsaGuide() {
   const homeGrowth = 4
   const homeGrown = projectLifetimeIsa({ ...home, growthPercent: homeGrowth })
   const homeCash = projectLifetimeIsa({ ...home, growthPercent: 0 })
+  const homeGrownOverCap = overCap(homeGrown)
+  const homeCashOverCap = overCap(homeCash)
 
   // £4,000 a year from 25, kept until 60.
   const later = { age: 25, contribution: lisaLimit, frequency: 'yearly', goal: 'retirement' }
@@ -41,8 +48,10 @@ export default function LifetimeIsaGuide() {
     <CalculatorGuide heading={<>How a Lifetime ISA works in {TAX_YEAR}</>} updated={LAST_UPDATED}>
       <p>
         A Lifetime ISA is a savings account for buying your first home or for later life. The
-        government adds a {percent(lisaBonusRate)} bonus to what you pay in. In return, you pay a{' '}
-        {percent(lisaWithdrawalChargeRate)} charge if you take money out for any other reason.
+        government adds a {percent(lisaBonusRate)} bonus to what you pay in. In return, there is a
+        charge if you take money out for anything else: {percent(lisaWithdrawalChargeRate)} in most
+        cases, or {percent(lisaOverCapChargeRate)} towards a first home that costs more than{' '}
+        {gbp(lisaPropertyCap)}.
       </p>
 
       <h3>The rules</h3>
@@ -88,6 +97,11 @@ export default function LifetimeIsaGuide() {
         bonus, as long as you are both first-time buyers. If you also have a Help to Buy ISA, you
         can only use the bonus from one of them.
       </p>
+      <p>
+        From {lisaOverCapChargeFrom}, you can also take the money out for a first home that costs
+        more than {gbp(lisaPropertyCap)}, as long as you meet the other rules. You do not keep the
+        bonus: a {percent(lisaOverCapChargeRate)} charge applies, which the next section explains.
+      </p>
 
       <h3>Using it for later life</h3>
       <p>
@@ -95,39 +109,60 @@ export default function LifetimeIsaGuide() {
         die, the account ends on that date and there is no charge on what is in it.
       </p>
 
-      <h3>Taking money out for any other reason</h3>
+      <h3>The withdrawal charges</h3>
       <p>
-        You pay a {percent(lisaWithdrawalChargeRate)} charge on whatever you take out. It is{' '}
-        {percent(lisaWithdrawalChargeRate)} of the whole amount, bonus included, so it takes back
-        more than the bonus added. In gov.uk's example, with no growth, {gbp(govExample.paidIn)}{' '}
-        earns a bonus of {gbp(govExample.bonus)}, making {gbp(govExample.value)}. Taking it all out
-        costs {gbp(govExample.withdrawal.charge)} and leaves{' '}
-        {gbp(govExample.withdrawal.afterCharge)}, which is {gbp(govExample.withdrawal.shortfall)}{' '}
-        less than was paid in.
+        If you take money out for any other reason, you pay a {percent(lisaWithdrawalChargeRate)}{' '}
+        charge on whatever you take out. It is {percent(lisaWithdrawalChargeRate)} of the whole
+        amount, bonus included, so it takes back more than the bonus added. In gov.uk's example,
+        with no growth, {gbp(govExample.paidIn)} earns a bonus of {gbp(govExample.bonus)}, making{' '}
+        {gbp(govExample.value)}. Taking it all out costs {gbp(govExample.withdrawal.charge)} and
+        leaves {gbp(govExample.withdrawal.afterCharge)}, which is{' '}
+        {gbp(govExample.withdrawal.shortfall)} less than was paid in. That is{' '}
+        {formatAmount(govExample.withdrawal.shortfall / govExample.paidIn, 'percent')} of what you
+        paid in, whatever the amount.
       </p>
       <p>
-        To end up with a set amount of cash, you have to take out more to cover the charge. To be
-        left with {gbp(cashNeeded)}, you take out {gbp(toWithdraw)} and pay{' '}
-        {gbp(toWithdraw - cashNeeded)}. There is no charge if you are terminally ill with less than{' '}
-        {lisaTerminalIllnessMonths} months to live.
+        From {lisaOverCapChargeFrom}, the charge is {percent(lisaOverCapChargeRate)} if you take the
+        money out for a first home that costs more than {gbp(lisaPropertyCap)}, as long as you meet
+        the other rules. On the same {gbp(govExample.value)} that is {gbp(govExampleOverCap.charge)}
+        , which is the bonus, so you get back the {gbp(govExampleOverCap.afterCharge)} you paid in.
+        With growth, it takes back the bonus and the growth on the bonus, and leaves what you paid
+        in and the growth on that. You lose no more than the bonus.
+      </p>
+      <p>
+        To end up with a set amount of cash when the {percent(lisaWithdrawalChargeRate)} charge
+        applies, you have to take out more to cover it. To be left with {gbp(cashNeeded)}, you take
+        out {gbp(toWithdraw)} and pay {gbp(toWithdraw - cashNeeded)}. There is no charge if you are
+        terminally ill with less than {lisaTerminalIllnessMonths} months to live.
       </p>
 
-      <h3>A planned change to Lifetime ISAs</h3>
+      <h3>The First Time Buyer ISA from {newAccount.from}</h3>
       <p>
-        Checked on {LIFETIME_ISA_REFORM.checkedOn}. At Budget 2025 the government announced a new,
-        simpler ISA to help first-time buyers save for a home, now called the First Time Buyer ISA.
-        Once it is available, it will be offered in place of the Lifetime ISA. HM Treasury consulted
-        on it from {LIFETIME_ISA_REFORM.consultationOpened} to{' '}
-        {LIFETIME_ISA_REFORM.consultationClosed}, and says it wants the new account available as
-        soon as practically possible. Its limits, bonus and property price cap will be announced
-        later.
+        Checked on {LIFETIME_ISA_REFORM.checkedOn}. HM Treasury consulted on a new First Time Buyer
+        ISA from {LIFETIME_ISA_REFORM.consultationOpened} to{' '}
+        {LIFETIME_ISA_REFORM.consultationClosed}. Its response, published on{' '}
+        {LIFETIME_ISA_REFORM.responsePublished}, confirms the new account from {newAccount.from}. It
+        will be offered in place of the Lifetime ISA. A Lifetime ISA opened before then can carry on
+        under its current rules, so you can still open one until then.
       </p>
-      <p>
-        Until then you can still open a Lifetime ISA, and anyone who has one can keep paying in
-        under the current rules indefinitely. The Budget also said the {gbp(lisaLimit)} Lifetime ISA
-        limit will stay the same until {LIFETIME_ISA_REFORM.lisaLimitFixedUntil}. The figures in
-        this guide and in the calculator use today's rules.
-      </p>
+      <p>The response sets out these features of the new account:</p>
+      <ul>
+        <li>
+          you can pay in up to {gbp(newAccount.yearlyLimit)} a tax year, which counts towards your
+          ISA allowance
+        </li>
+        <li>
+          the government adds {percent(newAccount.bonusRate)} of the final balance when you use it
+          to buy your first home, up to {gbp(newAccount.bonusCap)} in all
+        </li>
+        <li>
+          the home must cost {gbp(newAccount.propertyCap)} or less, you must buy with a mortgage,
+          and you must have held the account for {newAccount.monthsHeld} months
+        </li>
+        <li>you must be {newAccount.minAge} or over to open one, with no upper age limit</li>
+        <li>you cannot move a Lifetime ISA into it, but you can use both towards the same home</li>
+      </ul>
+      <p>The figures in this guide and in the calculator use the Lifetime ISA rules.</p>
 
       <h2>Worked examples</h2>
       <p>
@@ -147,6 +182,20 @@ export default function LifetimeIsaGuide() {
         charge would be {gbp(homeCash.withdrawal.charge)} and you would get{' '}
         {gbp(homeCash.withdrawal.afterCharge)}, which is {gbp(homeCash.withdrawal.shortfall)} less
         than you paid in.
+      </p>
+      <p>
+        If the home cost more than {gbp(lisaPropertyCap)}, the {percent(lisaOverCapChargeRate)}{' '}
+        charge on {gbp(homeCash.value)} would be {gbp(homeCashOverCap.charge)} and you would get{' '}
+        {gbp(homeCashOverCap.afterCharge)}, exactly what you paid in. With {homeGrowth}% growth, the
+        charge on {gbp(homeGrown.value)} would be {gbp(homeGrownOverCap.charge)} and you would get{' '}
+        {gbp(homeGrownOverCap.afterCharge)}: what {gbp(home.contribution)} a month would have grown
+        to at {homeGrowth}% without the bonus. The {percent(lisaWithdrawalChargeRate)} charge would
+        leave {gbp(homeGrown.withdrawal.afterCharge)}, which is{' '}
+        {formatAmount(
+          1 - homeGrown.withdrawal.afterCharge / homeGrownOverCap.afterCharge,
+          'percent',
+        )}{' '}
+        less than that.
       </p>
 
       <h3>
@@ -179,8 +228,11 @@ export default function LifetimeIsaGuide() {
 
       <h3>What if the home costs more than {gbp(lisaPropertyCap)}?</h3>
       <p>
-        You cannot use your Lifetime ISA for it. Taking the money out would count as a withdrawal
-        for another reason, so the {percent(lisaWithdrawalChargeRate)} charge would apply.
+        From {lisaOverCapChargeFrom} you can use your Lifetime ISA for it, as long as you meet the
+        other rules for a first home, but a {percent(lisaOverCapChargeRate)} charge applies to what
+        you take out. That takes back the bonus and leaves what you paid in. If the purchase does
+        not meet the other rules, it counts as a withdrawal for another reason and the{' '}
+        {percent(lisaWithdrawalChargeRate)} charge applies.
       </p>
 
       <h3>Can I use it if I am buying with someone else?</h3>
@@ -189,12 +241,11 @@ export default function LifetimeIsaGuide() {
         you are both first-time buyers and the purchase meets the other rules.
       </p>
 
-      <h3>What happens to my Lifetime ISA if the rules change?</h3>
+      <h3>What happens to my Lifetime ISA when the First Time Buyer ISA starts?</h3>
       <p>
-        From what the government has said so far, you can keep your Lifetime ISA and keep paying
-        into it under the current rules indefinitely, including after the new First Time Buyer ISA
-        is available. You can also still open one until then. The details of the new account are
-        still to be announced, so check gov.uk for updates.
+        HM Treasury says a Lifetime ISA opened before {newAccount.from} can carry on under its
+        current rules. You cannot transfer it into a First Time Buyer ISA, but you can use both
+        towards the same home.
       </p>
 
       <h2>Where these figures come from</h2>
@@ -203,22 +254,15 @@ export default function LifetimeIsaGuide() {
         <a href="https://www.gov.uk/lifetime-isa" target="_blank" rel="noreferrer">
           Lifetime ISA
         </a>{' '}
-        on gov.uk, including the example of the withdrawal charge. The planned change is from HM
-        Treasury's{' '}
+        on gov.uk, including the example of the withdrawal charge and the{' '}
+        {percent(lisaOverCapChargeRate)} charge for a home over {gbp(lisaPropertyCap)}. The First
+        Time Buyer ISA is from HM Treasury's{' '}
         <a
           href="https://www.gov.uk/government/consultations/first-time-buyer-isa-consultation"
           target="_blank"
           rel="noreferrer"
         >
-          First Time Buyer ISA consultation
-        </a>{' '}
-        and the{' '}
-        <a
-          href="https://www.gov.uk/government/publications/budget-2025-document/budget-2025-html"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Budget 2025 document
+          response to the First Time Buyer ISA consultation
         </a>
         . The other figures come from the calculator on this page.
       </p>

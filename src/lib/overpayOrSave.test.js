@@ -2,11 +2,13 @@
 // Run with: npm test
 //
 // Each test name says where its expected values came from:
-//   [gov.uk]      a worked example or published rule on gov.uk, checked on 20 October 2026
+//   [gov.uk]      a worked example or published rule on gov.uk, checked on 20 October 2026,
+//                 and the rates from April 2027 checked on 29 October 2026
 //   [own working] worked out by hand from the published rules
 //
 // https://www.gov.uk/apply-tax-free-interest-on-savings
 // https://www.gov.uk/individual-savings-accounts/how-isas-work
+// https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
@@ -14,6 +16,8 @@ import {
   interestSavedByOverpaying,
   rateBeforeTaxToMatch,
   savingsInterestAfterTax,
+  TAX_BANDS,
+  TAX_BANDS_AFTER_RISE,
 } from './overpayOrSave.js'
 
 const near = (actual, expected, message) =>
@@ -97,6 +101,54 @@ test('overpay or save [own working] the worked examples in the guide', () => {
   near(save({ amount: 20000, band: 'higher' }).tax, 120)
   near(save({ amount: 20000, band: 'higher' }).afterTax, 680)
   near(save({ amount: 20000, band: 'higher', isa: true }).afterTax, 800)
+})
+
+test('overpay or save [gov.uk] savings tax rates from 6 April 2027', () => {
+  // Budget 2026 overview of tax legislation and rates, Annex A, "Savings rates":
+  // savings basic rate 20% in 2026 to 2027 and 24% in 2027 to 2028, higher rate
+  // 40% and 44%, additional rate 45% and 49%. The Personal Savings Allowance is
+  // £1,000 and £500 in both years.
+  assert.deepEqual(TAX_BANDS, { basic: 0.2, higher: 0.4, additional: 0.45 })
+  assert.deepEqual(TAX_BANDS_AFTER_RISE, { basic: 0.24, higher: 0.44, additional: 0.49 })
+  // The allowances do not change, so interest inside them is still not taxed.
+  near(save({ amount: 25000, band: 'basic', afterRise: true }).tax, 0) // £1,000 of interest
+  near(save({ amount: 12500, band: 'higher', afterRise: true }).tax, 0) // £500
+})
+
+test('overpay or save [own working] tax after the rise at each boundary', () => {
+  const after = (settings) => save({ ...settings, afterRise: true })
+  // gov.uk's £1,300 example with the new rate: £300 over the allowance at 24%.
+  near(after({ amount: 32500, band: 'basic' }).tax, 72)
+  // £1,000 of interest: none taxed at basic rate, £500 at 44%, all at 49%.
+  near(after({ amount: 25000, band: 'basic' }).tax, 0)
+  near(after({ amount: 25000, band: 'higher' }).tax, 220)
+  near(after({ amount: 25000, band: 'additional' }).tax, 490)
+  // £1 of interest over the basic rate allowance: £25,025 at 4% is £1,001.
+  near(after({ amount: 25025, band: 'basic' }).tax, 0.24)
+  // Nothing to tax, and a cash ISA.
+  near(after({ amount: 0, band: 'additional' }).tax, 0)
+  near(after({ amount: -500, band: 'higher' }).tax, 0)
+  near(after({ amount: 25000, band: 'additional', isa: true }).tax, 0)
+  // £1,000,000 at 4% is £40,000, all taxed at 49% for an additional rate taxpayer.
+  near(after({ amount: 1000000, band: 'additional' }).tax, 19600)
+  // Left off, the rise changes nothing.
+  near(save({ amount: 25000, band: 'additional', afterRise: false }).tax, 450)
+})
+
+test('overpay or save [own working] the worked examples in the guide after the rise', () => {
+  const after = (settings) => save({ amount: 20000, ...settings, afterRise: true })
+  // £20,000 at 4% is £800. With the allowance used up elsewhere, a basic rate
+  // taxpayer pays 24%: £192, keeping £608.
+  near(after({ band: 'basic', otherInterest: 1000 }).tax, 192)
+  near(after({ band: 'basic', otherInterest: 1000 }).afterTax, 608)
+  near(after({ band: 'basic' }).afterTax, 800)
+  // A higher rate taxpayer pays 44% on the £300 over the £500 allowance: £132.
+  near(after({ band: 'higher' }).tax, 132)
+  near(after({ band: 'higher' }).afterTax, 668)
+  // To match a 4.5% mortgage on interest above the allowance.
+  near(rateBeforeTaxToMatch(4.5, 'basic', { afterRise: true }), 4.5 / 0.76)
+  near(rateBeforeTaxToMatch(4.5, 'higher', { afterRise: true }), 4.5 / 0.56)
+  near(rateBeforeTaxToMatch(4.5, 'additional', { afterRise: true }), 4.5 / 0.51)
 })
 
 test('overpay or save [own working] odd inputs', () => {

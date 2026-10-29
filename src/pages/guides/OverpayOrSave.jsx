@@ -11,17 +11,19 @@ import {
   rateBeforeTaxToMatch,
   savingsInterestAfterTax,
   TAX_BANDS,
+  TAX_BANDS_AFTER_RISE,
 } from '../../lib/overpayOrSave'
 import Source from '../../components/Source'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-20'
+const LAST_UPDATED = '2026-10-29'
 
 // "4.5" rather than "4.50", for rates worked out here.
 const rate = (value) => `${Math.round(value * 100) / 100}%`
 
 export default function OverpayOrSave() {
   const { personalSavingsAllowance, startingRateForSavings, startingRateIncomeLimit } = SAVINGS_TAX
+  const { rateRise, rateRiseFrom } = SAVINGS_TAX
   const { basicRate, higherRate, additionalRate } = INCOME_TAX
 
   // The examples: £20,000 to overpay or save, on £200,000 with 25 years left.
@@ -54,7 +56,17 @@ export default function OverpayOrSave() {
   const inIsa = save('higher', { isa: true })
   const limitShare = lumpSum / mortgage.balance
 
-  const afterTax = (band) => savingsRate * (1 - TAX_BANDS[band])
+  // The same examples with the savings tax rates from April 2027.
+  const later = { afterRise: true }
+  const basicAllowanceUsedLater = save('basic', {
+    otherInterest: personalSavingsAllowance.basic,
+    ...later,
+  })
+  const higherLater = save('higher', later)
+
+  const afterTax = (band, bands = TAX_BANDS) => savingsRate * (1 - bands[band])
+  const afterTaxLater = (band) => afterTax(band, TAX_BANDS_AFTER_RISE)
+  const toMatchLater = (band) => rateBeforeTaxToMatch(mortgageRate, band, later)
 
   return (
     <GuidePage
@@ -103,9 +115,16 @@ export default function OverpayOrSave() {
         income is under {gbp(startingRateIncomeLimit)}, the starting rate for savings can also let
         you earn up to {gbp(startingRateForSavings)} of interest tax-free. Interest on cash in an
         ISA is not taxed, and you can put up to {gbp(ISA.overallAllowance)} into ISAs in {TAX_YEAR}.
-        The Budget 2025 document says the tax rates on savings income will go up by{' '}
-        {Math.round(SAVINGS_TAX.rateRise * 100)} percentage points in every band from{' '}
-        {SAVINGS_TAX.rateRiseFrom}.
+      </p>
+
+      <h3>Savings tax from {rateRiseFrom}</h3>
+      <p>
+        From {rateRiseFrom}, the tax rates on savings interest go up by {Math.round(rateRise * 100)}{' '}
+        percentage points in every band, to {percent(TAX_BANDS_AFTER_RISE.basic)},{' '}
+        {percent(TAX_BANDS_AFTER_RISE.higher)} and {percent(TAX_BANDS_AFTER_RISE.additional)}. The
+        rise was announced in two equal steps, at Budget 2025 and Budget 2026. The Personal Savings
+        Allowance and the {gbp(startingRateForSavings)} starting rate for savings stay the same, and
+        interest in a cash ISA is still not taxed.
       </p>
 
       <h3>Comparing a savings rate after tax with your mortgage rate</h3>
@@ -121,6 +140,13 @@ export default function OverpayOrSave() {
         tax for a basic rate taxpayer, {rate(rateBeforeTaxToMatch(mortgageRate, 'higher'))} for
         higher rate and {rate(rateBeforeTaxToMatch(mortgageRate, 'additional'))} for additional
         rate.
+      </p>
+      <p>
+        From {rateRiseFrom}, with the higher savings tax rates, a {rate(savingsRate)} account leaves{' '}
+        {rate(afterTaxLater('basic'))} for a basic rate taxpayer, {rate(afterTaxLater('higher'))}{' '}
+        for higher rate and {rate(afterTaxLater('additional'))} for additional rate. To match a{' '}
+        {rate(mortgageRate)} mortgage it would need to pay {rate(toMatchLater('basic'))},{' '}
+        {rate(toMatchLater('higher'))} and {rate(toMatchLater('additional'))} before tax.
       </p>
 
       <h2>Worked examples</h2>
@@ -163,6 +189,28 @@ export default function OverpayOrSave() {
         no limit. What overpaying saves after that depends on the rate you move to, which is not
         known yet.
       </p>
+
+      <h3>The same examples from {rateRiseFrom}</h3>
+      <p>
+        The examples above use the {TAX_YEAR} rates. With the savings tax rates from {rateRiseFrom},
+        and the same savings and mortgage rates:
+      </p>
+      <ul>
+        <li>
+          a basic rate taxpayer whose interest stays inside the allowance still keeps all{' '}
+          {gbp(basic.afterTax)}. If other savings use up the allowance, the tax is{' '}
+          {gbp(basicAllowanceUsedLater.tax)} and you keep {gbp(basicAllowanceUsedLater.afterTax)}
+        </li>
+        <li>
+          a higher rate taxpayer pays {percent(TAX_BANDS_AFTER_RISE.higher)} on the{' '}
+          {gbp(higherLater.taxable)} over the allowance, which is {gbp(higherLater.tax)}, and keeps{' '}
+          {gbp(higherLater.afterTax)}
+        </li>
+        <li>
+          the interest overpaying saves does not change, because it is not taxed: still{' '}
+          {gbp(savedFirstYear)} in the first year on a {rate(mortgageRate)} mortgage
+        </li>
+      </ul>
 
       <h2>What else changes the answer</h2>
       <ul>
@@ -233,10 +281,14 @@ export default function OverpayOrSave() {
         ,{' '}
         <Source href="https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief">
           pension tax relief
-        </Source>{' '}
-        and the{' '}
+        </Source>
+        , the{' '}
         <Source href="https://www.gov.uk/government/publications/budget-2025-document/budget-2025-html">
           Budget 2025 document
+        </Source>{' '}
+        and the{' '}
+        <Source href="https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances">
+          Budget 2026 rates and allowances
         </Source>
         . From MoneyHelper:{' '}
         <Source href="https://www.moneyhelper.org.uk/en/homes/buying-a-home/should-you-pay-off-your-mortgage-early">

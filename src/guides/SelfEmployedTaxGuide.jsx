@@ -1,5 +1,5 @@
 import { INCOME_TAX, SCOTTISH_INCOME_TAX } from '../lib/rates/incomeTax'
-import { SELF_EMPLOYED } from '../lib/rates/selfEmployed'
+import { SELF_EMPLOYED, TRADING_ALLOWANCE_RISE } from '../lib/rates/selfEmployed'
 import { STUDENT_LOAN } from '../lib/rates/studentLoans'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatGBP as gbp, formatGBPPence as gbpPence, percent } from '../lib/format'
@@ -7,7 +7,7 @@ import { calculateSelfEmployedTax } from '../lib/selfEmployed'
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-11'
+const LAST_UPDATED = '2026-10-29'
 
 export default function SelfEmployedTaxGuide() {
   const { personalAllowance, basicRateLimit, higherRateLimit } = INCOME_TAX
@@ -68,6 +68,12 @@ export default function SelfEmployedTaxGuide() {
         expenses. You cannot have both, so it only helps if your expenses are under{' '}
         {gbp(tradingAllowance)}. If your self-employed income for the year is{' '}
         {gbp(tradingAllowance)} or less, you usually do not need to tell HMRC about it at all.
+      </p>
+      <p>
+        From {TRADING_ALLOWANCE_RISE.taxYear}: Budget 2026 announced that the trading allowance
+        rises to {gbp(TRADING_ALLOWANCE_RISE.tradingAllowance)} from the tax year that starts on{' '}
+        {TRADING_ALLOWANCE_RISE.from}. For {TAX_YEAR} it is still {gbp(tradingAllowance)}, which the
+        calculator uses.
       </p>
 
       <h3>If you also have a job</h3>
@@ -227,6 +233,14 @@ export default function SelfEmployedTaxGuide() {
           rel="noreferrer"
         >
           Making Tax Digital for Income Tax
+        </a>
+        . The rise in the trading allowance is from the{' '}
+        <a
+          href="https://www.gov.uk/government/publications/budget-2026-document/budget-2026-html"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Budget 2026 document
         </a>
         .
       </p>
