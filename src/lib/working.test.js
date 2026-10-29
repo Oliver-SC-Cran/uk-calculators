@@ -379,5 +379,20 @@ test('working [own working] maternity and paternity pay add up to the total', ()
     }
     const p = calculatePaternityPay(settings)
     checkHeadline(p.working, p.qualifies ? p.total : null, `paternity ${dueDate} ${earnings}`)
+    // For an employer, the reclaim and what is left after it add up too.
+    for (const smallEmployer of [false, true]) {
+      for (const r of [
+        calculateMaternityPay({ ...settings, forEmployer: true, smallEmployer }),
+        calculatePaternityPay({ ...settings, forEmployer: true, smallEmployer }),
+      ]) {
+        const where = `employer ${dueDate} ${earnings} ${smallEmployer}`
+        checkHeadline(r.working, r.qualifies ? r.total : null, where)
+        if (r.qualifies) {
+          assert.ok(Math.abs(r.working[1].total.value - r.reclaim.amount) < 0.005, where)
+          const left = r.reclaim.extra > 0 ? r.reclaim.extra : r.reclaim.cost
+          assert.ok(Math.abs(r.working[2].total.value - left) < 0.005, where)
+        }
+      }
+    }
   }
 })

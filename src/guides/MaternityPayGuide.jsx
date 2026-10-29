@@ -4,11 +4,13 @@ import {
   averageWeeklyEarnings,
   calculateMaternityPay,
   calculatePaternityPay,
+  employerReclaim,
 } from '../lib/parentalPay'
 import CalculatorGuide from '../components/CalculatorGuide'
+import Source from '../components/Source'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-10'
+const LAST_UPDATED = '2026-10-29'
 
 const EXAMPLE_DUE_DATE = '2027-03-01'
 
@@ -28,6 +30,9 @@ export default function MaternityPayGuide() {
   const ex1 = example(30000)
   const ex2 = example(15000)
   const ex3 = example(25000, false)
+  const { reclaim } = PARENTAL_PAY
+  const reclaimed = employerReclaim({ statutoryPay: ex1.total })
+  const reclaimedSmall = employerReclaim({ statutoryPay: ex1.total, smallEmployer: true })
   const dad = calculatePaternityPay({
     dueDate: EXAMPLE_DUE_DATE,
     averageWeeklyEarnings: averageWeeklyEarnings({ amount: 30000, period: 'annual' }),
@@ -94,6 +99,24 @@ export default function MaternityPayGuide() {
         {gbpPence(dad.weekly)} a week, {gbpPence(dad.total)} in total.
       </p>
 
+      <h3>For employers</h3>
+      <p>
+        You pay SMP and SPP through payroll and can reclaim most of it from HMRC:{' '}
+        {percent(reclaim.rate)} of what you pay, or {percent(reclaim.smallEmployerRate)} with Small
+        Employers' Relief. You get the relief if your total Class 1 National Insurance (what you and
+        your employees paid together, before any Employment Allowance) was{' '}
+        {gbp(reclaim.smallEmployerLimit)} or less in the last complete tax year before the
+        qualifying week. For a baby due on {formatDate(ex1.dueDate)} that is the{' '}
+        {ex1.smallEmployerTaxYear} tax year.
+      </p>
+      <p>
+        You reclaim through payroll, on an Employer Payment Summary (EPS) to HMRC. If you cannot
+        afford to make the payments, you can ask HMRC for the money in advance. Statutory Adoption
+        Pay, Shared Parental Pay, Parental Bereavement Pay and Neonatal Care Pay are reclaimed the
+        same way. Maternity Allowance is paid by the government, so there is nothing for an employer
+        to pay or reclaim.
+      </p>
+
       <h2>Worked examples</h2>
       <p>Each is for a baby due on {formatDate(EXAMPLE_DUE_DATE)}, with pay starting that day.</p>
 
@@ -102,6 +125,15 @@ export default function MaternityPayGuide() {
         Average weekly earnings are {gbpPence(ex1.averageWeeklyEarnings)}. The first{' '}
         {maternity.higherRateWeeks} weeks pay {gbpPence(ex1.higherWeekly)} a week and the next{' '}
         {standardWeeks} pay {gbpPence(ex1.standardWeekly)}. The total is {gbpPence(ex1.total)}.
+      </p>
+
+      <h3>What the employer reclaims on {gbp(30000)} a year</h3>
+      <p>
+        The employer pays {gbpPence(ex1.total)} of SMP and can reclaim {percent(reclaimed.rate)} of
+        it, {gbpPence(reclaimed.amount)}, so it costs them {gbpPence(reclaimed.cost)}. With Small
+        Employers' Relief it can reclaim {percent(reclaimedSmall.rate)},{' '}
+        {gbpPence(reclaimedSmall.amount)}, which is {gbpPence(reclaimedSmall.extra)} more than it
+        paid.
       </p>
 
       <h3>Earning {gbp(15000)} a year</h3>
@@ -177,6 +209,14 @@ export default function MaternityPayGuide() {
         >
           maternity and paternity calculator for employers
         </a>
+        . For employers, see{' '}
+        <Source href="https://www.gov.uk/recover-statutory-payments">
+          how to reclaim statutory payments
+        </Source>{' '}
+        and the{' '}
+        <Source href="https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027">
+          rates and thresholds for employers 2026 to 2027
+        </Source>
         .
       </p>
     </CalculatorGuide>

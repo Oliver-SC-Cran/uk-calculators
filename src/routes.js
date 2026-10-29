@@ -68,8 +68,8 @@ export const routes = [
     path: '/maternity-pay-calculator',
     name: 'Maternity and paternity pay calculator',
     sharedLinks: true,
-    title: 'Maternity and paternity pay calculator: SMP and SPP 2026/27',
-    description: `Work out Statutory Maternity Pay or Paternity Pay at the ${PARENTAL_PAY.ratesFrom} rate of £${PARENTAL_PAY.weeklyRate.toFixed(2)} a week, check if you qualify, and see your qualifying week.`,
+    title: `Maternity pay calculator ${TAX_YEAR}: SMP, SPP and employer reclaim`,
+    description: `Work out Statutory Maternity Pay (SMP) or Paternity Pay at £${PARENTAL_PAY.weeklyRate.toFixed(2)} a week from ${PARENTAL_PAY.ratesFrom}, check who qualifies, and see what an employer can reclaim from HMRC.`,
   },
   {
     path: '/isa-calculator',

@@ -9,6 +9,9 @@
 // https://www.gov.uk/maternity-pay-leave
 // https://www.gov.uk/paternity-pay-leave
 // https://www.gov.uk/maternity-allowance
+// https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027 (reclaim rates,
+//   recorded on 29 October 2026)
+// https://www.gov.uk/recover-statutory-payments
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
@@ -16,7 +19,11 @@ import {
   averageWeeklyEarnings,
   calculateMaternityPay,
   calculatePaternityPay,
+  employerReclaim,
+  isSmallEmployer,
   keyDates,
+  smallEmployerTaxYear,
+  taxYearOf,
 } from './parentalPay.js'
 
 const near = (actual, expected, message) =>
@@ -129,7 +136,9 @@ test('parental pay [gov.uk] SMP on £30,000 a year matches the official calculat
   assert.equal(result.standardWeekly, 194.32)
   assert.equal(result.total, 9528)
   assert.equal(result.weeks.length, 39)
-  assert.deepEqual(result.weeks[0], {
+  const { reclaim, ...firstWeek } = result.weeks[0]
+  assert.equal(typeof reclaim, 'number')
+  assert.deepEqual(firstWeek, {
     number: 1,
     start: '2027-03-01',
     end: '2027-03-07',
@@ -289,4 +298,114 @@ test('parental pay [own working] odd inputs and qualifying weeks outside 2026/27
   assert.equal(keyDates('2027-07-14').limitMayDiffer, false) // qualifying week ends 3 April 2027
   assert.equal(keyDates('2027-07-21').limitMayDiffer, true) // ends 10 April 2027
   assert.equal(keyDates('2026-07-01').limitMayDiffer, true) // ends 21 March 2026
+})
+
+// ---------------------------------------------------------------------------
+// What an employer can reclaim
+// ---------------------------------------------------------------------------
+
+test("parental pay [gov.uk] employers reclaim 92%, or 109% with Small Employers' Relief", () => {
+  // gov.uk's rates and thresholds for employers 2026 to 2027: an employer can reclaim 92% of
+  // the statutory pay it pays, or 109% if its total Class 1 National Insurance in the
+  // previous tax year was £45,000 or less.
+  // SMP on £30,000 a year (£576.92 a week): 6 weeks at £519.24 and 33 at £194.32, £9,528.00.
+  const smp = maternity(30000 / 52, { forEmployer: true })
+  assert.equal(smp.total, 9528)
+  assert.equal(smp.reclaim.rate, 0.92)
+  near(smp.reclaim.amount, 8765.76, '92% of £9,528.00')
+  near(smp.reclaim.cost, 762.24, 'left to pay')
+  assert.equal(smp.reclaim.extra, 0)
+  const smallSmp = maternity(30000 / 52, { forEmployer: true, smallEmployer: true })
+  assert.equal(smallSmp.reclaim.rate, 1.09)
+  near(smallSmp.reclaim.amount, 10385.52, '109% of £9,528.00')
+  assert.equal(smallSmp.reclaim.cost, 0)
+  near(smallSmp.reclaim.extra, 857.52, 'reclaimed above what was paid')
+  // SPP on the same pay: 2 weeks at £194.32, £388.64.
+  const spp = paternity(30000 / 52)
+  near(spp.reclaim.amount, 357.55, '92% of £388.64 is £357.5488')
+  const smallSpp = paternity(30000 / 52, { smallEmployer: true })
+  near(smallSpp.reclaim.amount, 423.62, '109% of £388.64 is £423.6176')
+  near(smallSpp.reclaim.extra, 34.98)
+})
+
+test('parental pay [own working] the reclaim week by week, and in the working', () => {
+  const smp = maternity(30000 / 52, { forEmployer: true })
+  // Each week's reclaim is rounded to the penny on its own: 92% of £519.24 is £477.7008 and
+  // of £194.32 is £178.7744. They come to £8,765.61, 15p under the total worked out at once.
+  assert.equal(smp.reclaim.higherWeekly, 477.7)
+  assert.equal(smp.reclaim.standardWeekly, 178.77)
+  assert.equal(smp.weeks[0].reclaim, 477.7)
+  assert.equal(smp.weeks[38].reclaim, 178.77)
+  const byWeek = smp.weeks.reduce((sum, week) => sum + Math.round(week.reclaim * 100), 0) / 100
+  near(byWeek, 8765.61)
+  // The working shows the reclaim and the cost after it, only for an employer.
+  const titles = smp.working.map((each) => each.title)
+  assert.deepEqual(titles, [
+    'Statutory Maternity Pay',
+    'Reclaimed from HMRC',
+    'Your cost after the reclaim',
+    'Weekly amounts',
+  ])
+  const small = maternity(30000 / 52, { forEmployer: true, smallEmployer: true })
+  assert.equal(small.working[2].title, 'Reclaimed above what you paid')
+  near(small.working[2].total.value, 857.52)
+  assert.deepEqual(
+    maternity(30000 / 52).working.map((each) => each.title),
+    ['Statutory Maternity Pay', 'Weekly amounts'],
+  )
+  assert.equal(paternity(30000 / 52, { forEmployer: true }).working[1].title, 'Reclaimed from HMRC')
+})
+
+test("parental pay [own working] the £45,000 limit for Small Employers' Relief", () => {
+  assert.equal(isSmallEmployer(0), true)
+  assert.equal(isSmallEmployer(44999.99), true)
+  assert.equal(isSmallEmployer(45000), true)
+  assert.equal(isSmallEmployer(45000.01), false)
+  assert.equal(isSmallEmployer(1e9), false)
+  for (const blank of [-1, NaN, undefined, null]) assert.equal(isSmallEmployer(blank), false)
+})
+
+test("parental pay [own working] the tax year Small Employers' Relief looks at", () => {
+  // Tax years start on 6 April.
+  assert.equal(taxYearOf('2026-04-05'), '2025/26')
+  assert.equal(taxYearOf('2026-04-06'), '2026/27')
+  assert.equal(taxYearOf('2027-01-01'), '2026/27')
+  assert.equal(taxYearOf('2099-12-31'), '2099/00')
+  // The last complete tax year before the qualifying week begins.
+  assert.equal(smallEmployerTaxYear('2026-11-15'), '2025/26')
+  assert.equal(smallEmployerTaxYear('2027-04-05'), '2025/26')
+  assert.equal(smallEmployerTaxYear('2027-04-06'), '2026/27')
+  // The default due date: qualifying week from 15 November 2026, so 2025/26.
+  assert.equal(keyDates('2027-03-01').smallEmployerTaxYear, '2025/26')
+  // Due 24 July 2027: the qualifying week starts on Sunday 4 April 2027, in 2026/27, so the
+  // relief looks at 2025/26. A day later the week starts on 11 April 2027, in 2027/28.
+  assert.equal(keyDates('2027-07-24').qualifyingWeekStart, '2027-04-04')
+  assert.equal(keyDates('2027-07-24').smallEmployerTaxYear, '2025/26')
+  assert.equal(keyDates('2027-07-25').qualifyingWeekStart, '2027-04-11')
+  assert.equal(keyDates('2027-07-25').smallEmployerTaxYear, '2026/27')
+})
+
+test('parental pay [own working] nothing to reclaim when no pay is due, and very high pay', () => {
+  for (const earnings of [0, 128.99, -200, NaN]) {
+    for (const smallEmployer of [false, true]) {
+      const smp = maternity(earnings, { forEmployer: true, smallEmployer })
+      assert.equal(smp.qualifies, false)
+      assert.equal(smp.reclaim.amount, 0)
+      assert.equal(smp.reclaim.cost, 0)
+      assert.equal(smp.reclaim.higherWeekly, 0)
+      assert.equal(paternity(earnings, { smallEmployer }).reclaim.amount, 0)
+    }
+  }
+  // Someone who has not worked long enough gets nothing, so nothing is reclaimed.
+  assert.equal(maternity(600, { workedContinuously: false }).reclaim.amount, 0)
+  // £1,000,000 a year is £19,230.77 a week. 90% is £17,307.6923, rounded up to £17,307.70.
+  // 6 × £17,307.70 + 33 × £194.32 = £103,846.20 + £6,412.56 = £110,258.76.
+  const high = maternity(1000000 / 52)
+  near(high.total, 110258.76)
+  near(high.reclaim.amount, 101438.06, '92% of £110,258.76 is £101,438.0592')
+  near(employerReclaim({ statutoryPay: high.total, smallEmployer: true }).amount, 120182.05)
+  // Blank or negative pay to reclaim on gives nothing.
+  for (const statutoryPay of [0, -100, NaN]) {
+    assert.equal(employerReclaim({ statutoryPay }).amount, 0)
+  }
 })

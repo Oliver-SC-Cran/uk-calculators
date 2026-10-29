@@ -4,6 +4,8 @@
 // Sources: https://www.gov.uk/maternity-pay-leave/pay
 //          https://www.gov.uk/paternity-pay-leave/pay
 //          https://www.gov.uk/maternity-allowance/what-youll-get
+//          https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027
+//          https://www.gov.uk/recover-statutory-payments
 
 import { forTaxYear } from './taxYear.js'
 
@@ -33,6 +35,18 @@ export const PARENTAL_PAY_RATES = {
     sharedParental: {
       leaveWeeks: 50,
       payWeeks: 37,
+    },
+    // What an employer can reclaim from HMRC of the statutory pay it pays, for
+    // payments made in this tax year. Small Employers' Relief applies when the
+    // employer's total Class 1 National Insurance (employees' and employer's,
+    // before Employment Allowance) was no more than smallEmployerLimit in the
+    // last complete tax year before the qualifying week. The 109% is set by
+    // SI 1994/1882 regulation 3, as amended by SI 2026/201, for payments made
+    // from 6 April 2026.
+    reclaim: {
+      rate: 0.92,
+      smallEmployerRate: 1.09,
+      smallEmployerLimit: 45000,
     },
     maternityAllowance: {
       payWeeks: 39,
