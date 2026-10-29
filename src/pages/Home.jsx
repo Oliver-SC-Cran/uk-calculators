@@ -50,7 +50,8 @@ const groups = [
     calculators: [
       {
         path: '/stamp-duty-calculator',
-        description: 'Stamp duty on a home in England or Northern Ireland.',
+        description:
+          'Stamp duty on a home in England or Northern Ireland, including shared ownership.',
       },
       {
         path: '/mortgage-overpayment-calculator',

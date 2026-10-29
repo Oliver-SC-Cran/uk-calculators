@@ -17,7 +17,7 @@ import { calculatePayPackage, calculatePayRise } from './payRise.js'
 import { readTaxCode, taxRatesFor } from './readTaxCode.js'
 import { calculateRedundancyPay } from './redundancy.js'
 import { calculateSelfEmployedTax } from './selfEmployed.js'
-import { calculateStampDuty } from './stampDuty.js'
+import { calculateSharedOwnershipStampDuty, calculateStampDuty } from './stampDuty.js'
 import { calculateStudentLoanRepayment } from './studentLoans.js'
 import { calculateTakeHomePay } from './takeHome.js'
 import { sumOfLines } from './working.js'
@@ -193,6 +193,30 @@ test('working [own working] stamp duty adds up to the tax', () => {
   )) {
     const r = calculateStampDuty({ price, buyerType, nonResident })
     checkHeadline(r.working, r.tax, `stamp duty ${price} ${buyerType} ${nonResident}`)
+  }
+})
+
+test('working [own working] shared ownership stamp duty adds up both ways of paying', () => {
+  for (const [marketValue, sharePercent, monthlyRent, leaseYears, rise, buyerType] of product(
+    [0, 125000, 280000, 400000, 500000, 500001, 2e6, NaN],
+    [10, 40, 75],
+    [null, 0, 550, 10871.25],
+    [1, 5, 6, 99, 990],
+    [0, 3],
+    ['homeMover', 'firstTimeBuyer'],
+  )) {
+    const r = calculateSharedOwnershipStampDuty({
+      marketValue,
+      sharePercent,
+      monthlyRent,
+      leaseYears,
+      rentRisePercent: rise,
+      buyerType,
+    })
+    const where = `shared ownership ${marketValue} ${sharePercent} ${monthlyRent} ${leaseYears} ${rise} ${buyerType}`
+    checkHeadline(r.working, r.inStages.tax, where)
+    // The second part comes to the figure with a market value election.
+    assert.ok(Math.abs(r.working[1].total.value - r.election.tax) < 0.005, where)
   }
 })
 

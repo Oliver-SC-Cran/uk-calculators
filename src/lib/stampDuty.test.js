@@ -10,7 +10,13 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { calculateStampDuty } from './stampDuty.js'
+import {
+  calculateSharedOwnershipStampDuty,
+  calculateStampDuty,
+  largestUntaxedRent,
+  rentNetPresentValue,
+  staircasingStampDuty,
+} from './stampDuty.js'
 
 const duty = (price, buyerType = 'homeMover', nonResident = false) =>
   calculateStampDuty({ price, buyerType, nonResident })
@@ -186,5 +192,304 @@ test('stamp duty [own working] breakdown, effective rate and odd inputs', () => 
       assert.ok(tax >= previous, `${type} at ${price}`)
       previous = tax
     }
+  }
+})
+
+// Shared ownership: a new lease from a housing association, council or other
+// approved body. Each test name says where its expected values came from:
+//   [gov.uk]      an example on gov.uk's shared ownership guide or in HMRC's Stamp Duty
+//                 Land Tax Manual, recorded on 29 October 2026
+//   [own working] worked out by hand, or with the closed-form sums below
+//
+// https://www.gov.uk/stamp-duty-land-tax/shared-ownership-property
+// https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm27060 (in stages)
+// https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm27030 (election)
+// https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm27065 (staircasing)
+// https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm29880 (first-time buyers)
+// https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm13075 (net present value)
+
+const shared = (marketValue, sharePercent, settings = {}) =>
+  calculateSharedOwnershipStampDuty({
+    marketValue,
+    sharePercent,
+    leaseYears: 990,
+    rentRisePercent: 0,
+    ...settings,
+  })
+
+// The net present value of a rent, from the sum of a growing series and of a
+// level one, as an independent check on the year-by-year sum in stampDuty.js.
+function npvClosedForm(yearlyRent, years, rise) {
+  const d = 1.035
+  const known = Math.min(5, years)
+  let value = 0
+  for (let year = 1; year <= known; year += 1)
+    value += (yearlyRent * (1 + rise) ** (year - 1)) / d ** year
+  const later = Math.max(0, years - 5)
+  const highest = yearlyRent * (1 + rise) ** (known - 1)
+  value += (highest * (1 - d ** -later)) / 0.035 / d ** 5
+  return value
+}
+
+test('shared ownership [gov.uk] a market value election taxes the full market value', () => {
+  // A home with a market value of £280,000: £2,500 on £125,000 to £250,000 and £1,500 on the rest.
+  for (const share of [10, 25, 40, 75]) {
+    const result = shared(280000, share, { monthlyRent: 500 })
+    assert.equal(result.election.tax, 4000, `${share}% share`)
+    assert.equal(result.election.price, 280000)
+  }
+})
+
+test('shared ownership [gov.uk] first-time buyers, both ways of paying', () => {
+  // Market value £450,000. With the election, first-time buyer rates on the full value:
+  // 5% of £150,000 = £7,500. Paying in stages on a £180,000 share: nothing, and no tax on rent.
+  const result = shared(450000, 40, { buyerType: 'firstTimeBuyer', monthlyRent: 700 })
+  assert.equal(result.election.tax, 7500)
+  assert.equal(result.sharePrice, 180000)
+  assert.equal(result.inStages.priceTax, 0)
+  assert.equal(result.inStages.rentTax, 0)
+  assert.equal(result.inStages.tax, 0)
+  assert.equal(result.reliefApplies, true)
+  assert.equal(result.rent.taxed, false)
+})
+
+test("shared ownership [own working] gov.uk's £400,000 home, 40% share and £550 a month rent", () => {
+  // In stages: 2% of £35,000 = £700 on the £160,000 share. The rent is £6,600 a year. With
+  // no rise its value over 990 years is £6,600 ÷ 0.035 = £188,571.43, so the tax on the rent is
+  // 1% of £63,571.43 = £635.71, rounded down to £635.
+  const flat = shared(400000, 40, { monthlyRent: 550 })
+  assert.equal(flat.sharePrice, 160000)
+  assert.equal(flat.inStages.priceTax, 700)
+  assert.ok(Math.abs(flat.rent.netPresentValue - 188571.43) < 0.01)
+  assert.equal(flat.inStages.rentTax, 635)
+  assert.equal(flat.inStages.tax, 1335)
+  // With the election: £2,500 + 5% of £150,000 = £10,000, and no tax on the rent.
+  assert.equal(flat.election.tax, 10000)
+  // With a 3% rise for the first five years the rent is £6,600, £6,798, £7,001.94, £7,212.00
+  // and £7,428.36, then £7,428.36 every year after: about £210,277, so £852 on the rent.
+  const rising = shared(400000, 40, { monthlyRent: 550, rentRisePercent: 3 })
+  assert.ok(Math.abs(rising.rent.netPresentValue - 210277) < 1)
+  assert.equal(rising.inStages.rentTax, 852)
+  assert.equal(rising.inStages.tax, 1552)
+  assert.deepEqual(
+    rising.rent.knownYears.map((each) => Math.round(each.rent * 100) / 100),
+    [6600, 6798, 7001.94, 7212, 7428.36],
+  )
+  assert.equal(rising.election.tax, 10000)
+  // A first-time buyer pays nothing in stages and £5,000 with the election.
+  const firstTime = shared(400000, 40, { monthlyRent: 550, buyerType: 'firstTimeBuyer' })
+  assert.equal(firstTime.inStages.tax, 0)
+  assert.equal(firstTime.election.tax, 5000)
+})
+
+test('shared ownership [own working] the rent is taxed only above £125,000 of net present value', () => {
+  // A one-year lease, so the net present value is the year's rent ÷ 1.035.
+  // £10,781.25 a month is £129,375 a year, worth exactly £125,000: nothing to pay.
+  const atBand = shared(400000, 40, { monthlyRent: 10781.25, leaseYears: 1 })
+  assert.ok(Math.abs(atBand.rent.netPresentValue - 125000) < 1e-6)
+  assert.equal(atBand.inStages.rentTax, 0)
+  assert.equal(atBand.inStages.tax, 700)
+  // £10,871.25 a month is £130,455 a year, worth £126,043.48: 1% of £1,043.48 is £10.43.
+  const over = shared(400000, 40, { monthlyRent: 10871.25, leaseYears: 1 })
+  assert.equal(over.inStages.rentTax, 10)
+  // On a 990-year lease with no rise, £4,375 a year (about £364.58 a month) is the most
+  // rent with no tax on it: £125,000 × 0.035 ÷ (1 − 1.035^−990).
+  assert.ok(Math.abs(largestUntaxedRent({ years: 990 }) - 4375) < 0.01)
+  assert.ok(Math.abs(largestUntaxedRent({ years: 99 }) - 4525.15) < 0.01)
+  // £364 a month is £4,368 a year, worth £124,800 over 990 years: nothing to pay.
+  assert.equal(shared(400000, 40, { monthlyRent: 364 }).inStages.rentTax, 0)
+  // £366 a month is £4,392 a year, worth £125,485.71: 1% of £485.71 is £4.86, so £4.
+  assert.equal(shared(400000, 40, { monthlyRent: 366 }).inStages.rentTax, 4)
+})
+
+test('shared ownership [own working] the net present value matches the closed-form sums', () => {
+  for (const [yearlyRent, years, rise] of [
+    [6600, 990, 0],
+    [6600, 990, 0.03],
+    [6600, 99, 0],
+    [6600, 99, 0.03],
+    [6600, 125, 0.05],
+    [4950, 3, 0.03], // shorter than the five years whose rent is known
+    [4950, 5, 0.03],
+    [4950, 6, 0.03],
+    [12000, 1, 0.1],
+  ]) {
+    const { value } = rentNetPresentValue({ yearlyRent, years, yearlyRise: rise })
+    const expected = npvClosedForm(yearlyRent, years, rise)
+    assert.ok(Math.abs(value - expected) < 1e-6, `${yearlyRent} over ${years} years at ${rise}`)
+  }
+  // After year 5 the rent stays at the highest of the first five, however long the lease.
+  const npv = rentNetPresentValue({ yearlyRent: 1000, years: 20, yearlyRise: 0.1 })
+  assert.ok(Math.abs(npv.highestRent - 1464.1) < 1e-9)
+  assert.equal(npv.laterYears, 15)
+  // Blank, zero or negative rent or years give nothing.
+  for (const [yearlyRent, years] of [
+    [0, 990],
+    [6600, 0],
+    [-6600, 990],
+    [6600, -5],
+    [NaN, 990],
+    [6600, NaN],
+  ]) {
+    assert.equal(rentNetPresentValue({ yearlyRent, years }).value, 0)
+  }
+})
+
+test('shared ownership [own working] the full market value limit for first-time buyer relief', () => {
+  // £500,000: relief applies both ways. A 40% share is £200,000, so nothing in stages, and
+  // the election is 5% of £200,000 = £10,000.
+  const atLimit = shared(500000, 40, { buyerType: 'firstTimeBuyer', monthlyRent: 550 })
+  assert.equal(atLimit.reliefApplies, true)
+  assert.equal(atLimit.firstTimeBuyerOverLimit, false)
+  assert.equal(atLimit.inStages.tax, 0)
+  assert.equal(atLimit.election.tax, 10000)
+  // £500,001: no relief either way. In stages, 2% of £75,000.40 on the £200,000.40 share
+  // (£1,500.008, so £1,500) and £635 on the rent. With the election, £15,000.05, so £15,000.
+  const over = shared(500001, 40, { buyerType: 'firstTimeBuyer', monthlyRent: 550 })
+  assert.equal(over.reliefApplies, false)
+  assert.equal(over.firstTimeBuyerOverLimit, true)
+  assert.equal(over.sharePrice, 200000.4)
+  assert.equal(over.inStages.priceTax, 1500)
+  assert.equal(over.inStages.rentTax, 635)
+  assert.equal(over.inStages.tax, 2135)
+  assert.equal(over.election.tax, 15000)
+  // Over the limit a first-time buyer pays the same as a home mover.
+  const mover = shared(500001, 40, { monthlyRent: 550 })
+  assert.equal(over.inStages.tax, mover.inStages.tax)
+  assert.equal(over.election.tax, mover.election.tax)
+  // The relief depends on the full market value, not the share: a £150,000 share of a
+  // £600,000 home gets none.
+  const bigHome = shared(600000, 25, { buyerType: 'firstTimeBuyer', monthlyRent: 0 })
+  assert.equal(bigHome.reliefApplies, false)
+  assert.equal(bigHome.inStages.priceTax, 500) // 2% of £25,000
+})
+
+test('shared ownership [own working] the smallest and largest shares, with the rent estimated', () => {
+  // No rent entered: 2.75% a year of the landlord's share. A 10% share of £400,000 leaves
+  // £360,000, so £9,900 a year (£825 a month). Over 990 years with no rise that is worth
+  // £282,857.14, and 1% of £157,857.14 is £1,578.57.
+  const smallest = shared(400000, 10)
+  assert.equal(smallest.rentEstimated, true)
+  assert.equal(smallest.sharePrice, 40000)
+  assert.equal(smallest.monthlyRent, 825)
+  assert.equal(smallest.inStages.priceTax, 0)
+  assert.equal(smallest.inStages.rentTax, 1578)
+  assert.equal(smallest.election.tax, 10000)
+  // A 75% share is £300,000: £2,500 + 5% of £50,000 = £5,000. The rent on the other
+  // £100,000 is £2,750 a year, or £229.17 a month to the penny, worth £78,572 or so: no tax.
+  const largest = shared(400000, 75)
+  assert.equal(largest.monthlyRent, 229.17)
+  assert.equal(largest.inStages.priceTax, 5000)
+  assert.equal(largest.inStages.rentTax, 0)
+  assert.equal(largest.inStages.tax, 5000)
+  // A rent that is entered is used as it is, even £0.
+  const noRent = shared(400000, 10, { monthlyRent: 0 })
+  assert.equal(noRent.rentEstimated, false)
+  assert.equal(noRent.inStages.rentTax, 0)
+})
+
+test('shared ownership [own working] lease lengths of 1, 99 and 990 years', () => {
+  // £550 a month with no rise. One year: £6,600 ÷ 1.035 = £6,376.81, so no tax on the rent.
+  const oneYear = shared(400000, 40, { monthlyRent: 550, leaseYears: 1 })
+  assert.ok(Math.abs(oneYear.rent.netPresentValue - 6376.81) < 0.01)
+  assert.equal(oneYear.inStages.rentTax, 0)
+  // 99 years: £6,600 × (1 − 1.035^−99) ÷ 0.035, which is about £182,316, so £573 on the rent.
+  const ninetyNine = shared(400000, 40, { monthlyRent: 550, leaseYears: 99 })
+  const expected = npvClosedForm(6600, 99, 0)
+  assert.ok(Math.abs(ninetyNine.rent.netPresentValue - expected) < 1e-6)
+  assert.equal(ninetyNine.inStages.rentTax, Math.floor((expected - 125000) * 0.01))
+  assert.equal(ninetyNine.inStages.rentTax, 573)
+  // 990 years: £635, as in gov.uk's example.
+  assert.equal(shared(400000, 40, { monthlyRent: 550 }).inStages.rentTax, 635)
+  // A longer lease is never worth less.
+  let previous = 0
+  for (const leaseYears of [1, 2, 5, 6, 10, 50, 99, 125, 250, 990, 999]) {
+    const { netPresentValue } = shared(400000, 40, { monthlyRent: 550, leaseYears }).rent
+    assert.ok(netPresentValue >= previous, `${leaseYears} years`)
+    previous = netPresentValue
+  }
+})
+
+test('shared ownership [own working] blank, zero, negative and very large figures', () => {
+  for (const marketValue of [0, -400000, NaN, undefined]) {
+    const result = shared(marketValue, 40)
+    assert.equal(result.inStages.tax, 0)
+    assert.equal(result.election.tax, 0)
+    assert.equal(result.monthlyRent, 0)
+  }
+  for (const sharePercent of [0, -40, NaN]) {
+    const result = shared(400000, sharePercent, { monthlyRent: 0 })
+    assert.equal(result.sharePrice, 0)
+    assert.equal(result.inStages.tax, 0)
+    assert.equal(result.election.tax, 10000)
+  }
+  // A negative rent or rise counts as none.
+  assert.equal(shared(400000, 40, { monthlyRent: -550 }).inStages.rentTax, 0)
+  assert.equal(shared(400000, 40, { monthlyRent: 550, rentRisePercent: -3 }).inStages.rentTax, 635)
+  // A £10 million home, 75% share, no rise. The share is £7,500,000: £93,750 + 12% of
+  // £6,000,000 = £813,750. The rent is 2.75% of £2,500,000 = £68,750 a year, worth
+  // £1,964,285.71, so 1% of £1,839,285.71 = £18,392.86 on the rent.
+  const huge = shared(10000000, 75)
+  assert.equal(huge.inStages.priceTax, 813750)
+  assert.equal(huge.inStages.rentTax, 18392)
+  assert.equal(huge.inStages.tax, 832142)
+  assert.equal(huge.election.tax, 1113750)
+  // The election always taxes the full value at the usual rates, so it matches the
+  // outright calculator.
+  for (const price of [0, 125000, 250000, 300000, 925000, 1500000, 3000000]) {
+    assert.equal(shared(price, 25).election.tax, duty(price).tax, `${price}`)
+    assert.equal(
+      shared(price, 25, { buyerType: 'firstTimeBuyer' }).election.tax,
+      duty(price, 'firstTimeBuyer').tax,
+      `first-time buyer ${price}`,
+    )
+  }
+})
+
+test('staircasing [own working] buying more shares after paying in stages', () => {
+  // gov.uk's method: nothing until your share goes over 80%. Then the tax on everything paid
+  // so far, times this share's price over the total paid.
+  // A £400,000 home bought with a 40% share (£160,000). Buying the other 60% (£240,000) in one
+  // go: tax on £400,000 is £10,000, and 240,000 ÷ 400,000 of it is £6,000.
+  assert.deepEqual(
+    staircasingStampDuty({ paidBefore: 160000, sharePrice: 240000, shareAfterPercent: 100 }),
+    { tax: 6000, taxed: true, totalPaid: 400000, taxOnTotal: 10000, fraction: 0.6 },
+  )
+  // Going to 80% first costs nothing, then the last 20% (£80,000) is £10,000 × 0.2 = £2,000.
+  const toEighty = staircasingStampDuty({
+    paidBefore: 160000,
+    sharePrice: 160000,
+    shareAfterPercent: 80,
+  })
+  assert.equal(toEighty.tax, 0)
+  assert.equal(toEighty.taxed, false)
+  assert.equal(
+    staircasingStampDuty({ paidBefore: 320000, sharePrice: 80000, shareAfterPercent: 100 }).tax,
+    2000,
+  )
+  // Just over 80% is taxed. £3,000 of tax on £260,000 paid, and a £65,000 share is a quarter
+  // of it: £750.
+  const quarter = staircasingStampDuty({
+    paidBefore: 195000,
+    sharePrice: 65000,
+    shareAfterPercent: 81,
+  })
+  assert.equal(quarter.taxOnTotal, 3000)
+  assert.equal(quarter.fraction, 0.25)
+  assert.equal(quarter.tax, 750)
+  // With a market value election nothing more is due.
+  const elected = staircasingStampDuty({
+    paidBefore: 160000,
+    sharePrice: 240000,
+    shareAfterPercent: 100,
+    electionMade: true,
+  })
+  assert.equal(elected.tax, 0)
+  // Nothing bought, or nothing typed.
+  for (const sharePrice of [0, -5, NaN]) {
+    assert.equal(
+      staircasingStampDuty({ paidBefore: 160000, sharePrice, shareAfterPercent: 100 }).tax,
+      0,
+    )
   }
 })

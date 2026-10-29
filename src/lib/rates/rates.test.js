@@ -15,7 +15,7 @@ import { calculateMaternityPay, calculatePaternityPay } from '../parentalPay.js'
 import { calculatePayRise } from '../payRise.js'
 import { calculateRedundancyPay } from '../redundancy.js'
 import { calculateSelfEmployedTax } from '../selfEmployed.js'
-import { calculateStampDuty } from '../stampDuty.js'
+import { calculateSharedOwnershipStampDuty, calculateStampDuty } from '../stampDuty.js'
 import { calculateStudentLoanRepayment } from '../studentLoans.js'
 import { INCOME_TAX_RATES } from './incomeTax.js'
 import { ISA_RATES } from './isa.js'
@@ -97,6 +97,11 @@ test('rates: each calculator gives the same answer with the current tax year pas
     calculateRedundancyPay({ age: 45, yearsOfService: 10, weeklyPay: 600 }),
   )
   same(calculateStampDuty({ price: 300000, taxYear }), calculateStampDuty({ price: 300000 }))
+  const sharedOwnership = { marketValue: 400000, sharePercent: 40, leaseYears: 990 }
+  same(
+    calculateSharedOwnershipStampDuty({ ...sharedOwnership, taxYear }),
+    calculateSharedOwnershipStampDuty(sharedOwnership),
+  )
   same(
     calculateSelfEmployedTax({ income: 35000, expenses: 5000, employmentIncome: 20000, taxYear }),
     calculateSelfEmployedTax({ income: 35000, expenses: 5000, employmentIncome: 20000 }),

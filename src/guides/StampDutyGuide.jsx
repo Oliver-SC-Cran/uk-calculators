@@ -1,10 +1,24 @@
 import { STAMP_DUTY } from '../lib/rates/stampDuty'
-import { calculateStampDuty } from '../lib/stampDuty'
-import { formatGBP as gbp, percent } from '../lib/format'
+import {
+  calculateSharedOwnershipStampDuty,
+  calculateStampDuty,
+  largestUntaxedRent,
+  staircasingStampDuty,
+} from '../lib/stampDuty'
+import { formatGBP as gbp, formatGBPPence, percent } from '../lib/format'
 import CalculatorGuide from '../components/CalculatorGuide'
+import Source from '../components/Source'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-09'
+const LAST_UPDATED = '2026-10-29'
+
+const MANUAL = 'https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/'
+
+// The shared ownership example: gov.uk's £400,000 home, with a 40% share and
+// £550 a month rent, on a new lease.
+const EXAMPLE_VALUE = 400000
+const EXAMPLE_SHARE = 0.4
+const EXAMPLE_RENT = 550
 
 export default function StampDutyGuide() {
   const { bands, firstTimeBuyer, ratesFrom } = STAMP_DUTY
@@ -30,6 +44,45 @@ export default function StampDutyGuide() {
     price: firstTimeBuyer.maxPrice,
     buyerType: 'firstTimeBuyer',
   })
+
+  const { sharedOwnership: so } = STAMP_DUTY
+  const example = {
+    marketValue: EXAMPLE_VALUE,
+    sharePercent: EXAMPLE_SHARE * 100,
+    monthlyRent: EXAMPLE_RENT,
+    leaseYears: so.newModelLeaseYears,
+  }
+  const flatRent = calculateSharedOwnershipStampDuty({ ...example, rentRisePercent: 0 })
+  const risingRent = calculateSharedOwnershipStampDuty({
+    ...example,
+    rentRisePercent: so.typicalRentRise * 100,
+  })
+  const firstTimeShared = calculateSharedOwnershipStampDuty({
+    ...example,
+    buyerType: 'firstTimeBuyer',
+  })
+  const untaxedRent = largestUntaxedRent({ years: so.newModelLeaseYears })
+
+  // Buying the rest later, at the same value and rates: in one go, or to 80% and then the rest.
+  const firstPaid = flatRent.sharePrice
+  const restInOneGo = staircasingStampDuty({
+    paidBefore: firstPaid,
+    sharePrice: EXAMPLE_VALUE - firstPaid,
+    shareAfterPercent: 100,
+  })
+  const toLimitPrice = Math.round(EXAMPLE_VALUE * so.staircasingTaxedOver) - firstPaid
+  const toLimit = staircasingStampDuty({
+    paidBefore: firstPaid,
+    sharePrice: toLimitPrice,
+    shareAfterPercent: so.staircasingTaxedOver * 100,
+  })
+  const lastShare = staircasingStampDuty({
+    paidBefore: firstPaid + toLimitPrice,
+    sharePrice: EXAMPLE_VALUE - firstPaid - toLimitPrice,
+    shareAfterPercent: 100,
+  })
+  const over = percent(so.staircasingTaxedOver)
+  const years = so.rentYearsKnown
 
   return (
     <CalculatorGuide
@@ -97,6 +150,70 @@ export default function StampDutyGuide() {
         higher rates for additional properties.
       </p>
 
+      <h2>Shared ownership</h2>
+      <p>
+        With shared ownership you buy a share of a home and pay rent on the rest to the landlord,
+        such as a housing association or council. On a new lease your first share is from{' '}
+        {percent(so.minimumShare)} to {percent(so.maximumShare)}. You can pay stamp duty on a new
+        lease in one of two ways, and the calculator shows both.
+      </p>
+
+      <h3>Paying in stages</h3>
+      <p>
+        You pay stamp duty on the price of your share at the usual rates. You also pay{' '}
+        {percent(so.rentRate)} of the amount by which the net present value of the rent goes over{' '}
+        {gbp(so.rentNilBand)}. You must send a stamp duty return even when there is nothing to pay.
+      </p>
+
+      <h3>A market value election</h3>
+      <p>
+        You pay stamp duty on the full market value stated in the lease, all at once. The rent is
+        not taxed, and nothing more is due when you buy more shares. You make the election in your
+        stamp duty return, or by amending the return within {so.electionAmendMonths} months of the
+        filing date. It cannot be undone.
+      </p>
+
+      <h3>First-time buyers and shared ownership</h3>
+      <p>
+        First-time buyer relief works with both if the full market value is{' '}
+        {gbp(firstTimeBuyer.maxPrice)} or less. Paying in stages, the first-time buyer rates apply
+        to the price of your share and the rent is not taxed. With the election, they apply to the
+        full market value. The relief does not apply to shares you buy later, and it is not taken
+        back if what you pay in total goes over {gbp(firstTimeBuyer.maxPrice)}.
+      </p>
+
+      <h3>The tax on the rent</h3>
+      <p>
+        The net present value of the rent is the rent for every year of the lease, with each year's
+        rent discounted by {percent(so.rentDiscountRate)} a year, compounded, to give its value
+        today. After year {years}, every year counts at the highest rent in the first {years} years.
+        If the rent never went up, a {so.newModelLeaseYears}-year lease would have no tax on its
+        rent up to about {gbp(untaxedRent)} a year ({formatGBPPence(untaxedRent / 12)} a month).
+      </p>
+      <p>
+        Shared ownership rent usually goes up each year by RPI plus 0.5% or CPI plus 1%. HMRC only
+        leaves out rises that follow RPI exactly, so the rent for the first {years} years has to be
+        estimated. The calculator starts with {percent(so.typicalRentRise)} a year, a typical rise
+        (CPI + 1%), which is an estimate, and you can change it. Where the rent is not known yet,
+        the tax on it is worked out again at the end of year {years}, using the rent actually
+        charged.
+      </p>
+
+      <h3>Buying more shares</h3>
+      <p>
+        Buying more shares is called staircasing. If you paid in stages, there is no stamp duty and
+        no return while your share stays at {over} or less. For a share that takes you over {over},
+        and any after it, work out the stamp duty on everything you have paid so far, at the rates
+        on the day. Then multiply it by the price of this share divided by the total you have paid.
+        If you made a market value election, nothing more is due.
+      </p>
+
+      <h3>Buying a resale</h3>
+      <p>
+        If you buy a share from someone who already owns it, you take over their lease. Stamp duty
+        is then worked out as for any other purchase, on the price you pay.
+      </p>
+
       <h2>Worked examples</h2>
 
       <h3>A first-time buyer paying {gbp(firstTime.price)}</h3>
@@ -126,6 +243,42 @@ export default function StampDutyGuide() {
         {gbp(buyToLetAsMover.tax)} for someone buying it as their only home.
       </p>
 
+      <h3>
+        A {percent(EXAMPLE_SHARE)} shared ownership share of a {gbp(EXAMPLE_VALUE)} home
+      </h3>
+      <p>
+        The share costs {gbp(flatRent.sharePrice)} and the rent is {gbp(flatRent.monthlyRent)} a
+        month, or {gbp(flatRent.yearlyRent)} a year, on a {flatRent.leaseYears}-year lease. Paying
+        in stages, a home mover pays {gbp(flatRent.inStages.priceTax)} on the share. If the rent
+        never went up, its net present value would be {gbp(flatRent.rent.netPresentValue)}.{' '}
+        {percent(so.rentRate)} of the {gbp(flatRent.rent.taxable)} over {gbp(so.rentNilBand)} is{' '}
+        {formatGBPPence(flatRent.rent.taxable * so.rentRate)}, which rounds down to{' '}
+        {gbp(flatRent.inStages.rentTax)}, so the bill is {gbp(flatRent.inStages.tax)}. With a{' '}
+        {percent(so.typicalRentRise)} rise for the first {years} years, the rent is worth{' '}
+        {gbp(risingRent.rent.netPresentValue)}, the tax on it is {gbp(risingRent.inStages.rentTax)}{' '}
+        and the bill is {gbp(risingRent.inStages.tax)}.
+      </p>
+      <p>
+        With a market value election the bill is {gbp(flatRent.election.tax)}, on the full{' '}
+        {gbp(EXAMPLE_VALUE)}. A first-time buyer pays {gbp(firstTimeShared.inStages.tax)} in stages
+        and {gbp(firstTimeShared.election.tax)} with the election.
+      </p>
+
+      <h3>Buying the rest of that home</h3>
+      <p>
+        Say you paid in stages and later buy the other {percent(1 - EXAMPLE_SHARE)} in one go, for{' '}
+        {gbp(EXAMPLE_VALUE - firstPaid)}, at the same value and rates. You have then paid{' '}
+        {gbp(restInOneGo.totalPaid)} in all, and the stamp duty on that is{' '}
+        {gbp(restInOneGo.taxOnTotal)}. This share is {percent(restInOneGo.fraction)} of what you
+        have paid, so you pay {gbp(restInOneGo.tax)}.
+      </p>
+      <p>
+        If you first buy {gbp(toLimitPrice)} more, taking you to {over}, that costs{' '}
+        {gbp(toLimit.tax)}. The last {percent(1 - so.staircasingTaxedOver)}, for{' '}
+        {gbp(EXAMPLE_VALUE - firstPaid - toLimitPrice)}, then costs {percent(lastShare.fraction)} of{' '}
+        {gbp(lastShare.taxOnTotal)}, which is {gbp(lastShare.tax)}.
+      </p>
+
       <h2>Common questions</h2>
 
       <h3>When do I have to pay stamp duty?</h3>
@@ -150,6 +303,21 @@ export default function StampDutyGuide() {
       <p>
         Yes. Above {gbp(firstTimeBuyer.maxPrice)} there is no relief, and a first-time buyer pays
         the same as anyone else buying their only home.
+      </p>
+
+      <h3>Which costs less for shared ownership, paying in stages or a market value election?</h3>
+      <p>
+        It depends on your share, your rent and whether you buy more shares later. Paying in stages
+        means tax on your share and the rent now, then on any share that takes you over {over}. The
+        election means tax on the full value now and nothing later. The calculator shows both for
+        the figures you enter.
+      </p>
+
+      <h3>Do I pay stamp duty when I buy more shares?</h3>
+      <p>
+        Not if you made a market value election. If you paid in stages, nothing is due until your
+        share goes over {over}. A share that takes you over {over}, and any after it, is taxed as
+        set out above.
       </p>
 
       <h3>Is stamp duty the same in Scotland and Wales?</h3>
@@ -184,7 +352,21 @@ export default function StampDutyGuide() {
         >
           rates for non-UK residents
         </a>
-        . HMRC also has an{' '}
+        . For shared ownership, see gov.uk on{' '}
+        <Source href="https://www.gov.uk/stamp-duty-land-tax/shared-ownership-property">
+          stamp duty on shared ownership
+        </Source>{' '}
+        and{' '}
+        <Source href="https://www.gov.uk/shared-ownership-scheme/paying-rent">
+          shared ownership rent
+        </Source>
+        , and HMRC's Stamp Duty Land Tax Manual on{' '}
+        <Source href={`${MANUAL}sdltm27060`}>paying in stages</Source>,{' '}
+        <Source href={`${MANUAL}sdltm27030`}>the market value election</Source>,{' '}
+        <Source href={`${MANUAL}sdltm29880`}>first-time buyers</Source>,{' '}
+        <Source href={`${MANUAL}sdltm27065`}>buying more shares</Source> and{' '}
+        <Source href={`${MANUAL}sdltm13075`}>the net present value of rent</Source>. HMRC also has
+        an{' '}
         <a
           href="https://www.tax.service.gov.uk/calculate-stamp-duty-land-tax"
           target="_blank"
