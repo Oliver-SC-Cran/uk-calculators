@@ -35,7 +35,12 @@ function gitDir() {
   }
 }
 
-/** Runs npm run build in a fresh copy, and gives back every file it wrote to dist/. */
+/**
+ * Runs npm run build in a fresh copy, and gives back every file it wrote to
+ * dist/. Only the build on your own computer reads this repository's history:
+ * a Cloudflare build may fetch more of it (scripts/prerender.js), and that must
+ * not happen to your own copy.
+ */
 async function build(cloudflare) {
   const copy = await mkdtemp(path.join(tmpdir(), 'uk-calculators-build-'))
   copies.push(copy)
@@ -54,7 +59,9 @@ async function build(cloudflare) {
     Object.entries(process.env).filter(([key]) => !key.startsWith('CF_PAGES')),
   )
   const git = gitDir()
-  if (git) env.GIT_DIR = git
+  if (git && !cloudflare.CF_PAGES) env.GIT_DIR = git
+  // Otherwise git finds no repository, not even one in a folder above the copy.
+  else env.GIT_CEILING_DIRECTORIES = path.dirname(copy)
   await promisify(execFile)('npm', ['run', 'build'], { cwd: copy, env: { ...env, ...cloudflare } })
 
   const dist = path.join(copy, 'dist')

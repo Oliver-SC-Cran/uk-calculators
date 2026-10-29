@@ -104,22 +104,28 @@ function latestUpdatedDate(body) {
 }
 
 // The date of the last commit that changed a file, as 'YYYY-MM-DD', for pages
-// that show no date. null if git cannot tell. Cloudflare Pages may clone only
-// the latest commits, and in a shallow clone the oldest commit looks as if it
-// added every file, so a date from that commit is not used.
+// that show no date. null if git cannot tell. In a shallow clone, one with only
+// the latest commits, the oldest commit looks as if it added every file, so a
+// date from that commit is not used.
 const shallowCommits = new Set()
-try {
-  const shallowFile = git('rev-parse', '--git-path', 'shallow')
-  if (existsSync(path.resolve(root, shallowFile))) {
-    const text = await readFile(path.resolve(root, shallowFile), 'utf8')
+async function readShallowCommits() {
+  shallowCommits.clear()
+  try {
+    const shallowFile = path.resolve(root, git('rev-parse', '--git-path', 'shallow'))
+    if (!existsSync(shallowFile)) return
+    const text = await readFile(shallowFile, 'utf8')
     for (const commit of text.split('\n').filter(Boolean)) shallowCommits.add(commit)
+  } catch {
+    // No git here, such as a copy of the files. Pages without a date get none.
   }
-} catch {
-  // No git here, such as a copy of the files. Pages without a date get none.
 }
+await readShallowCommits()
 
 function git(...args) {
-  return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe' }).trim()
+  // GIT_TERMINAL_PROMPT=0 stops git waiting for a password that never comes.
+  const env = { ...process.env, GIT_TERMINAL_PROMPT: '0' }
+  const options = { cwd: root, encoding: 'utf8', stdio: 'pipe', env, timeout: 120_000 }
+  return execFileSync('git', args, options).trim()
 }
 
 function lastCommitDate(file) {
@@ -129,6 +135,30 @@ function lastCommitDate(file) {
   } catch {
     return null
   }
+}
+
+// Cloudflare Pages clones only the latest commit (a preview's sitemap showed
+// this on 29 October 2026), so there the build fetches the rest of the history
+// when a page needs it. The repository is small, so this takes seconds. If it
+// fails, those pages get no lastmod and the build carries on.
+async function fetchFullHistory() {
+  if (process.env.CF_PAGES !== '1' || shallowCommits.size === 0) return
+  const before = new Set(shallowCommits)
+  let problem = ''
+  try {
+    git('fetch', '--unshallow', '--quiet')
+  } catch (error) {
+    problem = `: ${error.message.split('\n')[0]}`
+  }
+  // git can finish without an error and still fetch nothing, such as when the
+  // clone has no remote, so check whether the oldest commits it has changed.
+  await readShallowCommits()
+  const fetched = [...before].some((commit) => !shallowCommits.has(commit))
+  console.log(
+    fetched
+      ? 'Fetched the git history for the sitemap dates'
+      : `Could not fetch the git history${problem}`,
+  )
 }
 
 // The AdSense publisher ID lives in one place: public/ads.txt.
@@ -217,8 +247,12 @@ for (const route of routes) {
   await mkdir(path.dirname(file), { recursive: true })
   const { html, updated } = await buildPage(template, route, { indexable: true })
   await writeFile(file, html)
-  lastChanged.set(route, updated ?? lastCommitDate(`src/pages/${pageFiles[route.path]}.jsx`))
+  lastChanged.set(route, updated)
 }
+const pageSource = (route) => `src/pages/${pageFiles[route.path]}.jsx`
+const showNoDate = routes.filter((route) => !lastChanged.get(route))
+if (showNoDate.some((route) => !lastCommitDate(pageSource(route)))) await fetchFullHistory()
+for (const route of showNoDate) lastChanged.set(route, lastCommitDate(pageSource(route)))
 
 // Cloudflare Pages serves dist/404.html, with a 404 status, for any URL that
 // has no file. Without it, Pages would answer every unknown URL with the homepage.
