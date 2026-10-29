@@ -111,10 +111,13 @@ export default function MaternityPayGuide() {
       </p>
       <p>
         You reclaim through payroll, on an Employer Payment Summary (EPS) to HMRC. If you cannot
-        afford to make the payments, you can ask HMRC for the money in advance. Statutory Adoption
-        Pay, Shared Parental Pay, Parental Bereavement Pay and Neonatal Care Pay are reclaimed the
-        same way. Maternity Allowance is paid by the government, so there is nothing for an employer
-        to pay or reclaim.
+        afford to make the payments, you can{' '}
+        <Source href="https://www.gov.uk/recover-statutory-payments/if-you-cant-afford-to-make-payments">
+          ask HMRC for the money in advance
+        </Source>
+        . Statutory Adoption Pay, Shared Parental Pay, Parental Bereavement Pay and Neonatal Care
+        Pay are reclaimed the same way. Maternity Allowance is paid by the government, so there is
+        nothing for an employer to pay or reclaim.
       </p>
 
       <h2>Worked examples</h2>

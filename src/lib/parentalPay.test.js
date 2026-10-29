@@ -9,9 +9,8 @@
 // https://www.gov.uk/maternity-pay-leave
 // https://www.gov.uk/paternity-pay-leave
 // https://www.gov.uk/maternity-allowance
-// https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027 (reclaim rates,
-//   recorded on 29 October 2026)
-// https://www.gov.uk/recover-statutory-payments
+// https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027 and
+// https://www.gov.uk/recover-statutory-payments (reclaim rates, checked on 29 October 2026)
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
