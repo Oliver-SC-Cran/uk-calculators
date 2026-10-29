@@ -2,6 +2,9 @@
 // route in src/routes.js to its own HTML file in dist/, with that page's title,
 // description and canonical URL, then writes the sitemap from the same list.
 
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -13,6 +16,13 @@ const ssrDir = path.join(root, 'dist-ssr')
 const { render, routes, notFoundRoute, canonicalUrl, pageFiles } = await import(
   pathToFileURL(path.join(ssrDir, 'entry-server.js')).href
 )
+
+// Ads and visitor statistics belong on the live site only. Cloudflare Pages
+// sets CF_PAGES to 1 and CF_PAGES_BRANCH to the branch it is building (see
+// "Environment variables" in Cloudflare's build configuration docs), and main
+// is the live site. Preview builds of other branches, and builds on your own
+// computer, get neither script. src/build.test.js checks all three.
+const production = process.env.CF_PAGES === '1' && process.env.CF_PAGES_BRANCH === 'main'
 
 const escapeHtml = (text) =>
   text.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;')
@@ -58,17 +68,67 @@ async function buildPage(template, route, { indexable }) {
     indexable ? `\n    <meta property="og:url" content="${url}" />` : '',
   )
   html = replaceTag(html, /\s*<!-- The tags below.*?-->/s, '')
-  const pageTags = [...fontPreloads, ...preloadsFor(route.path)]
-  const headTags = indexable ? [...pageTags, adSenseTag] : pageTags
+  const headTags = [
+    ...fontPreloads,
+    ...preloadsFor(route.path),
+    // Before the AdSense tag, so it runs first. See src/clearShareLink.js.
+    ...(route.sharedLinks ? [clearShareLinkTag] : []),
+    ...(production && indexable ? [adSenseTag] : []),
+  ]
   html = replaceTag(html, /\n {2}<\/head>/, `\n    ${headTags.join('\n    ')}\n  </head>`)
-  html = replaceTag(html, /\n {2}<\/body>/, `\n    ${analyticsTag}\n  </body>`)
+  if (production) html = replaceTag(html, /\n {2}<\/body>/, `\n    ${analyticsTag}\n  </body>`)
 
   const body = await render(route.path)
   const isNotFoundPage = body.includes('Page not found')
   if (indexable === isNotFoundPage) {
     throw new Error(`${route.path} rendered the wrong page. Check the pages map in src/App.jsx.`)
   }
-  return replaceTag(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`)
+  return {
+    html: replaceTag(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`),
+    updated: latestUpdatedDate(body),
+  }
+}
+
+// The latest "Updated" or "Last updated" date a page shows, as 'YYYY-MM-DD',
+// or null if it shows none. A calculator page can show two: its own, at the
+// top, and its guide's. Both come from <time dateTime> (CalculatorLayout.jsx
+// and LastUpdated.jsx). React may put <!-- --> between the word and the date.
+function latestUpdatedDate(body) {
+  const dates = [...body.matchAll(/updated:?(?:<!-- -->)?\s*<time dateTime="([\d-]+)"/gi)]
+  return (
+    dates
+      .map((match) => match[1])
+      .sort()
+      .at(-1) ?? null
+  )
+}
+
+// The date of the last commit that changed a file, as 'YYYY-MM-DD', for pages
+// that show no date. null if git cannot tell. Cloudflare Pages may clone only
+// the latest commits, and in a shallow clone the oldest commit looks as if it
+// added every file, so a date from that commit is not used.
+const shallowCommits = new Set()
+try {
+  const shallowFile = git('rev-parse', '--git-path', 'shallow')
+  if (existsSync(path.resolve(root, shallowFile))) {
+    const text = await readFile(path.resolve(root, shallowFile), 'utf8')
+    for (const commit of text.split('\n').filter(Boolean)) shallowCommits.add(commit)
+  }
+} catch {
+  // No git here, such as a copy of the files. Pages without a date get none.
+}
+
+function git(...args) {
+  return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe' }).trim()
+}
+
+function lastCommitDate(file) {
+  try {
+    const [commit, date] = git('log', '-1', '--format=%H %cs', '--', file).split(' ')
+    return commit && !shallowCommits.has(commit) ? date : null
+  } catch {
+    return null
+  }
 }
 
 // The AdSense publisher ID lives in one place: public/ads.txt.
@@ -77,8 +137,9 @@ const publisherId = adsTxt.match(/^google\.com,\s*(pub-\d+)\s*,/m)?.[1]
 if (!publisherId) throw new Error('No Google publisher ID found in public/ads.txt')
 
 // Loads Google AdSense, which also shows the consent message published in the
-// AdSense account to visitors who need to see it. Real pages only: the 404
-// page has no content, so it carries no ads.
+// AdSense account to visitors who need to see it. Real pages on the live site
+// only: the 404 page has no content, so it carries no ads. It stays a plain tag
+// in the head, where AdSense looks for it when it checks the site.
 const adSenseTag = `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${publisherId}" crossorigin="anonymous"></script>`
 
 // Cloudflare Web Analytics counts page views without cookies. This token only
@@ -93,9 +154,22 @@ if (!/^[0-9a-f]{32}$/.test(WEB_ANALYTICS_TOKEN)) {
 }
 
 // The tag as Cloudflare's documentation gives it, placed at the end of the
-// body. It goes on every page, the 404 page included, so broken links show up
-// in the counts.
+// body. It goes on every page of the live site, the 404 page included, so
+// broken links show up in the counts.
 const analyticsTag = `<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${WEB_ANALYTICS_TOKEN}"}'></script>`
+
+// Takes a share link's figures out of the address bar before any other script
+// runs (see src/clearShareLink.js). It is a plain script, not a module, so the
+// browser runs it as soon as it reaches it. Its comments are left out, and its
+// name carries a hash of what is left, like Vite's own files, so browsers can
+// keep it for a year (see public/_headers).
+const clearShareLink = (await readFile(path.join(root, 'src', 'clearShareLink.js'), 'utf8'))
+  .replace(/^\s*\/\/.*\n/gm, '')
+  .trim()
+const clearShareLinkHash = createHash('sha256').update(clearShareLink).digest('base64url')
+const clearShareLinkFile = `assets/clearShareLink-${clearShareLinkHash.slice(0, 8)}.js`
+await writeFile(path.join(dist, clearShareLinkFile), `${clearShareLink}\n`)
+const clearShareLinkTag = `<script src="/${clearShareLinkFile}"></script>`
 
 // The two font files are fetched early, so text does not wait for the
 // stylesheet to ask for them. Vite adds a hash to each file name.
@@ -131,26 +205,35 @@ function preloadsFor(routePath) {
 
 const template = await readFile(path.join(dist, 'index.html'), 'utf8')
 
+// When each page last changed, for the sitemap: the date it shows, or for a
+// page that shows none, the date of the last commit to its file in src/pages.
+const lastChanged = new Map()
+
 for (const route of routes) {
   // "/" becomes dist/index.html and "/about" becomes dist/about.html. Cloudflare
   // Pages serves about.html at "/about". It would serve about/index.html at
   // "/about/" and redirect "/about" there, which is not the address we use.
   const file = path.join(dist, route.path === '/' ? 'index.html' : `${route.path}.html`)
   await mkdir(path.dirname(file), { recursive: true })
-  await writeFile(file, await buildPage(template, route, { indexable: true }))
+  const { html, updated } = await buildPage(template, route, { indexable: true })
+  await writeFile(file, html)
+  lastChanged.set(route, updated ?? lastCommitDate(`src/pages/${pageFiles[route.path]}.jsx`))
 }
 
 // Cloudflare Pages serves dist/404.html, with a 404 status, for any URL that
 // has no file. Without it, Pages would answer every unknown URL with the homepage.
-await writeFile(
-  path.join(dist, '404.html'),
-  await buildPage(template, notFoundRoute, { indexable: false }),
-)
+const notFoundPage = await buildPage(template, notFoundRoute, { indexable: false })
+await writeFile(path.join(dist, '404.html'), notFoundPage.html)
 
+const sitemapEntry = (route) => {
+  const date = lastChanged.get(route)
+  const lastmod = date ? `<lastmod>${date}</lastmod>` : ''
+  return `  <url><loc>${canonicalUrl(route)}</loc>${lastmod}</url>`
+}
 const sitemap = [
   '<?xml version="1.0" encoding="UTF-8"?>',
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-  ...routes.map((route) => `  <url><loc>${canonicalUrl(route)}</loc></url>`),
+  ...routes.map(sitemapEntry),
   '</urlset>',
   '',
 ].join('\n')
@@ -159,3 +242,12 @@ await writeFile(path.join(dist, 'sitemap.xml'), sitemap)
 await rm(ssrDir, { recursive: true, force: true })
 
 console.log(`Prerendered ${routes.length} pages, 404.html and sitemap.xml`)
+console.log(
+  production
+    ? 'Built for the live site, with the AdSense and Web Analytics tags'
+    : 'Not built for the live site, so there is no AdSense or Web Analytics tag',
+)
+const undated = routes.filter((route) => !lastChanged.get(route)).map((route) => route.path)
+if (undated.length > 0) {
+  console.log(`No date found for ${undated.join(', ')}, so the sitemap has no lastmod for them`)
+}

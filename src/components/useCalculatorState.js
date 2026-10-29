@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { linkHash, readLinkHash } from '../lib/calculatorLink'
+import { linkHash, readLinkHash, takeLinkHash } from '../lib/calculatorLink'
 import { amountText, groupDigits } from '../lib/format'
 import { parseDate, parseNumber } from '../lib/validation'
 
@@ -58,8 +58,9 @@ const lowerFirst = (text) => text.charAt(0).toLowerCase() + text.slice(1)
  *
  * Share links (calculatorLink.js) are off unless sharedLinks is passed.
  * - With sharedLinks, a page opened from a shared link reads the figures in
- *   it once it has loaded, then takes them out of the address bar, so that
- *   scripts on the page have as little time as possible to see them.
+ *   it once it has loaded. On a built page they were taken out of the address
+ *   bar before any other script ran (src/clearShareLink.js), so no other
+ *   script sees them there. takeLinkHash hands them over.
  * - shareLink() gives the link to copy for what is entered now. Nothing is
  *   written to the address bar, so the figures are never there to be seen.
  *   An exact amount goes into the link in full, and a link value with more
@@ -81,11 +82,9 @@ export function useCalculatorState(inputs, { sharedLinks = false } = {}) {
   const inputsRef = useRef(inputs)
   useEffect(() => {
     if (!sharedLinks) return
-    const { hash, pathname, search } = window.location
-    // Only a share link has = in it. A link to part of a page, such as
-    // #calculators, is left alone.
-    if (!hash.includes('=')) return
-    const found = readLinkHash(hash, inputsRef.current)
+    // The figures are out of the address bar once this returns, even if none
+    // of them can be used.
+    const found = readLinkHash(takeLinkHash(window), inputsRef.current)
     if (found) {
       // An amount with more than four decimal places was an exact amount when
       // the link was made: show it to the penny and keep it exact.
@@ -99,9 +98,6 @@ export function useCalculatorState(inputs, { sharedLinks = false } = {}) {
       setValues((previous) => ({ ...previous, ...found }))
       setHeld(exact)
     }
-    // Take the figures out of the address bar, even if none could be used.
-    // This keeps React Router's own state, so back and forward still work.
-    window.history.replaceState(window.history.state, '', pathname + search)
   }, [sharedLinks])
 
   const fields = {}

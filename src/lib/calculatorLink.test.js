@@ -1,8 +1,10 @@
 // Tests for share links (calculatorLink.js). Run with: npm test
 // The expected values are [own working]: they follow from the rules in the file.
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
-import { linkHash, readLinkHash } from './calculatorLink.js'
+import vm from 'node:vm'
+import { linkHash, readLinkHash, takeLinkHash } from './calculatorLink.js'
 
 // The same shapes useCalculatorState's numberInput, choiceInput, checkboxInput
 // and dateInput make. Rules are left out, as links do not use them.
@@ -100,4 +102,67 @@ test('share link [own working] an exact amount goes into the link in full', () =
     salary: '865.3846153846154',
   })
   assert.equal(readLinkHash('#salary=1.123456789012345678', inputs), null)
+})
+
+// A stand-in for the browser's window: an address, and history.replaceState,
+// which changes the address the way a browser does.
+function fakeWindow(address) {
+  const win = {
+    location: new URL(address),
+    history: {
+      state: { idx: 0 },
+      replaceState(state, unused, url) {
+        win.history.state = state
+        win.location = new URL(url, win.location)
+      },
+    },
+  }
+  win.window = win
+  return win
+}
+
+// What src/clearShareLink.js does when a built page is opened at an address.
+// It runs in the page before any other script.
+const clearShareLink = readFileSync(new URL('../clearShareLink.js', import.meta.url), 'utf8')
+function openBuiltPage(address) {
+  const win = fakeWindow(address)
+  vm.runInNewContext(clearShareLink, win)
+  return win
+}
+
+const sharedLink = 'https://ukmoneycalculators.co.uk/salary-calculator#salary=47321&taxCode=1185L'
+
+test('share link [own working] the figures leave the address before any other script runs', () => {
+  const win = openBuiltPage(sharedLink)
+  // What Google's ad script, or any other, would read from the address.
+  assert.equal(win.location.href, 'https://ukmoneycalculators.co.uk/salary-calculator')
+  assert.deepEqual(win.history.state, { idx: 0 })
+  // The calculator still gets them, once.
+  const hash = takeLinkHash(win)
+  assert.equal(hash, '#salary=47321&taxCode=1185L')
+  assert.deepEqual(readLinkHash(hash, inputs), { salary: '47321', taxCode: '1185L' })
+  assert.equal(takeLinkHash(win), '')
+  assert.equal(win.shareLinkHash, undefined)
+})
+
+test('share link [own working] a link to part of a page, or no # part, is left alone', () => {
+  const home = openBuiltPage('https://ukmoneycalculators.co.uk/#calculators')
+  assert.equal(home.location.href, 'https://ukmoneycalculators.co.uk/#calculators')
+  assert.equal(takeLinkHash(home), '')
+  assert.equal(home.location.href, 'https://ukmoneycalculators.co.uk/#calculators')
+  const plain = openBuiltPage('https://ukmoneycalculators.co.uk/salary-calculator')
+  assert.equal(plain.shareLinkHash, undefined)
+  assert.equal(takeLinkHash(plain), '')
+})
+
+test('share link [own working] on the dev server the calculator takes the figures out itself', () => {
+  // The dev server does not run src/clearShareLink.js.
+  const win = fakeWindow(`${sharedLink.replace('#', '?utm_source=email#')}`)
+  assert.equal(takeLinkHash(win), '#salary=47321&taxCode=1185L')
+  assert.equal(
+    win.location.href,
+    'https://ukmoneycalculators.co.uk/salary-calculator?utm_source=email',
+  )
+  assert.deepEqual(win.history.state, { idx: 0 })
+  assert.equal(takeLinkHash(win), '')
 })

@@ -3,9 +3,11 @@
 //
 // The part after # is never sent to a server: browsers leave it out of every
 // request and out of the Referer header, so it does not reach Cloudflare's
-// servers or logs. Scripts on the page can still read it, so the page reads a
-// shared link once, puts the figures into the calculator, then takes them out
-// of the address bar (see useCalculatorState).
+// servers or logs. Scripts on the page can still read it, and Google's ad
+// script sends the whole address in its ad requests. So on a built page the
+// figures are taken out of the address bar before any other script runs
+// (src/clearShareLink.js), and the calculator reads them once from where that
+// script kept them (takeLinkHash, used by useCalculatorState).
 //
 // The names are the keys a page gives its inputs. Changing one breaks links
 // that were shared before.
@@ -44,6 +46,30 @@ export function linkHash(inputs, values) {
   }
   const query = params.toString()
   return query ? `#${query}` : ''
+}
+
+/**
+ * The # part of the share link the page was opened from, or '' if it was not
+ * opened from one. It is handed over once only. win is the browser's window.
+ *
+ * On a built page, src/clearShareLink.js has already taken the figures out of
+ * the address bar, before any other script ran, and kept them as
+ * win.shareLinkHash. On the dev server, which does not run that file, the
+ * figures are taken out of the address bar here.
+ */
+export function takeLinkHash(win) {
+  const kept = win.shareLinkHash
+  if (typeof kept === 'string') {
+    delete win.shareLinkHash
+    return kept
+  }
+  const { hash, pathname, search } = win.location
+  // Only a share link has = in it. A link to part of a page, such as
+  // #calculators, is left alone.
+  if (!hash.includes('=')) return ''
+  // This keeps React Router's own state, so back and forward still work.
+  win.history.replaceState(win.history.state, '', pathname + search)
+  return hash
 }
 
 /**

@@ -4,7 +4,7 @@ import { CONTACT_EMAIL, OWNER_NAME, routes } from '../routes'
 import LastUpdated from '../components/LastUpdated'
 
 // Change this by hand whenever the policy changes.
-const LAST_UPDATED = '2026-10-23'
+const LAST_UPDATED = '2026-10-29'
 
 export default function Privacy() {
   return (
@@ -39,9 +39,10 @@ export default function Privacy() {
         in a link unless you press the button. Browsers do not send the part of a link after # to
         any server, so the figures do not reach us or Cloudflare. They are in the link itself,
         though, so anyone you send it to can see them, and so can anywhere you paste or save it.
-        When a page is opened from one of these links, the calculator reads the figures and then
-        takes them out of the address bar. Until then, scripts running on the page, including
-        Google's advertising script, can read the whole address.
+        When a page is opened from one of these links, the figures are taken out of the address bar
+        before any other script on the page starts, including Google's advertising script and
+        Cloudflare's visitor statistics, and the calculator then fills them in. So the page address
+        those scripts read, and send with their requests, does not have the figures in it.
       </p>
 
       <h2>Advertising</h2>
