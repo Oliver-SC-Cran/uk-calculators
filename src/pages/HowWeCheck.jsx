@@ -5,8 +5,9 @@ import TextPage from '../components/TextPage'
 import { CONTACT_EMAIL } from '../routes'
 
 // Change this by hand whenever the page changes. Everything on it describes how
-// the site is built and tested (CLAUDE.md, src/lib/rates/ and the tests in
-// src/lib/), so check it again when that changes. On 30 October 2026 there
+// the site is built and tested (CLAUDE.md, package.json, src/lib/rates/ and the
+// tests in src/lib/), so check it again when that changes. "If any of them
+// fails, the build stops" is true because npm run build runs npm test first. On 30 October 2026 there
 // were 359 tests, 85 of them labelled [gov.uk] and 1 [gov.scot].
 const LAST_UPDATED = '2026-10-30'
 
@@ -104,9 +105,9 @@ export default function HowWeCheck() {
       <h2>Tested before anything goes live</h2>
       <p>
         There are more than 350 automated tests, and more than 80 of them check against something
-        gov.uk or HMRC publishes. Every test is run before any change goes live, along with a full
-        build of the site. A change goes to a separate preview copy of the site first, and only goes
-        live once the tests pass.
+        gov.uk or HMRC publishes. Every time the site is built, all the tests run first. If any of
+        them fails, the build stops and the change cannot go live. Each change also goes to a
+        separate preview copy of the site before it goes live.
       </p>
 
       <h2 id={WORKING_SECTION_ID} tabIndex={-1}>

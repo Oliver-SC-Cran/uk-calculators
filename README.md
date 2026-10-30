@@ -34,7 +34,7 @@ npm run build
 ```
 
 - `npm test` runs the calculator tests. Each test name says whether its expected values come from gov.uk or were worked out by hand.
-- `npm run build` writes the site to `dist/`, with every page as its own HTML file, plus the sitemap and the 404 page. Set `CF_PAGES=1 CF_PAGES_BRANCH=main` to build the HTML exactly as the live site gets it, with its ad and analytics tags.
+- `npm run build` runs `npm test` first and stops if any test fails. Then it writes the site to `dist/`, with every page as its own HTML file, plus the sitemap and the 404 page. `npm run build:site` builds without running the tests. Set `CF_PAGES=1 CF_PAGES_BRANCH=main` to build the HTML exactly as the live site gets it, with its ad and analytics tags.
 
 ## How it is put together
 
@@ -47,7 +47,7 @@ npm run build
 - The Sora and Figtree fonts are served from the site itself. They come from the `@fontsource-variable` packages.
 - `scripts/prerender.js` turns each page into static HTML at build time. Each page loads only its own JavaScript.
 
-The site is hosted on Cloudflare Pages. Pushing a branch creates a preview, and pushing `main` deploys the live site. The build command is `npm run build`, the output folder is `dist`, and `.node-version` sets the Node.js version Cloudflare builds with. Response headers are in `public/_headers`. Only the build of `main` carries the Google AdSense and Cloudflare Web Analytics tags. Previews and builds on your own computer have neither.
+The site is hosted on Cloudflare Pages. Pushing a branch creates a preview, and pushing `main` deploys the live site. The build command is `npm run build`, which runs the tests first, so a failing test stops the deploy. The output folder is `dist`, and `.node-version` sets the Node.js version Cloudflare builds with. Response headers are in `public/_headers`. Only the build of `main` carries the Google AdSense and Cloudflare Web Analytics tags. Previews and builds on your own computer have neither.
 
 ## Updating the figures each April
 

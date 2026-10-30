@@ -28,8 +28,8 @@ export default function About() {
       <h2>How the figures are checked</h2>
       <ul>
         <li>
-          Every rate, threshold and allowance comes from gov.uk or HMRC, and each page lists its
-          sources.
+          Every rate, threshold and allowance comes from official sources such as gov.uk, HMRC,
+          nidirect and MoneyHelper, and each page lists its sources.
         </li>
         <li>
           Where gov.uk or HMRC publish worked examples, or have a calculator of their own, I check

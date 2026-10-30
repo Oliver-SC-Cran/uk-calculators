@@ -36,7 +36,7 @@ function gitDir() {
 }
 
 /**
- * Runs npm run build in a fresh copy, and gives back every file it wrote to
+ * Runs npm run build:site in a fresh copy, and gives back every file it wrote to
  * dist/. Only the build on your own computer reads this repository's history:
  * a Cloudflare build may fetch more of it (scripts/prerender.js), and that must
  * not happen to your own copy. edit, if given, changes the copy before the build.
@@ -63,7 +63,12 @@ async function build(cloudflare, edit) {
   if (git && !cloudflare.CF_PAGES) env.GIT_DIR = git
   // Otherwise git finds no repository, not even one in a folder above the copy.
   else env.GIT_CEILING_DIRECTORIES = path.dirname(copy)
-  await promisify(execFile)('npm', ['run', 'build'], { cwd: copy, env: { ...env, ...cloudflare } })
+  // build:site, not build, which runs these tests first and so would start
+  // them again in every copy.
+  await promisify(execFile)('npm', ['run', 'build:site'], {
+    cwd: copy,
+    env: { ...env, ...cloudflare },
+  })
 
   const dist = path.join(copy, 'dist')
   const files = new Map()
@@ -192,9 +197,31 @@ test('build [own working] every sitemap address has the date its page shows', ()
   }
 })
 
+// Cloudflare Pages clones only the latest commit, and npm run build runs these
+// tests there before building. In a clone like that git cannot tell when the
+// homepage's own file last changed, so it gets no date and the next test has
+// nothing to check. The build itself then fetches the history it needs.
+function historyTooShort() {
+  try {
+    const shallow = execFileSync('git', ['rev-parse', '--is-shallow-repository'], {
+      cwd: root,
+      encoding: 'utf8',
+    }).trim()
+    return (
+      shallow === 'true' && lastmodIn(local.get('sitemap.xml'), findRoute('/'))[1] === undefined
+    )
+  } catch {
+    return false
+  }
+}
+
 test(
   'build [own working] the homepage and the guides index take the date of their newest guide',
-  { skip: !gitDir() && 'needs the git history' },
+  {
+    skip:
+      (!gitDir() && 'needs the git history') ||
+      (historyTooShort() && 'needs more of the git history than this shallow clone has'),
+  },
   () => {
     // In this build the first guide is dated later than any commit, so the two
     // pages that list it take its date, though neither page's own file changed.
