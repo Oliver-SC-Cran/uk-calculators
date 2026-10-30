@@ -184,6 +184,7 @@ export default function ISACalculator() {
       ]}
       related={[
         '/lifetime-isa-calculator',
+        '/compound-interest-calculator',
         '/savings-interest-tax-calculator',
         '/mortgage-overpayment-calculator',
       ]}

@@ -7,6 +7,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { calculateCompoundInterest } from './compoundInterest.js'
 import { calculateTakeHome } from './incomeTax.js'
 import { calculateISAAllowance } from './isa.js'
 import { projectLifetimeIsa } from './lifetimeIsa.js'
@@ -448,5 +449,33 @@ test('working [own working] mileage allowance adds up to the relief or the taxab
     })
     const where = `mileage ${vehicle} ${miles} ${employerRate} ${employerRateAbove} ${passengers.passengerMiles} ${pay} ${scottish} ${taxYear}`
     checkHeadline(r.working, r.headline, where)
+  }
+})
+
+test('working [own working] compound interest adds up to the pot, added monthly and yearly', () => {
+  for (const [startAmount, payment, paymentFrequency, ratePercent, compounding, extras] of product(
+    [0, 1000, 250000],
+    [0, 100],
+    ['monthly', 'yearly'],
+    [0, 5, 20],
+    ['monthly', 'yearly'],
+    [
+      {},
+      { chargePercent: 1, inflationPercent: 2 },
+      { fall: { percent: 20, year: 2 } },
+      { chargePercent: 5, fall: { percent: 100, year: 1 }, inflationPercent: 3 },
+    ],
+  )) {
+    const r = calculateCompoundInterest({
+      startAmount,
+      payment,
+      paymentFrequency,
+      ratePercent,
+      compounding,
+      years: 10,
+      ...extras,
+    })
+    const where = `compound interest ${startAmount} ${payment} ${paymentFrequency} ${ratePercent}% ${compounding}`
+    checkHeadline(r.working, r.finalValue, where)
   }
 })

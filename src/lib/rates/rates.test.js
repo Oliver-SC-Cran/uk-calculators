@@ -17,6 +17,7 @@ import { calculateRedundancyPay } from '../redundancy.js'
 import { calculateSelfEmployedTax } from '../selfEmployed.js'
 import { calculateSharedOwnershipStampDuty, calculateStampDuty } from '../stampDuty.js'
 import { calculateStudentLoanRepayment } from '../studentLoans.js'
+import { GROWTH_RATES } from './growth.js'
 import { INCOME_TAX_RATES } from './incomeTax.js'
 import { ISA_RATES } from './isa.js'
 import { MILEAGE_RATES } from './mileage.js'
@@ -37,6 +38,7 @@ import {
 } from './taxYear.js'
 
 const tables = {
+  GROWTH_RATES,
   INCOME_TAX_RATES,
   ISA_RATES,
   MILEAGE_RATES,

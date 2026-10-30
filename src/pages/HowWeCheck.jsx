@@ -55,6 +55,10 @@ export default function HowWeCheck() {
           Budget documents and HM Treasury, for changes that have been announced but have not
           started yet
         </li>
+        <li>
+          the FCA and the Bank of England, for the growth and inflation rates the compound interest
+          calculator offers as quick picks
+        </li>
       </ul>
       <p>
         The <Link to="/mortgage-overpayment-calculator">mortgage overpayment calculator</Link> uses
@@ -99,7 +103,9 @@ export default function HowWeCheck() {
         calculator, so every mortgage result is also worked out a second way, from the standard loan
         formulas, and the two have to agree. The savings interest tax calculator is checked against
         a separate calculation of the whole tax bill, and the pay rise calculator has to match the
-        take-home pay calculator for every salary it is tested with.
+        take-home pay calculator for every salary it is tested with. The{' '}
+        <Link to="/compound-interest-calculator">compound interest calculator</Link> is checked
+        against the standard compound interest formulas in the same way.
       </p>
 
       <h2>Tested before anything goes live</h2>

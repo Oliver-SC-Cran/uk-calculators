@@ -357,7 +357,12 @@ export default function LifetimeIsaCalculator() {
       working={shows ? result.working : null}
       guide={<LifetimeIsaGuide />}
       guides={['/guides/first-time-buyer-isa-vs-lifetime-isa', '/guides/budget-2026']}
-      related={['/isa-calculator', '/stamp-duty-calculator', '/mortgage-overpayment-calculator']}
+      related={[
+        '/isa-calculator',
+        '/compound-interest-calculator',
+        '/stamp-duty-calculator',
+        '/mortgage-overpayment-calculator',
+      ]}
     />
   )
 }

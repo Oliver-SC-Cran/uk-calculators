@@ -303,7 +303,12 @@ export default function SavingsTaxCalculator() {
         '/guides/overpay-mortgage-or-save',
         '/guides/cash-isa-changes-april-2027',
       ]}
-      related={['/isa-calculator', '/salary-calculator', '/lifetime-isa-calculator']}
+      related={[
+        '/isa-calculator',
+        '/compound-interest-calculator',
+        '/salary-calculator',
+        '/lifetime-isa-calculator',
+      ]}
     />
   )
 }

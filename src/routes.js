@@ -110,6 +110,14 @@ export const routes = [
     description: `Work out the tax on your savings interest for ${TAX_YEAR} and from ${NEXT_TAX_YEAR_START}, when the savings rates rise to ${savingsRates}. Covers the whole UK.`,
   },
   {
+    path: '/compound-interest-calculator',
+    name: 'Compound interest calculator',
+    sharedLinks: true,
+    title: 'Compound interest calculator: savings and investment growth',
+    description:
+      'See what savings or investments could grow to with compound interest and regular payments, after charges and inflation, and what a market fall would do.',
+  },
+  {
     path: '/mortgage-overpayment-calculator',
     name: 'Mortgage overpayment calculator',
     sharedLinks: true,

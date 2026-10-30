@@ -70,6 +70,10 @@ const groups = [
         description: `What the ${percent(ISA.lisaBonusRate)} bonus and growth could add up to, for a first home or later life.`,
       },
       {
+        path: '/compound-interest-calculator',
+        description: 'What savings or investments could grow to, after charges and inflation.',
+      },
+      {
         path: '/savings-interest-tax-calculator',
         description: `Tax on your savings interest in ${TAX_YEAR}, and from ${NEXT_TAX_YEAR_START} when the rates go up.`,
       },

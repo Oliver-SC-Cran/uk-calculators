@@ -1,6 +1,6 @@
 # UK Money Calculators
 
-The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): eleven calculators for UK pay, tax, savings and property, each with a written guide, plus standalone guides at `/guides`.
+The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): calculators for UK pay, tax, savings and property, each with a written guide, plus standalone guides at `/guides`.
 
 - Take-home pay
 - Pay rises
