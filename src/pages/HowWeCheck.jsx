@@ -20,8 +20,8 @@ export default function HowWeCheck() {
       <h1>How we check our figures</h1>
       <p className="lede">
         The calculators use figures from gov.uk and HMRC and are tested against official examples.
-        Here is where the figures come from, how they are checked, and what happens when something
-        changes or turns out to be wrong.
+        Here is where they come from, how they are checked, and what happens when something changes
+        or is wrong.
       </p>
       <LastUpdated date={LAST_UPDATED} className="prose__updated" />
 
@@ -56,8 +56,7 @@ export default function HowWeCheck() {
           started yet
         </li>
         <li>
-          the FCA and the Bank of England, for the growth and inflation rates the compound interest
-          calculator offers as quick picks
+          the FCA and the Bank of England, for the compound interest calculator&apos;s quick picks
         </li>
       </ul>
       <p>
@@ -104,16 +103,16 @@ export default function HowWeCheck() {
         formulas, and the two have to agree. The savings interest tax calculator is checked against
         a separate calculation of the whole tax bill, and the pay rise calculator has to match the
         take-home pay calculator for every salary it is tested with. The{' '}
-        <Link to="/compound-interest-calculator">compound interest calculator</Link> is checked
-        against the standard compound interest formulas in the same way.
+        <Link to="/compound-interest-calculator">compound interest calculator</Link> is checked the
+        same way, against the standard formulas.
       </p>
 
       <h2>Tested before anything goes live</h2>
       <p>
         There are more than 350 automated tests, and more than 80 of them check against something
         gov.uk or HMRC publishes. Every time the site is built, all the tests run first. If any of
-        them fails, the build stops and the change cannot go live. Each change also goes to a
-        separate preview copy of the site before it goes live.
+        them fails, the build stops and the change cannot go live. Each change is also checked on a
+        preview copy of the site first.
       </p>
 
       <h2 id={WORKING_SECTION_ID} tabIndex={-1}>
@@ -121,9 +120,9 @@ export default function HowWeCheck() {
       </h2>
       <p>
         Every calculator shows its working under the result. The first table adds up to the figure
-        in the result. The tables after it show where each of its lines came from, such as the rate
-        and the amount it was applied to. A test checks that every calculator&apos;s working adds up
-        to the answer it shows, so you can follow each step and check it by hand.
+        in the result. The tables after it show where each line came from, such as a rate and the
+        amount it was applied to. A test checks that every calculator&apos;s working adds up to the
+        answer it shows, so you can follow each step and check it by hand.
       </p>
       <p>
         The results are estimates for common situations. Payroll software rounds some figures in
@@ -141,10 +140,7 @@ export default function HowWeCheck() {
           After each Budget. Changes that have been announced but have not started yet are shown
           with the date they start.
         </li>
-        <li>
-          When the detailed rules for an announced change are published, such as the regulations
-          that follow a Budget.
-        </li>
+        <li>When the detailed rules for an announced change are published.</li>
       </ul>
       <p>Each calculator and guide shows the date it was last updated.</p>
 
