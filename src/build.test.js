@@ -266,3 +266,16 @@ test('build [own working] the homepage links to every calculator', () => {
     assert.ok(home.includes(`href="${route.path}"`), `the homepage does not link to ${route.path}`)
   }
 })
+
+test('build [own working] Cloudflare builds with the Node.js version in .node-version', async () => {
+  // .node-version pins the Node.js version Cloudflare Pages builds with. Cloudflare
+  // also reads NODE_VERSION and .nvmrc, and does not say which wins, so on
+  // Cloudflare (CF_PAGES=1) this fails the build if any other version is used.
+  const pinned = (await readFile(path.join(root, '.node-version'), 'utf8')).trim()
+  assert.match(
+    pinned,
+    /^\d+\.\d+\.\d+$/,
+    '.node-version should be an exact version, such as 26.13.0',
+  )
+  if (process.env.CF_PAGES === '1') assert.equal(process.version, `v${pinned}`)
+})
