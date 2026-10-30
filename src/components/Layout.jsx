@@ -72,8 +72,17 @@ export default function Layout() {
 
       <footer className="site-footer">
         <div className="wrap site-footer__inner">
-          <p>Checked against gov.uk. General information only, not financial advice.</p>
+          <p>Tax rates and thresholds from gov.uk. General information, not financial advice.</p>
           <ul className="site-footer__links">
+            <li>
+              <Link to="/about">About</Link>
+            </li>
+            <li>
+              <Link to="/how-we-check">How we check our figures</Link>
+            </li>
+            <li>
+              <Link to="/contact">Contact</Link>
+            </li>
             <li>
               <Link to="/privacy">Privacy</Link>
             </li>

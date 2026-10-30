@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { formatAmount, formatDeduction, formatNumber } from '../lib/format'
 
 const WORKING_ID = 'working'
@@ -96,7 +97,7 @@ export default function Working({ parts }) {
       </h2>
       <p className="working__intro">
         The first table comes to the figure in the result. The ones after it show where each of its
-        lines came from.
+        lines came from. See <Link to="/how-we-check">how we check our figures</Link>.
       </p>
       <div className="working__parts">
         {parts.map((part, index) => (

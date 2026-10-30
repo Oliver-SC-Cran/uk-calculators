@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { pageFiles } from './pageFiles.js'
-import { canonicalUrl, findRoute, notFoundRoute, routes } from './routes.js'
+import { calculators, canonicalUrl, findRoute, guides, notFoundRoute, routes } from './routes.js'
 
 test('routes: every page has its own title and description', () => {
   const titles = new Set(routes.map((route) => route.title))
@@ -54,4 +54,14 @@ test('routes: sharedLinks marks exactly the pages that switch share links on', (
     assert.equal(Boolean(route.sharedLinks), switchedOn, `${route.path} sharedLinks`)
     if (switchedOn) assert.ok(route.name, `${route.path} needs a name for the privacy policy`)
   }
+})
+
+test('routes: the homepage and guides index descriptions count what they list', () => {
+  // Counted, not listed, so adding a calculator or a guide keeps them true.
+  const calculatorCount = routes.filter((route) => route.name).length
+  const guideCount = routes.filter((route) => route.guide).length
+  assert.equal(calculators.length, calculatorCount)
+  assert.equal(guides.length, guideCount)
+  assert.match(findRoute('/').description, new RegExp(`^${calculatorCount} free UK calculators `))
+  assert.match(findRoute('/guides').description, new RegExp(`^${guideCount} plain guides `))
 })

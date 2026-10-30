@@ -28,7 +28,7 @@
 //          https://www.gov.uk/hmrc-internal-manuals/employment-income-manual/eim31240
 //          https://www.gov.uk/hmrc-internal-manuals/employment-income-manual/eim31405
 //          https://www.gov.uk/hmrc-internal-manuals/national-insurance-manual/nim05833
-//          https://www.gov.uk/simpler-income-tax-simplified-expenses/vehicles-
+//          https://www.gov.uk/simpler-income-tax-simplified-expenses/vehicles
 //          https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar (paragraph 2.7)
 //          https://www.gov.uk/government/news/everyday-fixes-to-make-life-easier-for-millions-of-britons
 

@@ -26,6 +26,8 @@ export const pageFiles = {
   '/guides/budget-2026': 'guides/Budget2026',
   '/guides/first-time-buyer-isa-vs-lifetime-isa': 'guides/FirstTimeBuyerIsa',
   '/about': 'About',
+  '/how-we-check': 'HowWeCheck',
+  '/contact': 'Contact',
   '/privacy': 'Privacy',
   '/cookies': 'Cookies',
   '/terms': 'Terms',

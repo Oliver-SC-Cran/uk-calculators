@@ -41,7 +41,10 @@ export const routes = [
   {
     path: '/',
     title: `UK Money Calculators: tax, pay and savings ${TAX_YEAR}`,
-    description: `Free calculators for take-home pay, redundancy pay, ISA allowance, mortgage overpayments, minimum wage and student loans. Updated for the ${TAX_YEAR} tax year.`,
+    // A count, not a list, so adding a calculator keeps it true.
+    get description() {
+      return `${calculators.length} free UK calculators for pay, tax, work, family, property and savings, each showing how it worked out the answer. Updated for the ${TAX_YEAR} tax year.`
+    },
   },
   {
     path: '/salary-calculator',
@@ -140,7 +143,10 @@ export const routes = [
   {
     path: '/guides',
     title: 'Guides to UK tax, pay and savings | UK Money Calculators',
-    description: `Plain guides to the rules behind the calculators: the ${pounds(INCOME_TAX.taperStart)} tax trap, how to read your payslip, and the scrapped cut to the cash ISA limit.`,
+    // A count, not a list, so adding a guide keeps it true.
+    get description() {
+      return `${guides.length} plain guides to the UK tax, pay and savings rules behind the calculators, with worked examples and links to the official sources.`
+    },
   },
   {
     path: '/guides/100k-tax-trap',
@@ -192,6 +198,18 @@ export const routes = [
       'Who runs UK Money Calculators, where the figures come from and how often they are updated.',
   },
   {
+    path: '/how-we-check',
+    title: 'How we check our figures | UK Money Calculators',
+    description:
+      'Where the rates in UK Money Calculators come from, how each calculator is tested against gov.uk and HMRC examples, and when the figures are checked again.',
+  },
+  {
+    path: '/contact',
+    title: 'Contact | UK Money Calculators',
+    description:
+      'Get in touch with UK Money Calculators about a mistake, an out-of-date figure or an idea for a calculator. By email, with no personal financial advice.',
+  },
+  {
     path: '/privacy',
     title: 'Privacy policy | UK Money Calculators',
     description:
@@ -220,6 +238,9 @@ export const notFoundRoute = {
 
 /** The standalone guides, in the order they are listed. */
 export const guides = routes.filter((route) => route.guide)
+
+/** The calculators, which are the pages with a name. */
+export const calculators = routes.filter((route) => route.name)
 
 export const canonicalUrl = (route) => SITE_URL + route.path
 

@@ -245,7 +245,7 @@ export default function MileageAllowanceGuide() {
           Expenses and benefits: business travel mileage for employees&apos; own vehicles
         </Source>
         ,{' '}
-        <Source href="https://www.gov.uk/simpler-income-tax-simplified-expenses/vehicles-">
+        <Source href="https://www.gov.uk/simpler-income-tax-simplified-expenses/vehicles">
           Simplified expenses if you&apos;re self-employed
         </Source>
         , HMRC&apos;s{' '}
