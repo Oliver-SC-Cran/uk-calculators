@@ -23,7 +23,7 @@ import { PAY_ENTERED_AS, switchPayPer, yearlyPayFrom } from '../lib/payPeriods'
 import { MONEY } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-22'
+const LAST_UPDATED = '2026-10-23'
 
 const PAY_PER_NAMES = { year: 'Year', month: 'Month', week: 'Week', day: 'Day', hour: 'Hour' }
 const PER_WORDS = {

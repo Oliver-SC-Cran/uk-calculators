@@ -27,7 +27,7 @@ import { calculateTakeHomePay } from '../lib/takeHome'
 import { MONEY, PERCENTAGE } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-21'
+const LAST_UPDATED = '2026-10-23'
 
 const PAY_PER_NAMES = { year: 'Year', month: 'Month', week: 'Week', day: 'Day', hour: 'Hour' }
 
