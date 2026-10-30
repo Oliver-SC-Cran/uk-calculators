@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+import { LIFETIME_ISA_REFORM } from '../lib/rates/isa'
 import { STAMP_DUTY } from '../lib/rates/stampDuty'
 import {
   calculateSharedOwnershipStampDuty,
@@ -10,7 +12,7 @@ import CalculatorGuide from '../components/CalculatorGuide'
 import Source from '../components/Source'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-29'
+const LAST_UPDATED = '2026-10-30'
 
 const MANUAL = 'https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/'
 
@@ -127,6 +129,14 @@ export default function StampDutyGuide() {
         The relief stops completely if the price is over {gbp(firstTimeBuyer.maxPrice)}. A home at{' '}
         {gbp(firstTimeBuyer.maxPrice)} costs {gbp(atLimit.tax)} in stamp duty. At £1 more it costs{' '}
         {gbp(justOver.tax)}, because the standard rates then apply to the whole price.
+      </p>
+      <p>
+        If you are saving for a deposit, our guide{' '}
+        <Link to="/guides/first-time-buyer-isa-vs-lifetime-isa">
+          First Time Buyer ISA vs Lifetime ISA
+        </Link>{' '}
+        explains the two accounts that add a government bonus, and what changes from{' '}
+        {LIFETIME_ISA_REFORM.firstTimeBuyerIsa.from}.
       </p>
 
       <h3>Additional properties</h3>

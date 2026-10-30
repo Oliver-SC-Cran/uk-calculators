@@ -24,6 +24,7 @@ export const pageFiles = {
   '/guides/how-to-read-your-payslip': 'guides/Payslip',
   '/guides/cash-isa-changes-april-2027': 'guides/CashIsaChanges',
   '/guides/budget-2026': 'guides/Budget2026',
+  '/guides/first-time-buyer-isa-vs-lifetime-isa': 'guides/FirstTimeBuyerIsa',
   '/about': 'About',
   '/privacy': 'Privacy',
   '/cookies': 'Cookies',

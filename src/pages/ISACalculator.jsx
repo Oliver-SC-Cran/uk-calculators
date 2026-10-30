@@ -177,6 +177,7 @@ export default function ISACalculator() {
       working={problem ? null : result.working}
       guide={<ISAGuide />}
       guides={[
+        '/guides/first-time-buyer-isa-vs-lifetime-isa',
         '/guides/cash-isa-changes-april-2027',
         '/guides/budget-2026',
         '/guides/overpay-mortgage-or-save',

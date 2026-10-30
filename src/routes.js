@@ -8,7 +8,7 @@
 
 import { INCOME_TAX, NEXT_YEAR_SAVINGS_TAX } from './lib/rates/incomeTax.js'
 import { BUDGET_2026 } from './lib/rates/budget.js'
-import { CASH_ISA_CUT_SCRAPPED, ISA } from './lib/rates/isa.js'
+import { CASH_ISA_CUT_SCRAPPED, ISA, LIFETIME_ISA_REFORM } from './lib/rates/isa.js'
 import { MILEAGE_RATES } from './lib/rates/mileage.js'
 import { MINIMUM_WAGE } from './lib/rates/minimumWage.js'
 import { PARENTAL_PAY } from './lib/rates/parentalPay.js'
@@ -35,6 +35,7 @@ const standardTaxCode = taxCodeFor(personalAllowance)
 const { basic, higher, additional } = NEXT_YEAR_SAVINGS_TAX.rates
 const savingsRates = `${Math.round(basic * 100)}%, ${Math.round(higher * 100)}% and ${Math.round(additional * 100)}%`
 const nextCarMileage = MILEAGE_RATES[NEXT_TAX_YEAR].carOrVan
+const firstTimeBuyerIsa = LIFETIME_ISA_REFORM.firstTimeBuyerIsa
 
 export const routes = [
   {
@@ -176,6 +177,13 @@ export const routes = [
     summary: `What Budget 2026 on ${BUDGET_2026.date} changes for savings, ISAs, work, pensions and Child Benefit, and when each change starts.`,
     title: 'Budget 2026: what it means for your money',
     description: `What Budget 2026 changes and when: savings tax rising to ${savingsRates}, the cash ISA limit kept at ${pounds(ISA.overallAllowance)}, a ${pounds(TRADING_ALLOWANCE_RISE.tradingAllowance)} trading allowance and more.`,
+  },
+  {
+    path: '/guides/first-time-buyer-isa-vs-lifetime-isa',
+    guide: `First Time Buyer ISA vs Lifetime ISA: what changes in ${firstTimeBuyerIsa.from.slice(-4)}`,
+    summary: `The new account from ${firstTimeBuyerIsa.from}, what happens to Lifetime ISAs, and the two side by side.`,
+    title: `First Time Buyer ISA vs Lifetime ISA: what changes in ${firstTimeBuyerIsa.from.slice(-4)}`,
+    description: `From ${firstTimeBuyerIsa.from} the First Time Buyer ISA replaces the Lifetime ISA for new savers: a ${firstTimeBuyerIsa.bonusRate * 100}% bonus on the balance, up to ${pounds(firstTimeBuyerIsa.bonusCap)}, for homes up to ${pounds(firstTimeBuyerIsa.propertyCap)}.`,
   },
   {
     path: '/about',

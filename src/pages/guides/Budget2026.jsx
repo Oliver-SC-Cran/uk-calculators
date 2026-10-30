@@ -208,7 +208,11 @@ export default function Budget2026() {
         savers: up to {gbp(ftb.yearlyLimit)} a year, with a {percent(ftb.bonusRate)} bonus on the
         balance when you use it for a first home costing up to {gbp(ftb.propertyCap)}. The bonus is
         capped at {gbp(ftb.bonusCap)} and there is no upper age limit. If you already have a
-        Lifetime ISA, you can keep paying in under the current rules. The{' '}
+        Lifetime ISA, you can keep paying in under the current rules. Our guide{' '}
+        <Link to="/guides/first-time-buyer-isa-vs-lifetime-isa">
+          First Time Buyer ISA vs Lifetime ISA
+        </Link>{' '}
+        sets the two side by side, and the{' '}
         <Link to="/lifetime-isa-calculator">Lifetime ISA calculator</Link> covers both charges.
       </p>
 

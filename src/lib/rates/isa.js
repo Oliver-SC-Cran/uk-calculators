@@ -56,23 +56,35 @@ export const CASH_ISA_CUT_SCRAPPED = {
 
 // Not a rate, so not kept by tax year: the First Time Buyer ISA, which replaces
 // the Lifetime ISA for new savers. Only what HM Treasury's response to the
-// consultation (28 October 2026) confirms. Re-check gov.uk each time the ISA
-// pages are edited.
+// consultation (28 October 2026) and the Budget 2026 document confirm. Both say
+// a Lifetime ISA opened before `from` carries on under the current rules, paying
+// in included. Re-check gov.uk each time the ISA pages are edited.
 // Sources: https://www.gov.uk/government/consultations/first-time-buyer-isa-consultation
 //          https://assets.publishing.service.gov.uk/media/6ae0cc8216428df53760625c/First_Time_Buyer_ISA_Consultation_-_Government_Response.pdf
+//          https://www.gov.uk/government/publications/budget-2026-document/budget-2026-html
+//          ("A secure place to live", "Property taxation" and the table of policy decisions)
 export const LIFETIME_ISA_REFORM = {
-  checkedOn: '29 October 2026',
+  checkedOn: '30 October 2026',
   responsePublished: '28 October 2026',
   consultationOpened: '22 June 2026',
   consultationClosed: '18 August 2026',
   // Paragraphs 2.3 to 2.8 and chapter 3 of the response.
   firstTimeBuyerIsa: {
-    from: '6 April 2029',
-    yearlyLimit: 4000, // counts towards the overall ISA allowance
-    bonusRate: 0.25, // on the final balance, paid when it is used for a first home
+    from: '6 April 2029', // the Budget's table of policy decisions, and paragraph 2.5
+    yearlyLimit: 4000, // a tax year, counted in the overall ISA allowance, no lifetime limit
+    bonusRate: 0.25, // on the final balance, growth included, paid when it is used for a first home
     bonusCap: 20000, // the most bonus in all
     propertyCap: 450000,
     minAge: 18, // no upper age limit
-    monthsHeld: 12, // before the bonus can be used
+    monthsHeld: 12, // "Held account for 1 year" before the bonus can be used
+    // The bonus is paid at exchange, and the purchase must complete within this
+    // many days of claiming it (chapter 3).
+    daysToComplete: 90,
+    // "No withdrawal charge" (chapter 3). The Budget says paying the bonus only
+    // for a first home avoids "the need for any withdrawal charge".
+    withdrawalChargeRate: 0,
+    // A Help to Buy ISA can be moved in whole, outside the yearly limit, from
+    // `from` until this date, when Help to Buy ISAs are due to close (paragraph 2.5).
+    helpToBuyTransfersUntil: '1 December 2030',
   },
 }

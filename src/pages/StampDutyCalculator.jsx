@@ -18,7 +18,7 @@ import { formatAmount, formatGBP, formatGBPPence, percent } from '../lib/format'
 import { MONEY, PERCENTAGE } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-29'
+const LAST_UPDATED = '2026-10-30'
 
 const { sharedOwnership } = STAMP_DUTY
 const asPercent = (rate) => Math.round(rate * 10000) / 100
@@ -483,6 +483,7 @@ export default function StampDutyCalculator() {
       notices={notices.length > 0 ? notices : null}
       working={problem ? null : isShared ? shared.working : result.working}
       guide={<StampDutyGuide />}
+      guides={['/guides/first-time-buyer-isa-vs-lifetime-isa']}
       related={['/mortgage-overpayment-calculator', '/isa-calculator']}
     />
   )

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import CalculatorLayout from '../components/CalculatorLayout'
 import { Chips, NumberField, SelectField } from '../components/Fields'
 import { FieldRow, InputCard, InputSection } from '../components/InputCard'
@@ -18,7 +19,7 @@ import { projectLifetimeIsa, switchContribution } from '../lib/lifetimeIsa'
 import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-29'
+const LAST_UPDATED = '2026-10-30'
 
 // Quick picks for what is paid in. They are common amounts, not advice. The
 // last one each month is the most that keeps within the yearly limit.
@@ -165,7 +166,11 @@ export default function LifetimeIsaCalculator() {
       >
         response on the First Time Buyer ISA
       </a>{' '}
-      on gov.uk.
+      on gov.uk. Our guide{' '}
+      <Link to="/guides/first-time-buyer-isa-vs-lifetime-isa">
+        First Time Buyer ISA vs Lifetime ISA
+      </Link>{' '}
+      sets the two side by side.
     </Notice>,
   )
 
@@ -351,7 +356,7 @@ export default function LifetimeIsaCalculator() {
       notices={notices}
       working={shows ? result.working : null}
       guide={<LifetimeIsaGuide />}
-      guides={['/guides/budget-2026']}
+      guides={['/guides/first-time-buyer-isa-vs-lifetime-isa', '/guides/budget-2026']}
       related={['/isa-calculator', '/stamp-duty-calculator', '/mortgage-overpayment-calculator']}
     />
   )

@@ -6,7 +6,7 @@ import { homeOverCapWithdrawal, projectLifetimeIsa, withdrawalFor } from '../lib
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-29'
+const LAST_UPDATED = '2026-10-30'
 
 export default function LifetimeIsaGuide() {
   const { overallAllowance, lisaLimit, lisaBonusRate, lisaMinOpenAge, lisaMaxOpenAge } = ISA
@@ -162,7 +162,13 @@ export default function LifetimeIsaGuide() {
         <li>you must be {newAccount.minAge} or over to open one, with no upper age limit</li>
         <li>you cannot move a Lifetime ISA into it, but you can use both towards the same home</li>
       </ul>
-      <p>The figures in this guide and in the calculator use the Lifetime ISA rules.</p>
+      <p>
+        The figures in this guide and in the calculator use the Lifetime ISA rules. Our guide{' '}
+        <Link to="/guides/first-time-buyer-isa-vs-lifetime-isa">
+          First Time Buyer ISA vs Lifetime ISA
+        </Link>{' '}
+        compares the two accounts, with a worked example.
+      </p>
 
       <h2>Worked examples</h2>
       <p>
