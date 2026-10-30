@@ -269,7 +269,7 @@ export default function SavingsTaxCalculator() {
               {band(1)}
               {band(2)}
               {row(
-                'Tax on other income from the Personal Allowance you lose',
+                'Tax on the Personal Allowance you lose',
                 now.taxFromLostAllowance,
                 next.taxFromLostAllowance,
               )}
