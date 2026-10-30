@@ -24,7 +24,7 @@ import { calculateSelfEmployedTax } from '../lib/selfEmployed'
 import { incomeTaxLabel } from '../lib/incomeTax'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-22'
+const LAST_UPDATED = '2026-10-29'
 
 export default function SelfEmployedTaxCalculator() {
   const state = useCalculatorState(

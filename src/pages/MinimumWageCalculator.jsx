@@ -17,7 +17,7 @@ import { formatGBPPence } from '../lib/format'
 import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-23'
+const LAST_UPDATED = '2026-10-29'
 
 export default function MinimumWageCalculator() {
   const state = useCalculatorState(

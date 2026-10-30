@@ -168,3 +168,17 @@ test('build [own working] every sitemap address has the date its page shows', ()
     if (lastmod !== undefined) assert.match(lastmod, /^\d{4}-\d{2}-\d{2}$/, route.path)
   }
 })
+
+test('build [own working] no calculator says it was updated before its own guide', () => {
+  // The date at the top of a calculator page is when the page last changed, so
+  // it is never older than the "Last updated" date on the guide under it.
+  for (const route of routes) {
+    const html = local.get(pageFile(route))
+    const top = html.match(/calc-head__meta[^]*?<time dateTime="([\d-]+)"/)?.[1]
+    if (!top) continue
+    const guide = [...html.matchAll(/Last updated: (?:<!-- -->)?<time dateTime="([\d-]+)"/g)]
+    for (const [, date] of guide) {
+      assert.ok(top >= date, `${route.path} says Updated ${top} but its guide says ${date}`)
+    }
+  }
+})
