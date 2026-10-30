@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import GuidePage from '../../components/GuidePage'
 import Source from '../../components/Source'
-import { formatGBP as gbp, formatGBPPence as pence, percent } from '../../lib/format'
+import { formatGBP as gbp, formatGBPPence as pence, formatPence, percent } from '../../lib/format'
 import { BUDGET_2026 } from '../../lib/rates/budget'
 import {
   CHILD_BENEFIT_CHARGE_OFFSET,
@@ -31,7 +31,6 @@ import { calculateSavingsTax } from '../../lib/savingsTax'
 const LAST_UPDATED = '2026-10-30'
 
 const hourly = (value) => `£${value.toFixed(2)}`
-const pencePerMile = (rate) => `${Math.round(rate * 100)}p`
 const rates = ({ basic, higher, additional }) =>
   `${percent(basic)}, ${percent(higher)} and ${percent(additional)}`
 
@@ -60,6 +59,7 @@ export default function Budget2026() {
         '/savings-interest-tax-calculator',
         '/isa-calculator',
         '/self-employed-tax-calculator',
+        '/mileage-allowance-calculator',
       ]}
       intro={
         <>
@@ -116,12 +116,12 @@ export default function Budget2026() {
             </tr>
             <tr>
               <th scope="row">
-                Tax-free mileage: {pencePerMile(mileageNow.firstMilesRate)} for the first{' '}
+                Tax-free mileage: {formatPence(mileageNow.firstMilesRate)} for the first{' '}
                 {mileageNow.firstMiles.toLocaleString('en-GB')} miles made permanent, and{' '}
-                {pencePerMile(mileageNext.laterMilesRate)} above that
+                {formatPence(mileageNext.laterMilesRate)} above that
               </th>
               <td>
-                {pencePerMile(mileageNext.laterMilesRate)} from {NEXT_TAX_YEAR_START}
+                {formatPence(mileageNext.laterMilesRate)} from {NEXT_TAX_YEAR_START}
               </td>
               <td>Yes</td>
             </tr>
@@ -236,12 +236,14 @@ export default function Budget2026() {
 
       <h3>Mileage</h3>
       <p>
-        If you use your own car or van for work, {pencePerMile(mileageNow.firstMilesRate)} a mile
-        for the first {mileageNow.firstMiles.toLocaleString('en-GB')} business miles stays for good.
-        It was brought in from {TAX_YEAR_START} as a temporary rise. From {NEXT_TAX_YEAR_START},
-        each mile over that goes up from {pencePerMile(mileageNow.laterMilesRate)} to{' '}
-        {pencePerMile(mileageNext.laterMilesRate)}. The rates are what an employer can pay you
-        without tax, and what self-employed people can claim with the simplified rates.
+        If you use your own car or van for work, {formatPence(mileageNow.firstMilesRate)} a mile for
+        the first {mileageNow.firstMiles.toLocaleString('en-GB')} business miles stays for good. It
+        was brought in from {TAX_YEAR_START} as a temporary rise. From {NEXT_TAX_YEAR_START}, each
+        mile over that goes up from {formatPence(mileageNow.laterMilesRate)} to{' '}
+        {formatPence(mileageNext.laterMilesRate)}. The rates are what an employer can pay you
+        without tax, and what self-employed people can claim with the simplified rates. The{' '}
+        <Link to="/mileage-allowance-calculator">mileage allowance calculator</Link> works out the
+        tax relief you can claim, or the tax on what your employer pays, in both years.
       </p>
 
       <h2>Income tax, pensions and Child Benefit</h2>

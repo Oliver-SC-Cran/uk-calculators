@@ -8,6 +8,7 @@ import {
   formatAmount,
   formatDeduction,
   formatNumber,
+  formatPence,
   groupDigits,
   percent,
 } from './format.js'
@@ -106,4 +107,13 @@ test('format [own working] percentages in the working have up to three decimal p
     const thousandths = Math.floor((hundredths * 20 + 12) / 24)
     assert.equal(formatAmount(hundredths / 10000 / 12, 'percent'), `${thousandths / 1000}%`)
   }
+})
+
+test('format [own working] rates a mile show as pence, without stray decimals', () => {
+  assert.equal(formatPence(0.55), '55p')
+  assert.equal(formatPence(0.25), '25p')
+  assert.equal(formatPence(0.35), '35p')
+  assert.equal(formatPence(0.05), '5p')
+  assert.equal(formatPence(0.508), '50.8p')
+  assert.equal(formatPence(0), '0p')
 })

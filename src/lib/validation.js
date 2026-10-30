@@ -55,6 +55,10 @@ export const MONEY = { min: 0 }
 export const PERCENTAGE = { min: 0, max: 100 }
 /** An age, or full years of service, in whole years. */
 export const WHOLE_YEARS = { min: 0, max: MAX_AGE, whole: true }
+/** A distance in miles, 0 or more. Part of a mile is allowed. */
+export const MILES = { min: 0 }
+/** A rate in pence per mile, such as 45 for 45p, 0 or more. */
+export const PENCE_PER_MILE = { min: 0 }
 
 /**
  * Reads a date from a date field. A date field gives 'YYYY-MM-DD' text, or ''

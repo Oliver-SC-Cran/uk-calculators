@@ -12,6 +12,7 @@ import { calculateISAAllowance } from './isa.js'
 import { projectLifetimeIsa } from './lifetimeIsa.js'
 import { checkMinimumWage } from './minimumWage.js'
 import { calculateMortgageOverpayment, overpaymentToBeMortgageFree } from './mortgage.js'
+import { calculateMileageAllowance, VEHICLES } from './mileage.js'
 import { calculateMaternityPay, calculatePaternityPay } from './parentalPay.js'
 import { calculatePayPackage, calculatePayRise } from './payRise.js'
 import { readTaxCode, taxRatesFor } from './readTaxCode.js'
@@ -407,5 +408,45 @@ test('working [own working] savings interest tax adds up to the tax on the inter
   )) {
     const r = calculateSavingsTax({ otherIncome, interest, scottish, taxYear })
     checkHeadline(r.working, r.total, `savings ${otherIncome} ${interest} ${scottish} ${taxYear}`)
+  }
+})
+
+test('working [own working] mileage allowance adds up to the relief or the taxable amount', () => {
+  const passengerSettings = [
+    { passengerMiles: 0 },
+    { passengerMiles: 500, passengers: 2, passengerRate: 0.03 },
+    { passengerMiles: 2000, passengers: 3, passengerRate: 0.1 },
+  ]
+  for (const [
+    vehicle,
+    miles,
+    employerRate,
+    employerRateAbove,
+    passengers,
+    pay,
+    scottish,
+    taxYear,
+  ] of product(
+    VEHICLES,
+    [0, 1, 9999, 10000, 10001, 12000, 1000000, -5, NaN],
+    [0, 0.24, 0.45, 0.508, 0.55, 0.6],
+    [null, 0.25, 0.6],
+    passengerSettings,
+    [0, 13000, 35000, 50770, 110000, 200000, NaN],
+    [false, true],
+    ['2026/27', '2027/28'],
+  )) {
+    const r = calculateMileageAllowance({
+      vehicle,
+      miles,
+      employerRate,
+      employerRateAbove,
+      ...passengers,
+      pay,
+      scottish,
+      taxYear,
+    })
+    const where = `mileage ${vehicle} ${miles} ${employerRate} ${employerRateAbove} ${passengers.passengerMiles} ${pay} ${scottish} ${taxYear}`
+    checkHeadline(r.working, r.headline, where)
   }
 })

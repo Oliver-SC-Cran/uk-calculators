@@ -59,6 +59,9 @@ export function formatDeduction(value, { pence = false } = {}) {
  */
 export const amountText = (value) => String(Number(value.toFixed(2)))
 
+/** A rate in pounds a mile as pence: 0.55 becomes "55p" and 0.508 becomes "50.8p". */
+export const formatPence = (rate) => `${Number((rate * 100).toPrecision(12))}p`
+
 /** 1950 becomes "1,950" and 37.5 stays "37.5". */
 export const formatNumber = (value) => value.toLocaleString('en-GB', { maximumFractionDigits: 2 })
 

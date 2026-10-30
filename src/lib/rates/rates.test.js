@@ -77,11 +77,14 @@ test('rates: an announced year comes after the current one and holds only announ
   )
   assert.deepEqual(Object.keys(announced.incomeTax), currentIncomeTax)
   assert.deepEqual(Object.keys(announced.savingsTax), Object.keys(current.savingsTax))
-  // Mileage rates for 2027/28 were announced in full.
-  assert.deepEqual(
-    Object.keys(MILEAGE_RATES[NEXT_TAX_YEAR].carOrVan),
-    Object.keys(MILEAGE_RATES[CURRENT_TAX_YEAR].carOrVan),
-  )
+  // Mileage rates for 2027/28 are known in full: the car and van rates were
+  // announced, and the others are set in law from 2026/27 onwards.
+  const mileageNext = MILEAGE_RATES[NEXT_TAX_YEAR]
+  const mileageNow = MILEAGE_RATES[CURRENT_TAX_YEAR]
+  assert.deepEqual(Object.keys(mileageNext), Object.keys(mileageNow))
+  for (const kind of Object.keys(mileageNow)) {
+    assert.deepEqual(Object.keys(mileageNext[kind]), Object.keys(mileageNow[kind]), kind)
+  }
   const withNextYear = ['INCOME_TAX_RATES', 'MILEAGE_RATES']
   for (const [name, table] of Object.entries(tables)) {
     if (!withNextYear.includes(name)) {
@@ -104,6 +107,25 @@ test('rates: savings rates match the main rates in 2026/27 and are 4 points high
     basic: 0.24,
     higher: 0.44,
     additional: 0.49,
+  })
+})
+
+test('rates: mileage rates for 2026/27 and 2027/28 [gov.uk]', () => {
+  // EIM31240 (2026-2027 onwards: 55p then 25p, 24p, 20p), EIM31405 (5p a
+  // passenger) and the Budget 2026 overview of tax legislation and rates,
+  // paragraph 2.7 (25p to 35p above 10,000 miles from 6 April 2027), checked
+  // on 30 October 2026.
+  assert.deepEqual(MILEAGE_RATES['2026/27'], {
+    carOrVan: { firstMiles: 10000, firstMilesRate: 0.55, laterMilesRate: 0.25 },
+    motorcycle: { rate: 0.24 },
+    bicycle: { rate: 0.2 },
+    passenger: { rate: 0.05 },
+  })
+  assert.deepEqual(MILEAGE_RATES['2027/28'], {
+    carOrVan: { firstMiles: 10000, firstMilesRate: 0.55, laterMilesRate: 0.35 },
+    motorcycle: { rate: 0.24 },
+    bicycle: { rate: 0.2 },
+    passenger: { rate: 0.05 },
   })
 })
 

@@ -9,6 +9,7 @@
 import { INCOME_TAX, NEXT_YEAR_SAVINGS_TAX } from './lib/rates/incomeTax.js'
 import { BUDGET_2026 } from './lib/rates/budget.js'
 import { CASH_ISA_CUT_SCRAPPED, ISA } from './lib/rates/isa.js'
+import { MILEAGE_RATES } from './lib/rates/mileage.js'
 import { MINIMUM_WAGE } from './lib/rates/minimumWage.js'
 import { PARENTAL_PAY } from './lib/rates/parentalPay.js'
 import { REDUNDANCY } from './lib/rates/redundancy.js'
@@ -33,6 +34,7 @@ const taperRate = `${Math.round(higherRate * (1 + taperAllowanceLostPerPound) * 
 const standardTaxCode = taxCodeFor(personalAllowance)
 const { basic, higher, additional } = NEXT_YEAR_SAVINGS_TAX.rates
 const savingsRates = `${Math.round(basic * 100)}%, ${Math.round(higher * 100)}% and ${Math.round(additional * 100)}%`
+const nextCarMileage = MILEAGE_RATES[NEXT_TAX_YEAR].carOrVan
 
 export const routes = [
   {
@@ -60,6 +62,13 @@ export const routes = [
     sharedLinks: true,
     title: `Self-employed tax calculator ${TAX_YEAR}: tax, NI and what to save`,
     description: `Work out income tax, Class 4 National Insurance and student loan on your self-employed profit for ${TAX_YEAR}. Includes Scottish income tax rates.`,
+  },
+  {
+    path: '/mileage-allowance-calculator',
+    name: 'Mileage allowance calculator',
+    sharedLinks: true,
+    title: `Mileage allowance calculator ${TAX_YEAR}: tax relief on your miles`,
+    description: `Work out the tax relief on business miles in your own car, van, motorcycle or bike for ${TAX_YEAR} and ${NEXT_TAX_YEAR}, when the rate above ${nextCarMileage.firstMiles.toLocaleString('en-GB')} miles rises to ${Math.round(nextCarMileage.laterMilesRate * 100)}p.`,
   },
   {
     path: '/redundancy-calculator',

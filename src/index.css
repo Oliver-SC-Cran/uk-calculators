@@ -1242,6 +1242,13 @@ h2[tabindex='-1']:focus {
   }
 }
 
+/* Three short answers, such as kinds of vehicle, in one row when they fit. */
+@container (min-width: 30rem) {
+  .choice--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .field__label + .choice {
   margin-top: var(--space-2);
 }

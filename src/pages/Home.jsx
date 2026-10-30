@@ -26,6 +26,10 @@ const groups = [
         path: '/student-loan-calculator',
         description: 'Your monthly repayment from your plan and salary.',
       },
+      {
+        path: '/mileage-allowance-calculator',
+        description: 'Tax relief on business miles in your own car, van, motorcycle or bike.',
+      },
     ],
   },
   {

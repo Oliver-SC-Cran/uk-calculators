@@ -1,7 +1,16 @@
 // Tests for the input checks in validation.js. Run with: npm test
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { MAX_AGE, MONEY, parseDate, parseNumber, PERCENTAGE, WHOLE_YEARS } from './validation.js'
+import {
+  MAX_AGE,
+  MILES,
+  MONEY,
+  parseDate,
+  parseNumber,
+  PENCE_PER_MILE,
+  PERCENTAGE,
+  WHOLE_YEARS,
+} from './validation.js'
 
 test('parseNumber: plain numbers are read as they are [own working]', () => {
   assert.deepEqual(parseNumber('35000'), { value: 35000, error: null })
@@ -119,5 +128,26 @@ test('rule sets: money, percentages and whole years [own working]', () => {
   assert.equal(
     parseNumber(String(MAX_AGE + 1), { name: 'x', ...WHOLE_YEARS }).error,
     'Enter a whole number between 0 and 120.',
+  )
+})
+
+test('rule sets: miles and pence a mile [own working]', () => {
+  assert.equal(parseNumber('12,000', { name: 'x', ...MILES }).value, 12000)
+  assert.equal(parseNumber('12,000.5', { name: 'x', ...MILES }).value, 12000.5)
+  assert.equal(parseNumber('0', { name: 'x', ...MILES }).value, 0)
+  assert.equal(parseNumber('1,000,000', { name: 'x', ...MILES }).value, 1000000)
+  assert.equal(
+    parseNumber('-5', { name: 'x', ...MILES }).error,
+    'Enter a number that is 0 or more.',
+  )
+  assert.equal(
+    parseNumber('', { name: 'your business miles', ...MILES }).error,
+    'Enter your business miles.',
+  )
+  assert.equal(parseNumber('50.8', { name: 'x', ...PENCE_PER_MILE }).value, 50.8)
+  assert.equal(parseNumber('0', { name: 'x', ...PENCE_PER_MILE }).value, 0)
+  assert.equal(
+    parseNumber('-1', { name: 'x', ...PENCE_PER_MILE }).error,
+    'Enter a number that is 0 or more.',
   )
 })

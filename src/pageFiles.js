@@ -8,6 +8,7 @@ export const pageFiles = {
   '/salary-calculator': 'SalaryCalculator',
   '/pay-rise-calculator': 'PayRiseCalculator',
   '/self-employed-tax-calculator': 'SelfEmployedTaxCalculator',
+  '/mileage-allowance-calculator': 'MileageAllowanceCalculator',
   '/redundancy-calculator': 'RedundancyCalculator',
   '/isa-calculator': 'ISACalculator',
   '/lifetime-isa-calculator': 'LifetimeIsaCalculator',
