@@ -11,6 +11,7 @@ export const pageFiles = {
   '/redundancy-calculator': 'RedundancyCalculator',
   '/isa-calculator': 'ISACalculator',
   '/lifetime-isa-calculator': 'LifetimeIsaCalculator',
+  '/savings-interest-tax-calculator': 'SavingsTaxCalculator',
   '/mortgage-overpayment-calculator': 'MortgageOverpaymentCalculator',
   '/stamp-duty-calculator': 'StampDutyCalculator',
   '/maternity-pay-calculator': 'MaternityPayCalculator',

@@ -182,3 +182,11 @@ test('build [own working] no calculator says it was updated before its own guide
     }
   }
 })
+
+test('build [own working] the homepage links to every calculator', () => {
+  // The homepage lists the calculators by hand, in groups (src/pages/Home.jsx).
+  const home = local.get('index.html')
+  for (const route of routes.filter((each) => each.name && !each.guide)) {
+    assert.ok(home.includes(`href="${route.path}"`), `the homepage does not link to ${route.path}`)
+  }
+})

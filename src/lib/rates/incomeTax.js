@@ -164,6 +164,16 @@ export const SCOTTISH_INCOME_TAX = current.scottishIncomeTax
 export const WELSH_INCOME_TAX = current.welshIncomeTax
 export const NATIONAL_INSURANCE = current.nationalInsurance
 export const SAVINGS_TAX = current.savingsTax
+// How tax on savings interest is paid. Not a rate, so not kept by tax year.
+// Up to this much interest, HMRC usually collects the tax through a tax code,
+// or sends a Simple Assessment letter when it cannot. Over it, the interest
+// goes on a Self Assessment tax return. Checked on 30 October 2026.
+// Source: https://www.gov.uk/apply-tax-free-interest-on-savings/how-you-pay-tax-on-savings-interest
+export const SAVINGS_TAX_PAYMENT = {
+  selfAssessmentOver: 10000,
+  contactHmrcIfNoLetterBy: '31 March', // of the tax year after the one the interest was earned in
+}
+
 // The savings figures announced for the next tax year, for page copy.
 export const NEXT_YEAR_SAVINGS_TAX = forTaxYear(INCOME_TAX_RATES, NEXT_TAX_YEAR).savingsTax
 export const CHILD_BENEFIT_CHARGE = current.childBenefitCharge

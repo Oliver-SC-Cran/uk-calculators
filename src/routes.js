@@ -6,13 +6,13 @@
 // useCalculatorState (see "Share links" in CLAUDE.md). The privacy policy
 // lists them from here, and routes.test.js checks the two agree.
 
-import { INCOME_TAX } from './lib/rates/incomeTax.js'
+import { INCOME_TAX, NEXT_YEAR_SAVINGS_TAX } from './lib/rates/incomeTax.js'
 import { CASH_ISA_CUT_SCRAPPED, ISA } from './lib/rates/isa.js'
 import { MINIMUM_WAGE } from './lib/rates/minimumWage.js'
 import { PARENTAL_PAY } from './lib/rates/parentalPay.js'
 import { REDUNDANCY } from './lib/rates/redundancy.js'
 import { STAMP_DUTY } from './lib/rates/stampDuty.js'
-import { TAX_YEAR } from './lib/rates/taxYear.js'
+import { NEXT_TAX_YEAR, NEXT_TAX_YEAR_START, TAX_YEAR } from './lib/rates/taxYear.js'
 import { taxCodeFor } from './lib/taxCode.js'
 
 export const SITE_URL = 'https://ukmoneycalculators.co.uk'
@@ -29,6 +29,8 @@ const pounds = (value) => `£${value.toLocaleString('en-GB')}`
 const { higherRate, taperAllowanceLostPerPound, personalAllowance } = INCOME_TAX
 const taperRate = `${Math.round(higherRate * (1 + taperAllowanceLostPerPound) * 100)}%`
 const standardTaxCode = taxCodeFor(personalAllowance)
+const { basic, higher, additional } = NEXT_YEAR_SAVINGS_TAX.rates
+const savingsRates = `${Math.round(basic * 100)}%, ${Math.round(higher * 100)}% and ${Math.round(additional * 100)}%`
 
 export const routes = [
   {
@@ -84,6 +86,13 @@ export const routes = [
     sharedLinks: true,
     title: 'Lifetime ISA calculator: bonus, savings and withdrawal charge',
     description: `Project your Lifetime ISA for ${TAX_YEAR} with the ${ISA.lisaBonusRate * 100}% government bonus, for a first home or age ${ISA.lisaAccessAge}, and see what you would get back after the ${ISA.lisaWithdrawalChargeRate * 100}% withdrawal charge.`,
+  },
+  {
+    path: '/savings-interest-tax-calculator',
+    name: 'Savings interest tax calculator',
+    sharedLinks: true,
+    title: `Savings interest tax calculator ${TAX_YEAR} and ${NEXT_TAX_YEAR}`,
+    description: `Work out the tax on your savings interest for ${TAX_YEAR} and from ${NEXT_TAX_YEAR_START}, when the savings rates rise to ${savingsRates}. Covers the whole UK.`,
   },
   {
     path: '/mortgage-overpayment-calculator',

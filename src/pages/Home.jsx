@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ISA } from '../lib/rates/isa'
-import { TAX_YEAR } from '../lib/rates/taxYear'
+import { NEXT_TAX_YEAR_START, TAX_YEAR } from '../lib/rates/taxYear'
 import { percent } from '../lib/format'
 import { guides, routes } from '../routes'
 
@@ -64,6 +64,10 @@ const groups = [
       {
         path: '/lifetime-isa-calculator',
         description: `What the ${percent(ISA.lisaBonusRate)} bonus and growth could add up to, for a first home or later life.`,
+      },
+      {
+        path: '/savings-interest-tax-calculator',
+        description: `Tax on your savings interest in ${TAX_YEAR}, and from ${NEXT_TAX_YEAR_START} when the rates go up.`,
       },
     ],
   },

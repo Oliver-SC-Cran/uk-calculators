@@ -16,6 +16,7 @@ import { calculateMaternityPay, calculatePaternityPay } from './parentalPay.js'
 import { calculatePayPackage, calculatePayRise } from './payRise.js'
 import { readTaxCode, taxRatesFor } from './readTaxCode.js'
 import { calculateRedundancyPay } from './redundancy.js'
+import { calculateSavingsTax } from './savingsTax.js'
 import { calculateSelfEmployedTax } from './selfEmployed.js'
 import { calculateSharedOwnershipStampDuty, calculateStampDuty } from './stampDuty.js'
 import { calculateStudentLoanRepayment } from './studentLoans.js'
@@ -394,5 +395,17 @@ test('working [own working] maternity and paternity pay add up to the total', ()
         }
       }
     }
+  }
+})
+
+test('working [own working] savings interest tax adds up to the tax on the interest', () => {
+  for (const [otherIncome, interest, scottish, taxYear] of product(
+    [0, 12570, 16000, 17570, 30000, 49270, 50270, 100000, 124140, 125140, 200000, -5, NaN],
+    [0, 200, 1000, 1001, 2000, 20000, 1000000, NaN],
+    [false, true],
+    ['2026/27', '2027/28'],
+  )) {
+    const r = calculateSavingsTax({ otherIncome, interest, scottish, taxYear })
+    checkHeadline(r.working, r.total, `savings ${otherIncome} ${interest} ${scottish} ${taxYear}`)
   }
 })
