@@ -27,7 +27,13 @@ import { REDUNDANCY_RATES } from './redundancy.js'
 import { SELF_EMPLOYED_RATES } from './selfEmployed.js'
 import { STAMP_DUTY_RATES } from './stampDuty.js'
 import { STUDENT_LOAN_RATES } from './studentLoans.js'
-import { CURRENT_TAX_YEAR, forTaxYear, TAX_YEARS } from './taxYear.js'
+import {
+  ANNOUNCED_TAX_YEARS,
+  CURRENT_TAX_YEAR,
+  forTaxYear,
+  NEXT_TAX_YEAR,
+  TAX_YEARS,
+} from './taxYear.js'
 
 const tables = {
   INCOME_TAX_RATES,
@@ -43,10 +49,53 @@ const tables = {
 }
 
 test('rates: every table has an entry for every tax year, and no others [own working]', () => {
+  // A table may also have an entry for a year whose figures are only partly
+  // announced, but only one listed in ANNOUNCED_TAX_YEARS.
   const years = Object.keys(TAX_YEARS)
   for (const [name, table] of Object.entries(tables)) {
-    assert.deepEqual(Object.keys(table), years, `${name} does not have the same tax years`)
+    const ownYears = Object.keys(table).filter((year) => !(year in ANNOUNCED_TAX_YEARS))
+    assert.deepEqual(ownYears, years, `${name} does not have the same tax years`)
   }
+})
+
+test('rates: an announced year comes after the current one and holds only announced figures [own working]', () => {
+  for (const year of Object.keys(ANNOUNCED_TAX_YEARS)) {
+    assert.ok(!(year in TAX_YEARS), `${year} is in both lists`)
+    assert.ok(year > CURRENT_TAX_YEAR, `${year} is not after ${CURRENT_TAX_YEAR}`)
+  }
+  assert.ok(NEXT_TAX_YEAR in ANNOUNCED_TAX_YEARS)
+  // Budget 2026 published the 2027/28 income tax bands and savings figures,
+  // and nothing else this site uses. Each part has the same fields as the
+  // current year's, apart from the payroll limit, which is not a Budget figure.
+  const announced = INCOME_TAX_RATES[NEXT_TAX_YEAR]
+  const current = INCOME_TAX_RATES[CURRENT_TAX_YEAR]
+  assert.deepEqual(Object.keys(announced), ['incomeTax', 'savingsTax'])
+  const currentIncomeTax = Object.keys(current.incomeTax).filter(
+    (key) => key !== 'maxShareOfPayTaken',
+  )
+  assert.deepEqual(Object.keys(announced.incomeTax), currentIncomeTax)
+  assert.deepEqual(Object.keys(announced.savingsTax), Object.keys(current.savingsTax))
+  for (const [name, table] of Object.entries(tables)) {
+    if (name !== 'INCOME_TAX_RATES')
+      assert.ok(!(NEXT_TAX_YEAR in table), `${name} has ${NEXT_TAX_YEAR}`)
+  }
+})
+
+test('rates: savings rates match the main rates in 2026/27 and are 4 points higher in 2027/28 [gov.uk]', () => {
+  // Budget 2026 overview of tax legislation and rates, Annex A, checked on
+  // 30 October 2026: savings basic, higher and additional rates of 20%, 40%
+  // and 45% in 2026 to 2027, and 24%, 44% and 49% in 2027 to 2028.
+  const { incomeTax, savingsTax } = INCOME_TAX_RATES['2026/27']
+  assert.deepEqual(savingsTax.rates, {
+    basic: incomeTax.basicRate,
+    higher: incomeTax.higherRate,
+    additional: incomeTax.additionalRate,
+  })
+  assert.deepEqual(INCOME_TAX_RATES['2027/28'].savingsTax.rates, {
+    basic: 0.24,
+    higher: 0.44,
+    additional: 0.49,
+  })
 })
 
 test('rates: tax years are written 2026/27 and the current one is listed [own working]', () => {

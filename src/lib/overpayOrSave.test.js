@@ -12,6 +12,8 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { INCOME_TAX_RATES } from './rates/incomeTax.js'
+import { NEXT_TAX_YEAR } from './rates/taxYear.js'
 import {
   interestSavedByOverpaying,
   rateBeforeTaxToMatch,
@@ -111,12 +113,12 @@ test('overpay or save [gov.uk] savings tax rates from 6 April 2027', () => {
   assert.deepEqual(TAX_BANDS, { basic: 0.2, higher: 0.4, additional: 0.45 })
   assert.deepEqual(TAX_BANDS_AFTER_RISE, { basic: 0.24, higher: 0.44, additional: 0.49 })
   // The allowances do not change, so interest inside them is still not taxed.
-  near(save({ amount: 25000, band: 'basic', afterRise: true }).tax, 0) // £1,000 of interest
-  near(save({ amount: 12500, band: 'higher', afterRise: true }).tax, 0) // £500
+  near(save({ amount: 25000, band: 'basic', taxYear: NEXT_TAX_YEAR }).tax, 0) // £1,000 of interest
+  near(save({ amount: 12500, band: 'higher', taxYear: NEXT_TAX_YEAR }).tax, 0) // £500
 })
 
 test('overpay or save [own working] tax after the rise at each boundary', () => {
-  const after = (settings) => save({ ...settings, afterRise: true })
+  const after = (settings) => save({ ...settings, taxYear: NEXT_TAX_YEAR })
   // gov.uk's £1,300 example with the new rate: £300 over the allowance at 24%.
   near(after({ amount: 32500, band: 'basic' }).tax, 72)
   // £1,000 of interest: none taxed at basic rate, £500 at 44%, all at 49%.
@@ -131,12 +133,12 @@ test('overpay or save [own working] tax after the rise at each boundary', () => 
   near(after({ amount: 25000, band: 'additional', isa: true }).tax, 0)
   // £1,000,000 at 4% is £40,000, all taxed at 49% for an additional rate taxpayer.
   near(after({ amount: 1000000, band: 'additional' }).tax, 19600)
-  // Left off, the rise changes nothing.
-  near(save({ amount: 25000, band: 'additional', afterRise: false }).tax, 450)
+  // Without the year, the current year's rates are used.
+  near(save({ amount: 25000, band: 'additional' }).tax, 450)
 })
 
 test('overpay or save [own working] the worked examples in the guide after the rise', () => {
-  const after = (settings) => save({ amount: 20000, ...settings, afterRise: true })
+  const after = (settings) => save({ amount: 20000, ...settings, taxYear: NEXT_TAX_YEAR })
   // £20,000 at 4% is £800. With the allowance used up elsewhere, a basic rate
   // taxpayer pays 24%: £192, keeping £608.
   near(after({ band: 'basic', otherInterest: 1000 }).tax, 192)
@@ -146,9 +148,9 @@ test('overpay or save [own working] the worked examples in the guide after the r
   near(after({ band: 'higher' }).tax, 132)
   near(after({ band: 'higher' }).afterTax, 668)
   // To match a 4.5% mortgage on interest above the allowance.
-  near(rateBeforeTaxToMatch(4.5, 'basic', { afterRise: true }), 4.5 / 0.76)
-  near(rateBeforeTaxToMatch(4.5, 'higher', { afterRise: true }), 4.5 / 0.56)
-  near(rateBeforeTaxToMatch(4.5, 'additional', { afterRise: true }), 4.5 / 0.51)
+  near(rateBeforeTaxToMatch(4.5, 'basic', { taxYear: NEXT_TAX_YEAR }), 4.5 / 0.76)
+  near(rateBeforeTaxToMatch(4.5, 'higher', { taxYear: NEXT_TAX_YEAR }), 4.5 / 0.56)
+  near(rateBeforeTaxToMatch(4.5, 'additional', { taxYear: NEXT_TAX_YEAR }), 4.5 / 0.51)
 })
 
 test('overpay or save [own working] odd inputs', () => {
@@ -166,4 +168,51 @@ test('overpay or save [own working] odd inputs', () => {
     lumpSum: 50000,
   })
   assert.ok(all > 0 && all < 10000 * 0.07)
+})
+
+test('overpay or save [own working] the same results as before the savings rates were kept by tax year', () => {
+  // Until 30 October 2026 the savings rates were the main income tax rates for
+  // the year, and the rates from April 2027 were those plus a 4 point rise
+  // (savingsTax.rateRise). This repeats that rule and checks every result is
+  // the same now that each year holds its own savings rates.
+  const { incomeTax } = INCOME_TAX_RATES['2026/27']
+  const oldRates = (rise) => ({
+    basic: Math.round((incomeTax.basicRate + rise) * 1000) / 1000,
+    higher: Math.round((incomeTax.higherRate + rise) * 1000) / 1000,
+    additional: Math.round((incomeTax.additionalRate + rise) * 1000) / 1000,
+  })
+  assert.deepEqual(TAX_BANDS, oldRates(0))
+  assert.deepEqual(TAX_BANDS_AFTER_RISE, oldRates(0.04))
+  const allowance = { basic: 1000, higher: 500, additional: 0 }
+  const oldSave = ({ amount, ratePercent, band, otherInterest, isa, rise }) => {
+    const interest = (Math.max(0, amount) * ratePercent) / 100
+    const left = isa ? 0 : Math.max(0, allowance[band] - Math.max(0, otherInterest))
+    const taxable = isa ? 0 : Math.max(0, interest - left)
+    const tax = taxable * oldRates(rise)[band]
+    return { interest, allowanceUsed: interest - taxable, taxable, tax, afterTax: interest - tax }
+  }
+  let checked = 0
+  for (const amount of [0, 1, 12500, 20000, 25000, 25025, 32500, 100000, 1000000]) {
+    for (const ratePercent of [0, 1.5, 4, 4.5, 7]) {
+      for (const band of ['basic', 'higher', 'additional']) {
+        for (const otherInterest of [0, 300, 1000, 5000]) {
+          for (const isa of [false, true]) {
+            const settings = { amount, ratePercent, band, otherInterest, isa }
+            assert.deepEqual(savingsInterestAfterTax(settings), oldSave({ ...settings, rise: 0 }))
+            assert.deepEqual(
+              savingsInterestAfterTax({ ...settings, taxYear: NEXT_TAX_YEAR }),
+              oldSave({ ...settings, rise: 0.04 }),
+            )
+            checked += 2
+          }
+        }
+      }
+    }
+  }
+  for (const band of ['basic', 'higher', 'additional']) {
+    assert.equal(rateBeforeTaxToMatch(4.5, band), 4.5 / (1 - oldRates(0)[band]))
+    const after = rateBeforeTaxToMatch(4.5, band, { taxYear: NEXT_TAX_YEAR })
+    assert.equal(after, 4.5 / (1 - oldRates(0.04)[band]))
+  }
+  assert.equal(checked, 2160)
 })

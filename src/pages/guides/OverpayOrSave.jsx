@@ -3,7 +3,7 @@ import GuidePage from '../../components/GuidePage'
 import { INCOME_TAX, SAVINGS_TAX } from '../../lib/rates/incomeTax'
 import { ISA } from '../../lib/rates/isa'
 import { MORTGAGE } from '../../lib/rates/mortgage'
-import { TAX_YEAR } from '../../lib/rates/taxYear'
+import { NEXT_TAX_YEAR, NEXT_TAX_YEAR_START, TAX_YEAR } from '../../lib/rates/taxYear'
 import { formatGBP as gbp, percent, yearsAndMonths } from '../../lib/format'
 import { calculateMortgageOverpayment } from '../../lib/mortgage'
 import {
@@ -23,7 +23,9 @@ const rate = (value) => `${Math.round(value * 100) / 100}%`
 
 export default function OverpayOrSave() {
   const { personalSavingsAllowance, startingRateForSavings, startingRateIncomeLimit } = SAVINGS_TAX
-  const { rateRise, rateRiseFrom } = SAVINGS_TAX
+  // The savings tax rates rise by the same amount in every band.
+  const rateRiseFrom = NEXT_TAX_YEAR_START
+  const rateRise = TAX_BANDS_AFTER_RISE.basic - TAX_BANDS.basic
   const { basicRate, higherRate, additionalRate } = INCOME_TAX
 
   // The examples: £20,000 to overpay or save, on £200,000 with 25 years left.
@@ -57,7 +59,7 @@ export default function OverpayOrSave() {
   const limitShare = lumpSum / mortgage.balance
 
   // The same examples with the savings tax rates from April 2027.
-  const later = { afterRise: true }
+  const later = { taxYear: NEXT_TAX_YEAR }
   const basicAllowanceUsedLater = save('basic', {
     otherInterest: personalSavingsAllowance.basic,
     ...later,

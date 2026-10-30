@@ -2,7 +2,7 @@
 // on adjusted net income. Re-check every April on gov.uk (and gov.scot for the
 // Scottish rates), then add the new tax year below the last one.
 
-import { forTaxYear } from './taxYear.js'
+import { forTaxYear, NEXT_TAX_YEAR } from './taxYear.js'
 
 export const INCOME_TAX_RATES = {
   '2026/27': {
@@ -75,24 +75,24 @@ export const INCOME_TAX_RATES = {
       },
     },
 
-    // Tax on savings interest. Interest above the allowances is taxed at the
-    // same rates as other income (incomeTax above), and the same across the UK.
-    // Interest on cash in an ISA is not taxed.
+    // Tax on savings interest, the same across the UK: Scottish and Welsh
+    // taxpayers pay UK rates on it, in the UK bands. In 2026/27 the savings
+    // rates are the same as the main rates above. Interest on cash in an ISA is
+    // not taxed.
     // Sources: https://www.gov.uk/apply-tax-free-interest-on-savings
     //          https://www.gov.uk/individual-savings-accounts/how-isas-work
     //          https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
+    //          https://www.gov.uk/hmrc-internal-manuals/paye-manual/paye13100
     savingsTax: {
-      // The Personal Savings Allowance, by income tax band.
+      // The Personal Savings Allowance, by income tax band. The band is decided
+      // by taxable income including the interest, against the UK basic rate band
+      // (£37,700) and £125,140, for Scottish taxpayers too (HMRC's 2026 tax
+      // calculation summary notes, SA110, boxes A133b to A138).
       personalSavingsAllowance: { basic: 1000, higher: 500, additional: 0 },
       startingRateForSavings: 5000, // for people whose other income is low
       startingRateIncomeLimit: 17570, // other income below which the starting rate applies
-      // The tax rates on savings income go up by this much in every band from
-      // this date: 2 percentage points announced at Budget 2025 and 2 more at
-      // Budget 2026, giving 24%, 44% and 49% in 2027/28 (Annex A of Budget
-      // 2026's overview of tax legislation and rates, checked on 29 October
-      // 2026). The allowances above do not change.
-      rateRiseFrom: '6 April 2027',
-      rateRise: 0.04,
+      // The savings basic, higher and additional rates.
+      rates: { basic: 0.2, higher: 0.4, additional: 0.45 },
     },
 
     // The High Income Child Benefit Charge, on adjusted net income.
@@ -120,6 +120,41 @@ export const INCOME_TAX_RATES = {
       newJobDays: 35, // how long HMRC can take to update a code after you start a job
     },
   },
+
+  // Announced for 2027/28 (ANNOUNCED_TAX_YEARS in taxYear.js), so this holds
+  // only what Budget 2026 published: the UK main rates and bands, and tax on
+  // savings. The Scottish and Welsh rates, National Insurance and the rest are
+  // added when the year is, in April 2027. Only the savings interest tax
+  // calculator and the guides read it. Checked on 30 October 2026.
+  // Sources: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
+  //          https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar (paragraph 1.1)
+  //          https://www.gov.uk/government/publications/maintaining-income-tax-and-equivalent-national-insurance-contributions-thresholds-until-5-april-2031
+  '2027/28': {
+    // The Personal Allowance and the basic rate limit stay frozen until
+    // 5 April 2031 (Budget 2025), so the bands are the same as in 2026/27.
+    incomeTax: {
+      personalAllowance: 12570,
+      basicRateLimit: 50270,
+      higherRateLimit: 125140,
+      taperStart: 100000,
+      taperFullyGoneAt: 125140,
+      taperAllowanceLostPerPound: 0.5,
+      basicRate: 0.2,
+      higherRate: 0.4,
+      additionalRate: 0.45,
+    },
+    // The savings rates rise by 4 percentage points in every band: 2 announced
+    // at Budget 2025 (to 22%, 42% and 47%) and 2 more at Budget 2026. The
+    // allowances do not change. From 2027/28 the law also sets the Personal
+    // Allowance against other income before savings.
+    // Source for that: https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-savings-and-dividend-income
+    savingsTax: {
+      personalSavingsAllowance: { basic: 1000, higher: 500, additional: 0 },
+      startingRateForSavings: 5000,
+      startingRateIncomeLimit: 17570,
+      rates: { basic: 0.24, higher: 0.44, additional: 0.49 },
+    },
+  },
 }
 
 // The current tax year's figures, for page copy and guides.
@@ -129,6 +164,8 @@ export const SCOTTISH_INCOME_TAX = current.scottishIncomeTax
 export const WELSH_INCOME_TAX = current.welshIncomeTax
 export const NATIONAL_INSURANCE = current.nationalInsurance
 export const SAVINGS_TAX = current.savingsTax
+// The savings figures announced for the next tax year, for page copy.
+export const NEXT_YEAR_SAVINGS_TAX = forTaxYear(INCOME_TAX_RATES, NEXT_TAX_YEAR).savingsTax
 export const CHILD_BENEFIT_CHARGE = current.childBenefitCharge
 export const CHILDCARE = current.childcare
 export const TAX_CODE_TIMES = current.taxCodeTimes

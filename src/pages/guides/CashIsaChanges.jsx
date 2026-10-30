@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom'
 import GuidePage from '../../components/GuidePage'
 import { CASH_ISA_CUT_SCRAPPED, ISA, LIFETIME_ISA_REFORM } from '../../lib/rates/isa'
-import { SAVINGS_TAX } from '../../lib/rates/incomeTax'
 import { SELF_EMPLOYED } from '../../lib/rates/selfEmployed'
-import { TAX_YEAR } from '../../lib/rates/taxYear'
+import { NEXT_TAX_YEAR_START, TAX_YEAR } from '../../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../../lib/format'
 import { TAX_BANDS_AFTER_RISE } from '../../lib/overpayOrSave'
 import Source from '../../components/Source'
@@ -145,8 +144,8 @@ export default function CashIsaChanges() {
       </p>
       <h3>Is tax on savings outside an ISA changing?</h3>
       <p>
-        Yes. From {SAVINGS_TAX.rateRiseFrom}, interest above your Personal Savings Allowance is
-        taxed at {percent(TAX_BANDS_AFTER_RISE.basic)}, {percent(TAX_BANDS_AFTER_RISE.higher)} or{' '}
+        Yes. From {NEXT_TAX_YEAR_START}, interest above your Personal Savings Allowance is taxed at{' '}
+        {percent(TAX_BANDS_AFTER_RISE.basic)}, {percent(TAX_BANDS_AFTER_RISE.higher)} or{' '}
         {percent(TAX_BANDS_AFTER_RISE.additional)}, depending on your income tax band. The
         allowances stay the same, and interest in a cash ISA is still not taxed. The guide{' '}
         <Link to="/guides/overpay-mortgage-or-save">Should I overpay my mortgage or save?</Link> has
