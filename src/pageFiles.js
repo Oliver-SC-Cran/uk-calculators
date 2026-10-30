@@ -22,6 +22,7 @@ export const pageFiles = {
   '/guides/overpay-mortgage-or-save': 'guides/OverpayOrSave',
   '/guides/how-to-read-your-payslip': 'guides/Payslip',
   '/guides/cash-isa-changes-april-2027': 'guides/CashIsaChanges',
+  '/guides/budget-2026': 'guides/Budget2026',
   '/about': 'About',
   '/privacy': 'Privacy',
   '/cookies': 'Cookies',

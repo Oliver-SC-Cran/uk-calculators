@@ -19,6 +19,7 @@ import { calculateSharedOwnershipStampDuty, calculateStampDuty } from '../stampD
 import { calculateStudentLoanRepayment } from '../studentLoans.js'
 import { INCOME_TAX_RATES } from './incomeTax.js'
 import { ISA_RATES } from './isa.js'
+import { MILEAGE_RATES } from './mileage.js'
 import { MINIMUM_WAGE_RATES } from './minimumWage.js'
 import { MORTGAGE_RATES } from './mortgage.js'
 import { PARENTAL_PAY_RATES } from './parentalPay.js'
@@ -38,6 +39,7 @@ import {
 const tables = {
   INCOME_TAX_RATES,
   ISA_RATES,
+  MILEAGE_RATES,
   MINIMUM_WAGE_RATES,
   MORTGAGE_RATES,
   PARENTAL_PAY_RATES,
@@ -75,9 +77,16 @@ test('rates: an announced year comes after the current one and holds only announ
   )
   assert.deepEqual(Object.keys(announced.incomeTax), currentIncomeTax)
   assert.deepEqual(Object.keys(announced.savingsTax), Object.keys(current.savingsTax))
+  // Mileage rates for 2027/28 were announced in full.
+  assert.deepEqual(
+    Object.keys(MILEAGE_RATES[NEXT_TAX_YEAR].carOrVan),
+    Object.keys(MILEAGE_RATES[CURRENT_TAX_YEAR].carOrVan),
+  )
+  const withNextYear = ['INCOME_TAX_RATES', 'MILEAGE_RATES']
   for (const [name, table] of Object.entries(tables)) {
-    if (name !== 'INCOME_TAX_RATES')
+    if (!withNextYear.includes(name)) {
       assert.ok(!(NEXT_TAX_YEAR in table), `${name} has ${NEXT_TAX_YEAR}`)
+    }
   }
 })
 

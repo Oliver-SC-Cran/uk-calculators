@@ -176,7 +176,11 @@ export default function ISACalculator() {
       notices={notices.length > 0 ? notices : null}
       working={problem ? null : result.working}
       guide={<ISAGuide />}
-      guides={['/guides/cash-isa-changes-april-2027', '/guides/overpay-mortgage-or-save']}
+      guides={[
+        '/guides/cash-isa-changes-april-2027',
+        '/guides/budget-2026',
+        '/guides/overpay-mortgage-or-save',
+      ]}
       related={[
         '/lifetime-isa-calculator',
         '/savings-interest-tax-calculator',

@@ -646,7 +646,7 @@ export default function PayRiseCalculator() {
       notices={notices.length > 0 ? notices : null}
       working={shows ? result.working : null}
       guide={<PayRiseGuide />}
-      guides={['/guides/100k-tax-trap']}
+      guides={['/guides/100k-tax-trap', '/guides/budget-2026']}
       related={['/salary-calculator', '/student-loan-calculator', '/minimum-wage-calculator']}
     />
   )

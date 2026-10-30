@@ -351,6 +351,7 @@ export default function LifetimeIsaCalculator() {
       notices={notices}
       working={shows ? result.working : null}
       guide={<LifetimeIsaGuide />}
+      guides={['/guides/budget-2026']}
       related={['/isa-calculator', '/stamp-duty-calculator', '/mortgage-overpayment-calculator']}
     />
   )

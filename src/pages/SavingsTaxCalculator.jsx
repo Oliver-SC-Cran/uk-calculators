@@ -298,7 +298,11 @@ export default function SavingsTaxCalculator() {
       notices={notices.length > 0 ? notices : null}
       working={problem ? null : bothYears(now, next)}
       guide={<SavingsTaxGuide />}
-      guides={['/guides/overpay-mortgage-or-save', '/guides/cash-isa-changes-april-2027']}
+      guides={[
+        '/guides/budget-2026',
+        '/guides/overpay-mortgage-or-save',
+        '/guides/cash-isa-changes-april-2027',
+      ]}
       related={['/isa-calculator', '/salary-calculator', '/lifetime-isa-calculator']}
     />
   )

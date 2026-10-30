@@ -341,7 +341,7 @@ export default function SelfEmployedTaxCalculator() {
       notices={notices.length > 0 ? notices : null}
       working={problem ? null : result.working}
       guide={<SelfEmployedTaxGuide />}
-      guides={['/guides/100k-tax-trap']}
+      guides={['/guides/budget-2026', '/guides/100k-tax-trap']}
       related={['/salary-calculator', '/pay-rise-calculator', '/student-loan-calculator']}
     />
   )

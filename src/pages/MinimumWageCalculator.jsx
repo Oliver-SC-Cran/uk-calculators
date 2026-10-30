@@ -129,7 +129,7 @@ export default function MinimumWageCalculator() {
       notices={notices.length > 0 ? notices : null}
       working={problem ? null : result.working}
       guide={<MinimumWageGuide />}
-      guides={['/guides/how-to-read-your-payslip']}
+      guides={['/guides/budget-2026', '/guides/how-to-read-your-payslip']}
       related={['/salary-calculator', '/maternity-pay-calculator', '/redundancy-calculator']}
     />
   )

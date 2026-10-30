@@ -916,6 +916,12 @@ h2[tabindex='-1']:focus {
   font-size: 0.875rem;
 }
 
+/* A table whose row headings are words, not codes. */
+.data-table--plain tbody th {
+  font-family: inherit;
+  font-size: inherit;
+}
+
 /* The calculator layout (CalculatorLayout.jsx): a short head, the input card
    beside the result card, then the working, the guide and related links. */
 

@@ -412,7 +412,7 @@ export default function SalaryCalculator() {
       notices={notices}
       working={problem ? null : result.working}
       guide={<TakeHomePayGuide />}
-      guides={['/guides/how-to-read-your-payslip']}
+      guides={['/guides/how-to-read-your-payslip', '/guides/budget-2026']}
       related={[
         '/pay-rise-calculator',
         '/self-employed-tax-calculator',

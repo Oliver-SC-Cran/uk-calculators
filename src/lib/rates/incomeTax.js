@@ -164,6 +164,23 @@ export const SCOTTISH_INCOME_TAX = current.scottishIncomeTax
 export const WELSH_INCOME_TAX = current.welshIncomeTax
 export const NATIONAL_INSURANCE = current.nationalInsurance
 export const SAVINGS_TAX = current.savingsTax
+// Budget 2025 kept the Personal Allowance and the basic rate limit at their
+// current levels, so the higher rate threshold stays the same, until this date.
+// Source: https://www.gov.uk/government/publications/maintaining-income-tax-and-equivalent-national-insurance-contributions-thresholds-until-5-april-2031
+export const INCOME_TAX_FREEZE = {
+  until: '5 April 2031',
+  announcedAt: 'Budget 2025',
+}
+
+// Budget 2026: HMRC will set Child Benefit overpayments against the High Income
+// Child Benefit Charge automatically, through Finance Bill 2026-27, back to when
+// the charge began. Not a rate, so not kept by tax year.
+// Source: https://www.gov.uk/government/publications/budget-2026-document/budget-2026-html
+export const CHILD_BENEFIT_CHARGE_OFFSET = {
+  law: 'Finance Bill 2026-27',
+  backTo: 'January 2013',
+}
+
 // How tax on savings interest is paid. Not a rate, so not kept by tax year.
 // Up to this much interest, HMRC usually collects the tax through a tax code,
 // or sends a Simple Assessment letter when it cannot. Over it, the interest

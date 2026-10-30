@@ -7,10 +7,12 @@
 // lists them from here, and routes.test.js checks the two agree.
 
 import { INCOME_TAX, NEXT_YEAR_SAVINGS_TAX } from './lib/rates/incomeTax.js'
+import { BUDGET_2026 } from './lib/rates/budget.js'
 import { CASH_ISA_CUT_SCRAPPED, ISA } from './lib/rates/isa.js'
 import { MINIMUM_WAGE } from './lib/rates/minimumWage.js'
 import { PARENTAL_PAY } from './lib/rates/parentalPay.js'
 import { REDUNDANCY } from './lib/rates/redundancy.js'
+import { TRADING_ALLOWANCE_RISE } from './lib/rates/selfEmployed.js'
 import { STAMP_DUTY } from './lib/rates/stampDuty.js'
 import { NEXT_TAX_YEAR, NEXT_TAX_YEAR_START, TAX_YEAR } from './lib/rates/taxYear.js'
 import { taxCodeFor } from './lib/taxCode.js'
@@ -158,6 +160,13 @@ export const routes = [
     summary: `The planned ${pounds(CASH_ISA_CUT_SCRAPPED.plannedCashLimit)} cash limit was dropped at Budget 2026, so you can still put all ${pounds(ISA.overallAllowance)} in cash. What had been planned, and what is still to be confirmed.`,
     title: 'Cash ISA limit cut scrapped: what happens in April 2027',
     description: `Budget 2026 scrapped the planned ${pounds(CASH_ISA_CUT_SCRAPPED.plannedCashLimit)} cash ISA limit. From April 2027 the limit stays ${pounds(ISA.overallAllowance)} and you can still save it all in cash.`,
+  },
+  {
+    path: '/guides/budget-2026',
+    guide: 'Budget 2026: what it means for your money',
+    summary: `What Budget 2026 on ${BUDGET_2026.date} changes for savings, ISAs, work, pensions and Child Benefit, and when each change starts.`,
+    title: 'Budget 2026: what it means for your money',
+    description: `What Budget 2026 changes and when: savings tax rising to ${savingsRates}, the cash ISA limit kept at ${pounds(ISA.overallAllowance)}, a ${pounds(TRADING_ALLOWANCE_RISE.tradingAllowance)} trading allowance and more.`,
   },
   {
     path: '/about',
