@@ -90,8 +90,8 @@ export default function Home() {
         <div className="wrap hero__inner">
           <h1>Your money, worked out.</h1>
           <p className="hero__lede">
-            Free UK calculators for pay, tax, property and family. Updated for {TAX_YEAR} and
-            checked against gov.uk.
+            Free UK calculators for pay, tax, property and family. Updated for {TAX_YEAR}, with tax
+            rates from gov.uk.
           </p>
           <div className="hero__actions">
             <Link to="/salary-calculator" className="button">

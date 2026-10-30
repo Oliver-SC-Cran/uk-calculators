@@ -209,7 +209,7 @@ export const routes = [
     path: '/how-we-check',
     title: 'How we check our figures | UK Money Calculators',
     description:
-      'Where the rates in UK Money Calculators come from, how each calculator is tested against gov.uk and HMRC examples, and when the figures are checked again.',
+      'Where the rates in UK Money Calculators come from, how the sums are tested against official examples and formulas, and when the figures are checked again.',
   },
   {
     path: '/contact',

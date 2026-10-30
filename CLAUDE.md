@@ -220,7 +220,7 @@ Go through these four lists for every batch of changes, and finish the batch wit
 - Remove dark patterns: no pre-ticked boxes, fake urgency, nagging or hidden opt-outs
 - Remove hidden fees: N/A. The site is free and takes no payments
 - Remove fake reviews: N/A. There are no reviews or testimonials
-- Remove unsupported claims: follow the writing rules, and only say "checked against gov.uk" where the figures come from gov.uk
+- Remove unsupported claims: follow the writing rules, and only say "checked against gov.uk" where the figures come from gov.uk. The homepage hero says "Updated for [TAX_YEAR], with tax rates from gov.uk" and the footer "Tax rates and thresholds from gov.uk", because the mortgage overpayment and compound interest calculators use no gov.uk figures (both changed on 30 October 2026 from "checked against gov.uk")
 - Accessibility alt text: pages have no content images. The logo is decorative and sits beside the site name. The social image has `og:image:alt`
 - Fix colour contrast: check every new pairing (4.5:1 for text, 3:1 for field edges)
 - Keyboard navigation: skip link, visible focus, and focus moved to the new page

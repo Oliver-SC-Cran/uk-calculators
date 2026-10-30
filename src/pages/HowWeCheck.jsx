@@ -19,9 +19,9 @@ export default function HowWeCheck() {
     <TextPage>
       <h1>How we check our figures</h1>
       <p className="lede">
-        The calculators use figures from gov.uk and HMRC and are tested against official examples.
-        Here is where they come from, how they are checked, and what happens when something changes
-        or is wrong.
+        The rates the calculators use come from official sources such as gov.uk and HMRC, and the
+        sums are tested against official examples where there are any. Here is how, and what happens
+        when something changes or is wrong.
       </p>
       <LastUpdated date={LAST_UPDATED} className="prose__updated" />
 
