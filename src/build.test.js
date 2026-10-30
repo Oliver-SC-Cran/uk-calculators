@@ -9,14 +9,14 @@
 // (see scripts/prerender.js). Expected values are [own working].
 import assert from 'node:assert/strict'
 import { execFile, execFileSync } from 'node:child_process'
-import { cp, mkdtemp, readdir, readFile, rm, symlink } from 'node:fs/promises'
+import { cp, mkdtemp, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { after, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { pageFiles } from './pageFiles.js'
-import { canonicalUrl, routes } from './routes.js'
+import { canonicalUrl, findRoute, routes } from './routes.js'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const copies = []
@@ -39,9 +39,9 @@ function gitDir() {
  * Runs npm run build in a fresh copy, and gives back every file it wrote to
  * dist/. Only the build on your own computer reads this repository's history:
  * a Cloudflare build may fetch more of it (scripts/prerender.js), and that must
- * not happen to your own copy.
+ * not happen to your own copy. edit, if given, changes the copy before the build.
  */
-async function build(cloudflare) {
+async function build(cloudflare, edit) {
   const copy = await mkdtemp(path.join(tmpdir(), 'uk-calculators-build-'))
   copies.push(copy)
   for (const entry of [
@@ -54,6 +54,7 @@ async function build(cloudflare) {
   ]) {
     await cp(path.join(root, entry), path.join(copy, entry), { recursive: true })
   }
+  if (edit) await edit(copy)
   await symlink(path.join(root, 'node_modules'), path.join(copy, 'node_modules'), 'dir')
   const env = Object.fromEntries(
     Object.entries(process.env).filter(([key]) => !key.startsWith('CF_PAGES')),
@@ -73,15 +74,34 @@ async function build(cloudflare) {
   return files
 }
 
-const [local, preview, live] = await Promise.all([
+// One guide dated later than any commit, as when a guide is added or updated
+// after the homepage and the guides index last changed.
+const LATER = '2099-12-31'
+const firstGuide = routes.find((route) => route.guide)
+async function dateFirstGuideLater(copy) {
+  const file = path.join(copy, 'src', 'pages', `${pageFiles[firstGuide.path]}.jsx`)
+  const source = await readFile(file, 'utf8')
+  const edited = source.replace(/const LAST_UPDATED = '[\d-]+'/, `const LAST_UPDATED = '${LATER}'`)
+  assert.notEqual(edited, source, `${file} has no LAST_UPDATED date to change`)
+  await writeFile(file, edited)
+}
+
+const [local, preview, live, laterGuide] = await Promise.all([
   build({}),
   build({ CF_PAGES: '1', CF_PAGES_BRANCH: 'ads-and-housekeeping' }),
   build({ CF_PAGES: '1', CF_PAGES_BRANCH: 'main' }),
+  build({}, dateFirstGuideLater),
 ])
 
 const pageFile = (route) => (route.path === '/' ? 'index.html' : `${route.path.slice(1)}.html`)
 const pagesOf = (files) => [...files].filter(([name]) => name.endsWith('.html'))
 const headOf = (html) => html.slice(0, html.indexOf('</head>'))
+const datesShown = (html) =>
+  [...html.matchAll(/<time dateTime="([\d-]+)">/g)].map((match) => match[1])
+const lastmodIn = (sitemap, route) =>
+  sitemap.match(
+    new RegExp(`<url><loc>${canonicalUrl(route)}</loc>(?:<lastmod>([\\d-]+)</lastmod>)?</url>`),
+  )
 
 const adsTxt = await readFile(path.join(root, 'public', 'ads.txt'), 'utf8')
 const publisherId = adsTxt.match(/^google\.com,\s*(pub-\d+)\s*,/m)[1]
@@ -146,28 +166,57 @@ test('build [own working] a share link leaves the address before AdSense can loa
 test('build [own working] every sitemap address has the date its page shows', () => {
   const sitemap = local.get('sitemap.xml')
   for (const route of routes) {
-    const entry = sitemap.match(
-      new RegExp(`<url><loc>${canonicalUrl(route)}</loc>(?:<lastmod>([\\d-]+)</lastmod>)?</url>`),
-    )
+    const entry = lastmodIn(sitemap, route)
     assert.ok(entry, `${route.path} is not in the sitemap`)
     const lastmod = entry[1]
     const html = local.get(pageFile(route))
-    const shown = [...html.matchAll(/<time dateTime="([\d-]+)">/g)].map((match) => match[1])
+    const shown = datesShown(html)
     if (shown.length > 0) {
       // The latest one, as a calculator page can show its own and its guide's.
       assert.equal(lastmod, shown.sort().at(-1), route.path)
     } else if (lastmod !== undefined) {
-      // A page that shows no date has the date of the last commit to its file.
+      // A page that shows no date has the date of the last commit to its file,
+      // or the newest date of the guides it lists (the homepage and the guides
+      // index) if that is later.
       const file = `src/pages/${pageFiles[route.path]}.jsx`
       const committed = execFileSync('git', ['log', '-1', '--format=%cs', '--', file], {
         cwd: root,
         encoding: 'utf8',
       }).trim()
-      assert.equal(lastmod, committed, route.path)
+      const listed = routes
+        .filter((guide) => guide.guide && html.includes(`href="${guide.path}"`))
+        .flatMap((guide) => datesShown(local.get(pageFile(guide))))
+      assert.equal(lastmod, [committed, ...listed].sort().at(-1), route.path)
     }
     if (lastmod !== undefined) assert.match(lastmod, /^\d{4}-\d{2}-\d{2}$/, route.path)
   }
 })
+
+test(
+  'build [own working] the homepage and the guides index take the date of their newest guide',
+  { skip: !gitDir() && 'needs the git history' },
+  () => {
+    // In this build the first guide is dated later than any commit, so the two
+    // pages that list it take its date, though neither page's own file changed.
+    const sitemap = laterGuide.get('sitemap.xml')
+    const listing = [firstGuide, findRoute('/'), findRoute('/guides')]
+    for (const route of routes) {
+      const lastmod = lastmodIn(sitemap, route)?.[1]
+      assert.equal(lastmod === LATER, listing.includes(route), `${route.path} is dated ${lastmod}`)
+    }
+    // In the real build too, neither page is dated before the newest guide.
+    const real = local.get('sitemap.xml')
+    const newestGuide = routes
+      .filter((route) => route.guide)
+      .map((route) => lastmodIn(real, route)[1])
+      .sort()
+      .at(-1)
+    for (const route of [findRoute('/'), findRoute('/guides')]) {
+      const lastmod = lastmodIn(real, route)[1]
+      assert.ok(lastmod >= newestGuide, `${route.path} is dated ${lastmod}, before ${newestGuide}`)
+    }
+  },
+)
 
 test('build [own working] no calculator says it was updated before its own guide', () => {
   // The date at the top of a calculator page is when the page last changed, so

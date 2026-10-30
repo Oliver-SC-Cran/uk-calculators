@@ -86,8 +86,12 @@ async function buildPage(template, route, { indexable }) {
   return {
     html: replaceTag(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`),
     updated: latestUpdatedDate(body),
+    guidesLinked: guides.filter((guide) => body.includes(`href="${guide.path}"`)),
   }
 }
+
+// The standalone guides, which the homepage and the guides index list.
+const guides = routes.filter((route) => route.guide)
 
 // The latest "Updated" or "Last updated" date a page shows, as 'YYYY-MM-DD',
 // or null if it shows none. A calculator page can show two: its own, at the
@@ -236,8 +240,10 @@ function preloadsFor(routePath) {
 const template = await readFile(path.join(dist, 'index.html'), 'utf8')
 
 // When each page last changed, for the sitemap: the date it shows, or for a
-// page that shows none, the date of the last commit to its file in src/pages.
+// page that shows none, the date of the last commit to its file in src/pages,
+// or the newest date of the guides it links to if that is later.
 const lastChanged = new Map()
+const guidesOnPage = new Map()
 
 for (const route of routes) {
   // "/" becomes dist/index.html and "/about" becomes dist/about.html. Cloudflare
@@ -245,14 +251,24 @@ for (const route of routes) {
   // "/about/" and redirect "/about" there, which is not the address we use.
   const file = path.join(dist, route.path === '/' ? 'index.html' : `${route.path}.html`)
   await mkdir(path.dirname(file), { recursive: true })
-  const { html, updated } = await buildPage(template, route, { indexable: true })
+  const { html, updated, guidesLinked } = await buildPage(template, route, { indexable: true })
   await writeFile(file, html)
   lastChanged.set(route, updated)
+  guidesOnPage.set(route, guidesLinked)
 }
 const pageSource = (route) => `src/pages/${pageFiles[route.path]}.jsx`
 const showNoDate = routes.filter((route) => !lastChanged.get(route))
 if (showNoDate.some((route) => !lastCommitDate(pageSource(route)))) await fetchFullHistory()
-for (const route of showNoDate) lastChanged.set(route, lastCommitDate(pageSource(route)))
+for (const route of showNoDate) {
+  // The homepage and the guides index list the guides from src/routes.js, so
+  // adding or updating a guide changes them without changing their own file.
+  // They take the newest "Last updated" date of the guides they list when that
+  // is later. If git cannot tell when the page's own file last changed, the
+  // page still gets no date, as that file may have changed after every guide.
+  const committed = lastCommitDate(pageSource(route))
+  const listed = guidesOnPage.get(route).map((guide) => lastChanged.get(guide))
+  lastChanged.set(route, committed && [committed, ...listed].filter(Boolean).sort().at(-1))
+}
 
 // Cloudflare Pages serves dist/404.html, with a 404 status, for any URL that
 // has no file. Without it, Pages would answer every unknown URL with the homepage.
