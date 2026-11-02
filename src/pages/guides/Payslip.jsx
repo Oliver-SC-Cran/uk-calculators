@@ -230,9 +230,9 @@ export default function Payslip() {
             <tr>
               <th scope="row">NI letter or category</th>
               <td>
-                Your National Insurance category letter, which sets the rates you pay: A for most
-                employees, C over State Pension age, H for apprentices under 25, M under 21 and X if
-                you do not have to pay. There are others for smaller groups
+                Your National Insurance category letter, which sets the rates you pay. Most
+                employees have A. Others include C over State Pension age, H for apprentices under
+                25, M under 21 and X if you do not have to pay
               </td>
             </tr>
             <tr>
@@ -263,8 +263,7 @@ export default function Payslip() {
       <p>
         National Insurance is worked out on each payslip. In {TAX_YEAR} you pay {percent(mainRate)}{' '}
         on monthly pay between {gbp(monthlyNiStart)} and {gbp(monthlyNiUpper)}, and{' '}
-        {percent(upperRate)} on anything above. Your payslip also shows a category letter. Most
-        employees have A.
+        {percent(upperRate)} on anything above.
       </p>
 
       <h2>Student loan and pension</h2>
