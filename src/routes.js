@@ -129,7 +129,7 @@ export const routes = [
     path: '/stamp-duty-calculator',
     name: 'Stamp duty calculator',
     sharedLinks: true,
-    title: `Stamp duty calculator ${TAX_YEAR}: England and Northern Ireland`,
+    title: `Stamp duty calculator ${TAX_YEAR}: England, NI and shared ownership`,
     description: `Work out stamp duty on a home in England or Northern Ireland, for first-time buyers (relief up to ${pounds(STAMP_DUTY.firstTimeBuyer.maxPrice)}), home movers, second homes and shared ownership.`,
   },
   {
