@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import { calculateISAAllowance } from '../lib/isa'
 import { CASH_ISA_CUT_SCRAPPED, ISA } from '../lib/rates/isa'
-import { TAX_YEAR } from '../lib/rates/taxYear'
+import { NEXT_TAX_YEAR_START, TAX_YEAR, TAX_YEAR_END, TAX_YEAR_START } from '../lib/rates/taxYear'
 import { formatGBP as gbp, percent } from '../lib/format'
 import CalculatorGuide from '../components/CalculatorGuide'
+import Source from '../components/Source'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-29'
+const LAST_UPDATED = '2026-11-02'
 
 export default function ISAGuide() {
   const { overallAllowance, minAge, lisaLimit, lisaBonusRate } = ISA
@@ -125,6 +126,18 @@ export default function ISAGuide() {
       </p>
 
       <h2>Common questions</h2>
+
+      <h3>When does the cash ISA year start?</h3>
+      <p>
+        On 6 April. Cash ISAs and every other kind of ISA work by the tax year, which gov.uk says
+        runs from 6 April to 5 April. Your {gbp(overallAllowance)} allowance for {TAX_YEAR} covers{' '}
+        {TAX_YEAR_START} to {TAX_YEAR_END}, and a new allowance starts on {NEXT_TAX_YEAR_START}.
+        Your ISAs do not close when the tax year ends. See{' '}
+        <Source href="https://www.gov.uk/individual-savings-accounts/how-isas-work">
+          how ISAs work
+        </Source>{' '}
+        on gov.uk.
+      </p>
 
       <h3>Can I have more than one ISA?</h3>
       <p>

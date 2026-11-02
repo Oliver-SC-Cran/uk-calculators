@@ -24,7 +24,7 @@ import {
 import { MONEY, PERCENTAGE } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-26'
+const LAST_UPDATED = '2026-11-02'
 
 // What the calculator can work out, picked at the top of the inputs.
 const MODES = [
@@ -390,7 +390,7 @@ export default function MortgageOverpaymentCalculator() {
   return (
     <CalculatorLayout
       title="Mortgage overpayment and early repayment calculator"
-      lede="See how much interest overpaying or an offset account could save and when you could be mortgage-free, or what to overpay each month to be mortgage-free by a set date. It works from the figures you enter."
+      lede="See when you could pay off your mortgage early, and how much interest you could save, by overpaying each month, paying a lump sum or offsetting savings. Or work out what to overpay to cut your term and be mortgage-free by a set date. It works from the figures you enter."
       updated={LAST_UPDATED}
       checked={false}
       inputs={

@@ -54,6 +54,28 @@ export const CASH_ISA_CUT_SCRAPPED = {
   newRegulationsDue: 'November 2026',
 }
 
+// Not a rate, so not kept by tax year: the Help to Buy ISA, which closed to new
+// savers in 2019, for the Lifetime ISA guide. Existing accounts can still be paid
+// into, and their bonus claimed, until the dates below. gov.uk's Help to Buy ISA
+// page gives these dates as months only ("until November 2029", "until November
+// 2030"), and HM Treasury's savings statistics give the days. Checked on gov.uk
+// on 2 November 2026.
+// Sources: https://www.gov.uk/help-to-buy-isa
+//          https://www.gov.uk/government/statistics/annual-savings-statistics-2026/annual-savings-statistics-background-and-methodology (section 3.4)
+//          https://www.gov.uk/lifetime-isa/withdrawing-money-from-your-lifetime-isa
+//          https://www.gov.uk/guidance/transfer-lifetime-isas-between-managers
+export const HELP_TO_BUY_ISA = {
+  checkedOn: '2 November 2026',
+  closedToNewSavers: '30 November 2019',
+  paymentsUntil: '30 November 2029',
+  bonusClaimBy: '1 December 2030',
+  monthlyLimit: 200, // the most you can pay in each month
+  bonusRate: 0.25, // added when you buy your first home
+  maxBonus: 3000,
+  propertyCap: 250000, // the most the home can cost
+  propertyCapLondon: 450000, // the most the home can cost in London
+}
+
 // Not a rate, so not kept by tax year: the First Time Buyer ISA, which replaces
 // the Lifetime ISA for new savers. Only what HM Treasury's response to the
 // consultation (28 October 2026) and the Budget 2026 document confirm. Both say

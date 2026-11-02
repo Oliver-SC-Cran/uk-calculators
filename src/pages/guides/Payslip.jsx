@@ -2,7 +2,7 @@ import GuidePage from '../../components/GuidePage'
 import { INCOME_TAX, NATIONAL_INSURANCE, TAX_CODE_TIMES } from '../../lib/rates/incomeTax'
 import { AUTO_ENROLMENT } from '../../lib/rates/pensions'
 import { STUDENT_LOAN } from '../../lib/rates/studentLoans'
-import { TAX_YEAR } from '../../lib/rates/taxYear'
+import { TAX_YEAR, TAX_YEAR_END } from '../../lib/rates/taxYear'
 import { monthlyLoanThreshold } from '../../lib/studentLoans'
 import { readTaxCode } from '../../lib/readTaxCode'
 import { calculateTakeHomePay } from '../../lib/takeHome'
@@ -11,7 +11,11 @@ import Source from '../../components/Source'
 import { taxCodeFor } from '../../lib/taxCode'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-21'
+const LAST_UPDATED = '2026-11-02'
+
+// HMRC's example of a tax month in its employer guide for the tax year (CWG2):
+// pay due on 1 January is in tax month 9.
+const january = `1 January ${TAX_YEAR_END.slice(-4)}`
 
 export default function Payslip() {
   const { personalAllowance, basicRate, higherRate, additionalRate } = INCOME_TAX
@@ -50,8 +54,8 @@ export default function Payslip() {
       intro={
         <>
           A payslip shows what you earned, what was taken off and why. This guide goes through each
-          line, explains what a tax code such as {standardCode} means, and lists the checks that
-          catch most mistakes.
+          line, explains the tax period, a tax code such as {standardCode} and the other codes you
+          will see, and lists the checks that catch most mistakes.
         </>
       }
     >
@@ -108,17 +112,18 @@ export default function Payslip() {
         </tbody>
       </table>
 
-      <h2>The tax period or tax week number</h2>
+      <h2>What the tax period on your payslip means</h2>
       <p>
-        A tax period such as Month 7 or Week 30 counts from the start of the tax year on 6 April,
-        not from January. Tax months run from the 6th of one month to the 5th of the next, so month
-        1 is 6 April to 5 May and month 12 is 6 March to 5 April. Tax weeks start on 6 April, so
-        week 1 is 6 to 12 April, and the day or two left at the end of the year count as week 53.
+        The tax period is the tax month or tax week you were paid in, such as Month 7 or Week 30. It
+        counts from the start of the tax year on 6 April, not from January. Tax months run from the
+        6th of one month to the 5th of the next, so month 1 is 6 April to 5 May and month 12 is 6
+        March to 5 April. Tax weeks start on 6 April, so week 1 is 6 to 12 April, and the day or two
+        left at the end of the year count as week 53.
       </p>
       <p>
-        The number comes from the date you are paid: pay on 28 October is in month 7. Your employer
-        reports it to HMRC and, with a normal tax code, uses it to work out tax on your pay for the
-        year so far.
+        The number comes from the date you are paid. In HMRC's own example, pay due on {january} is
+        in tax month 9. Your employer reports it to HMRC and, with a normal tax code, uses it to
+        work out tax on your pay for the year so far.
       </p>
 
       <h2>Your tax code</h2>
@@ -182,7 +187,7 @@ export default function Payslip() {
               <td>At the start of a code: taxed at the rates for Scotland (S) or Wales (C)</td>
             </tr>
             <tr>
-              <th scope="row">W1, M1, X</th>
+              <th scope="row">W1, M1, X, NONCUM</th>
               <td>At the end of a code: an emergency tax code</td>
             </tr>
           </tbody>
@@ -193,6 +198,61 @@ export default function Payslip() {
         the year so far, so you can pay the wrong amount. It usually happens in a new job, and HMRC
         can take up to {TAX_CODE_TIMES.newJobDays} days to update it.
       </p>
+
+      <h2>Other codes and abbreviations on a payslip</h2>
+      <div className="table-scroll">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th scope="col">On your payslip</th>
+              <th scope="col">What it means</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">PAYE</th>
+              <td>
+                Pay As You Earn, HMRC's system for collecting income tax and National Insurance
+                through your employer
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">NI, NICs</th>
+              <td>National Insurance contributions</td>
+            </tr>
+            <tr>
+              <th scope="row">NI number</th>
+              <td>
+                Your National Insurance number: 2 letters, 6 numbers and a final letter. It stays
+                the same for life
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">NI letter or category</th>
+              <td>
+                Your National Insurance category letter, which sets the rates you pay: A for most
+                employees, C over State Pension age, H for apprentices under 25, M under 21 and X if
+                you do not have to pay. There are others for smaller groups
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">To date</th>
+              <td>
+                Totals since 6 April, the start of the tax year. Your P45 shows your pay and tax to
+                date when you leave a job
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">SSP, SMP</th>
+              <td>Statutory Sick Pay and Statutory Maternity Pay</td>
+            </tr>
+            <tr>
+              <th scope="row">PGL</th>
+              <td>Postgraduate Loan repayments</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <h2>Income tax and National Insurance</h2>
       <p>
@@ -286,6 +346,12 @@ export default function Payslip() {
           category letters
         </Source>
         ,{' '}
+        <Source href="https://www.gov.uk/national-insurance/your-national-insurance-number">
+          your National Insurance number
+        </Source>
+        , <Source href="https://www.gov.uk/paye-for-employers">PAYE</Source>,{' '}
+        <Source href="https://www.gov.uk/paye-forms-p45-p60-p11d/p45">the P45</Source>,{' '}
+        <Source href="https://www.gov.uk/statutory-sick-pay">Statutory Sick Pay</Source>,{' '}
         <Source href="https://www.gov.uk/repaying-your-student-loan/how-you-repay">
           repaying a student loan
         </Source>

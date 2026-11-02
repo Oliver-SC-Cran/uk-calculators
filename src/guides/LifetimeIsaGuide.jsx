@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
-import { ISA, LIFETIME_ISA_REFORM } from '../lib/rates/isa'
+import { HELP_TO_BUY_ISA, ISA, LIFETIME_ISA_REFORM } from '../lib/rates/isa'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { formatAmount, formatGBP as gbp, percent } from '../lib/format'
 import { homeOverCapWithdrawal, projectLifetimeIsa, withdrawalFor } from '../lib/lifetimeIsa'
 import CalculatorGuide from '../components/CalculatorGuide'
+import Source from '../components/Source'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-30'
+const LAST_UPDATED = '2026-11-02'
 
 export default function LifetimeIsaGuide() {
   const { overallAllowance, lisaLimit, lisaBonusRate, lisaMinOpenAge, lisaMaxOpenAge } = ISA
@@ -15,6 +16,7 @@ export default function LifetimeIsaGuide() {
   const { lisaOverCapChargeRate, lisaOverCapChargeFrom } = ISA
   const maxBonus = lisaLimit * lisaBonusRate
   const newAccount = LIFETIME_ISA_REFORM.firstTimeBuyerIsa
+  const helpToBuy = HELP_TO_BUY_ISA
   const overCap = (result) =>
     homeOverCapWithdrawal({ value: result.value, putIn: result.withdrawal.putIn })
 
@@ -94,8 +96,7 @@ export default function LifetimeIsaGuide() {
       <p>
         The mortgage cannot be a private one from a relative or from your spouse or civil partner.
         If you buy with someone who also has a Lifetime ISA, you can both use your savings and
-        bonus, as long as you are both first-time buyers. If you also have a Help to Buy ISA, you
-        can only use the bonus from one of them.
+        bonus, as long as you are both first-time buyers.
       </p>
       <p>
         From {lisaOverCapChargeFrom}, you can also take the money out for a first home that costs
@@ -134,6 +135,31 @@ export default function LifetimeIsaGuide() {
         applies, you have to take out more to cover it. To be left with {gbp(cashNeeded)}, you take
         out {gbp(toWithdraw)} and pay {gbp(toWithdraw - cashNeeded)}. There is no charge if you are
         terminally ill with less than {lisaTerminalIllnessMonths} months to live.
+      </p>
+
+      <h3>If you have a Help to Buy ISA</h3>
+      <p>
+        Help to Buy ISAs closed to new savers on {helpToBuy.closedToNewSavers}. If you have one, you
+        can keep paying in up to {gbp(helpToBuy.monthlyLimit)} a month until{' '}
+        {helpToBuy.paymentsUntil}. The government adds {percent(helpToBuy.bonusRate)}, up to{' '}
+        {gbp(helpToBuy.maxBonus)}, when you buy your first home, and the bonus must be claimed by{' '}
+        {helpToBuy.bonusClaimBy}. The home must cost {gbp(helpToBuy.propertyCap)} or less, or{' '}
+        {gbp(helpToBuy.propertyCapLondon)} or less in London.
+      </p>
+      <p>
+        You can have both accounts, but you can only use the government bonus from one of them to
+        buy your home. You can move money from a Help to Buy ISA into a Lifetime ISA. HMRC's
+        guidance for ISA providers says money moved into a Lifetime ISA from another ISA counts
+        towards the {gbp(lisaLimit)} you can pay into it that year. Moving money the other way, from
+        a Lifetime ISA to a Help to Buy ISA, has the {percent(lisaWithdrawalChargeRate)} withdrawal
+        charge.
+      </p>
+      <p>
+        From {newAccount.from} to {newAccount.helpToBuyTransfersUntil}, HM Treasury says you will be
+        able to move the whole of a Help to Buy ISA into the new First Time Buyer ISA, without it
+        counting towards that account's {gbp(newAccount.yearlyLimit)} yearly limit. The{' '}
+        {gbp(newAccount.propertyCap)} limit on the price of the home then applies, as it does to the
+        Lifetime ISA.
       </p>
 
       <h3>The First Time Buyer ISA from {newAccount.from}</h3>
@@ -247,6 +273,13 @@ export default function LifetimeIsaGuide() {
         you are both first-time buyers and the purchase meets the other rules.
       </p>
 
+      <h3>Can I have a Help to Buy ISA and a Lifetime ISA?</h3>
+      <p>
+        Yes, but you can only use the government bonus from one of them to buy your home. You can
+        move money from a Help to Buy ISA into a Lifetime ISA, within the {gbp(lisaLimit)} yearly
+        limit.
+      </p>
+
       <h3>What happens to my Lifetime ISA when the First Time Buyer ISA starts?</h3>
       <p>
         HM Treasury says a Lifetime ISA opened before {newAccount.from} can carry on under its
@@ -261,8 +294,18 @@ export default function LifetimeIsaGuide() {
           Lifetime ISA
         </a>{' '}
         on gov.uk, including the example of the withdrawal charge and the{' '}
-        {percent(lisaOverCapChargeRate)} charge for a home over {gbp(lisaPropertyCap)}. The First
-        Time Buyer ISA is from HM Treasury's{' '}
+        {percent(lisaOverCapChargeRate)} charge for a home over {gbp(lisaPropertyCap)}. The Help to
+        Buy ISA rules are from{' '}
+        <Source href="https://www.gov.uk/help-to-buy-isa">Help to Buy ISA</Source> on gov.uk, with
+        the exact dates from section 3.4 of HM Treasury's{' '}
+        <Source href="https://www.gov.uk/government/statistics/annual-savings-statistics-2026/annual-savings-statistics-background-and-methodology">
+          annual savings statistics
+        </Source>{' '}
+        and moving money between ISAs from HMRC's{' '}
+        <Source href="https://www.gov.uk/guidance/transfer-lifetime-isas-between-managers">
+          guidance on Lifetime ISA transfers
+        </Source>
+        . The First Time Buyer ISA, and moving a Help to Buy ISA into it, are from HM Treasury's{' '}
         <a
           href="https://www.gov.uk/government/consultations/first-time-buyer-isa-consultation"
           target="_blank"

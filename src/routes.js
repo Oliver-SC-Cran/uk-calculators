@@ -99,7 +99,7 @@ export const routes = [
     path: '/lifetime-isa-calculator',
     name: 'Lifetime ISA calculator',
     sharedLinks: true,
-    title: 'Lifetime ISA calculator: bonus, savings and withdrawal charge',
+    title: 'Lifetime ISA (LISA) calculator: bonus, savings and withdrawals',
     description: `Project your Lifetime ISA for ${TAX_YEAR} with the ${ISA.lisaBonusRate * 100}% government bonus, for a first home or age ${ISA.lisaAccessAge}, and see what you would get back after the ${ISA.lisaWithdrawalChargeRate * 100}% withdrawal charge.`,
   },
   {
@@ -121,15 +121,15 @@ export const routes = [
     path: '/mortgage-overpayment-calculator',
     name: 'Mortgage overpayment calculator',
     sharedLinks: true,
-    title: 'Mortgage overpayment calculator: your mortgage-free date',
+    title: 'Mortgage overpayment calculator: pay off your mortgage early',
     description:
-      'Pay off your mortgage early: see your mortgage-free date and the interest saved by overpaying or offsetting savings, or what to overpay to clear it by a set year.',
+      'See how fast monthly or lump sum overpayments or offset savings could clear your mortgage, the interest saved, and what to overpay to be mortgage-free by a set year.',
   },
   {
     path: '/stamp-duty-calculator',
     name: 'Stamp duty calculator',
     sharedLinks: true,
-    title: `Stamp duty calculator ${TAX_YEAR}: England, NI and shared ownership`,
+    title: `Stamp duty calculator ${TAX_YEAR}: England and Northern Ireland`,
     description: `Work out stamp duty on a home in England or Northern Ireland, for first-time buyers (relief up to ${pounds(STAMP_DUTY.firstTimeBuyer.maxPrice)}), home movers, second homes and shared ownership.`,
   },
   {
@@ -175,8 +175,8 @@ export const routes = [
     path: '/guides/how-to-read-your-payslip',
     guide: 'How to read your payslip',
     summary: `What each line means, what tax code ${standardTaxCode} tells you, and how to spot a mistake.`,
-    title: `How to read your payslip: tax codes and deductions ${TAX_YEAR}`,
-    description: `What each line on a UK payslip means: gross pay, tax code ${standardTaxCode}, income tax, National Insurance, student loan and pension, and how to spot a mistake.`,
+    title: 'How to read your payslip: tax codes, tax period and deductions',
+    description: `What each line and code on a UK payslip means in ${TAX_YEAR}: gross pay, the tax period, tax code ${standardTaxCode}, National Insurance, student loan and pension.`,
   },
   {
     path: '/guides/cash-isa-changes-april-2027',

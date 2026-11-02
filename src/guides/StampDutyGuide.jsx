@@ -12,7 +12,7 @@ import CalculatorGuide from '../components/CalculatorGuide'
 import Source from '../components/Source'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-30'
+const LAST_UPDATED = '2026-11-02'
 
 const MANUAL = 'https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/'
 
@@ -341,6 +341,23 @@ export default function StampDutyGuide() {
         set out above.
       </p>
 
+      <h3>Do you pay stamp duty in Northern Ireland?</h3>
+      <p>
+        Yes. gov.uk says you pay Stamp Duty Land Tax when you buy property or land over a certain
+        price in England and Northern Ireland, and nidirect lists stamp duty among the one-off costs
+        of buying a home there. The return and payment are due to HMRC within {returnDeadlineDays}{' '}
+        days of completion, as in England.
+      </p>
+
+      <h3>Are stamp duty rates the same in Northern Ireland as in England?</h3>
+      <p>
+        Yes. gov.uk gives one set of Stamp Duty Land Tax rates for both, so a home in Northern
+        Ireland costs the same in stamp duty as one at the same price in England. That includes
+        first-time buyer relief up to {gbp(firstTimeBuyer.maxPrice)}, the higher rates for
+        additional properties and the surcharge for buyers who are not UK resident. The calculator
+        works the same for a home in either.
+      </p>
+
       <h3>Is stamp duty the same in Scotland and Wales?</h3>
       <p>
         No. Scotland charges Land and Buildings Transaction Tax and Wales charges Land Transaction
@@ -350,6 +367,7 @@ export default function StampDutyGuide() {
       <h2>Where these figures come from</h2>
       <p>
         See gov.uk for{' '}
+        <Source href="https://www.gov.uk/stamp-duty-land-tax">where stamp duty applies</Source>,{' '}
         <a
           href="https://www.gov.uk/stamp-duty-land-tax/residential-property-rates"
           target="_blank"
@@ -373,6 +391,10 @@ export default function StampDutyGuide() {
         >
           rates for non-UK residents
         </a>
+        , and nidirect's{' '}
+        <Source href="https://www.nidirect.gov.uk/articles/buying-home-step-step-guide">
+          guide to buying a home in Northern Ireland
+        </Source>
         . For shared ownership, see gov.uk on{' '}
         <Source href="https://www.gov.uk/stamp-duty-land-tax/shared-ownership-property">
           stamp duty on shared ownership

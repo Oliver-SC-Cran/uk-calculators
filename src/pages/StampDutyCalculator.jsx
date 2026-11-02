@@ -18,7 +18,7 @@ import { formatAmount, formatGBP, formatGBPPence, percent } from '../lib/format'
 import { MONEY, PERCENTAGE } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-30'
+const LAST_UPDATED = '2026-11-02'
 
 const { sharedOwnership } = STAMP_DUTY
 const asPercent = (rate) => Math.round(rate * 10000) / 100
@@ -334,8 +334,8 @@ export default function StampDutyCalculator() {
 
   return (
     <CalculatorLayout
-      title="Stamp duty calculator"
-      lede={`Stamp Duty Land Tax on a home in England or Northern Ireland, bought outright or through shared ownership, using the rates from ${STAMP_DUTY.ratesFrom}.`}
+      title="Stamp duty calculator for England and Northern Ireland"
+      lede={`Stamp Duty Land Tax is charged in England and Northern Ireland, at the same rates in both. Work it out on a home bought outright or through shared ownership, using the rates from ${STAMP_DUTY.ratesFrom}.`}
       updated={LAST_UPDATED}
       inputs={
         <>

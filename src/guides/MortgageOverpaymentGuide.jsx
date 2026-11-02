@@ -5,7 +5,9 @@ import { calculateMortgageOverpayment, overpaymentToBeMortgageFree } from '../li
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-26'
+const LAST_UPDATED = '2026-11-02'
+
+const FCA_EARLY_REPAYMENT_RULES = 'https://handbook.fca.org.uk/handbook/mcob12/mcob12s3'
 
 const example = (balance, annualRatePercent, remainingYears, extra = {}) => ({
   balance,
@@ -32,6 +34,16 @@ export default function MortgageOverpaymentGuide() {
   const lumpNow = example(200000, 4.5, 25, { lumpSum: 10000 })
   const lumpLater = example(200000, 4.5, 25, { lumpSum: 10000, lumpSumYear: 5 })
   const both = example(200000, 4.5, 25, { lumpSum: 10000, monthlyOverpayment: 200 })
+
+  // The same lump sum with the payment lowered instead: the lender works the
+  // payment out again on what is left, over the same 25 years.
+  const lowerPayment = example(none.balance - lumpNow.lumpSum, 4.5, 25)
+  const lowerPaymentSaves = none.standardTotalInterest - lowerPayment.standardTotalInterest
+
+  // A lump sum against monthly overpayments: what each £1,000 overpaid saves.
+  const totalOverpaid = (result) => result.years.reduce((sum, row) => sum + row.overpaid, 0)
+  const monthly200Overpaid = totalOverpaid(monthly200)
+  const savedPer1000 = (result) => (result.interestSaved / totalOverpaid(result)) * 1000
 
   // MoneyHelper's own example, worked out here.
   const moneyHelper = example(250000, 5, 25, { lumpSum: 5000 })
@@ -66,9 +78,10 @@ export default function MortgageOverpaymentGuide() {
   return (
     <CalculatorGuide heading={<>How mortgage overpayments work</>} updated={LAST_UPDATED}>
       <p>
-        Overpaying means paying more than your required monthly payment, either a set amount each
-        month or a one-off lump sum. The extra comes straight off what you owe, so less interest is
-        charged from then on and the mortgage is paid off sooner.
+        Overpaying is one way to pay off your mortgage early. It means paying more than your
+        required monthly payment, either a set amount each month or a one-off lump sum. The extra
+        comes straight off what you owe, so less interest is charged from then on and the mortgage
+        is paid off sooner.
       </p>
 
       <h3>Reducing your term or your monthly payment</h3>
@@ -88,18 +101,30 @@ export default function MortgageOverpaymentGuide() {
         sooner saves more interest. A lower payment saves less interest but frees up money each
         month.
       </p>
-
-      <h2>How much can you pay off each year?</h2>
       <p>
-        It depends on your mortgage deal. MoneyHelper says many lenders let you overpay up to{' '}
-        {percent(typicalOverpaymentLimit)} a year without a fee while you are on a fixed-rate deal.
-        On a lender's standard variable rate there is usually no limit, even on large amounts. Go
-        over a limit while it applies, or pay the mortgage off early, and you could be charged.
+        For example, take {gbp(none.balance)} at {none.annualRatePercent}% with{' '}
+        {none.remainingYears} years left, where the payment is {gbp(none.standardPayment)} a month,
+        and a {gbp(lumpNow.lumpSum)} lump sum straight away. Keeping the payment the same clears the
+        mortgage {yearsAndMonths(lumpNow.monthsSaved)} sooner and saves {gbp(lumpNow.interestSaved)}{' '}
+        in interest. If the lender lowered the payment instead, it would be{' '}
+        {gbp(lowerPayment.standardPayment)} a month for the same {none.remainingYears} years, and
+        you would save {gbp(lowerPaymentSaves)}.
+      </p>
+
+      <h2>How much can you overpay on a mortgage each year?</h2>
+      <p>
+        It depends on your mortgage deal. MoneyHelper, the free guidance service backed by the
+        government, says many lenders let you overpay up to {percent(typicalOverpaymentLimit)} a
+        year without penalties, and that this is often the limit on a fixed-rate deal. That is where
+        the calculator's starting figure of {percent(typicalOverpaymentLimit)} comes from. It is
+        typical, not a rule: some lenders set a lower limit or measure it in a different way, so
+        check your own mortgage offer. On a lender's standard variable rate there is usually no
+        limit, even on large amounts, and trackers usually have fewer limits or none.
       </p>
       <p>
-        Lenders measure the limit in different ways, and some set a lower one. The calculator works
-        it out on what you owe at the start of each year, and checks it for the years left on your
-        deal. A lump sum is an overpayment too, so the calculator counts it towards the limit.
+        The calculator works the limit out on what you owe at the start of each year, and checks it
+        for the years left on your deal. A lump sum is an overpayment too, so the calculator counts
+        it towards the limit.
       </p>
       <p>
         For example, on {gbp(limitExample.balance)} at {limitExample.annualRatePercent}%,{' '}
@@ -112,6 +137,23 @@ export default function MortgageOverpaymentGuide() {
         {gbp(laterLimits[1].allowance)} and {gbp(laterLimits[2].allowance)}. The faster you pay the
         mortgage off, the faster your limit falls, so a set monthly amount that fits now may not fit
         later in your deal.
+      </p>
+
+      <h2>Early repayment charges</h2>
+      <p>
+        An early repayment charge is what a lender can charge if you overpay by more than your deal
+        allows, or pay off the mortgage or leave the deal early. MoneyHelper says you are usually
+        tied in for the length of a fixed-rate deal, and that you might pay a fee for leaving a
+        discounted deal before the discount ends.
+      </p>
+      <p>
+        The Financial Conduct Authority's rules say the charge must be a cash amount and a
+        reasonable pre-estimate of what it costs the lender when you repay early. Before you take
+        out a mortgage or switch to a new rate, the lender must tell you the most the charge could
+        be, and the mortgage offer must show it too. Lenders work it out in their own ways, and
+        neither MoneyHelper nor the FCA gives a typical amount, so the calculator does not work out
+        a charge. It warns you when your overpayments would go over the limit you enter, so you know
+        to check the charge in your offer.
       </p>
 
       <h2>How many years will it take to pay off your mortgage?</h2>
@@ -158,6 +200,33 @@ export default function MortgageOverpaymentGuide() {
         months sooner. This calculator gives the same {yearsAndMonths(moneyHelper.monthsSaved)}, and{' '}
         {gbp(moneyHelper.interestSaved)} for the interest: calculators work out interest in slightly
         different ways.
+      </p>
+
+      <h2>A lump sum or monthly overpayments?</h2>
+      <p>
+        Both bring the end date forward, and both count towards your lender's yearly limit. The
+        difference is timing. A pound paid off now stops interest being charged on it for longer
+        than a pound paid later, so each pound of an early lump sum saves more. On the same{' '}
+        {gbp(none.balance)} mortgage:
+      </p>
+      <ul>
+        <li>
+          a {gbp(lumpNow.lumpSum)} lump sum straight away saves {gbp(lumpNow.interestSaved)}, about{' '}
+          {gbp(savedPer1000(lumpNow))} for every £1,000 overpaid
+        </li>
+        <li>
+          {gbp(monthly200.monthlyOverpayment)} a month saves {gbp(monthly200.interestSaved)}, but
+          you would overpay {gbp(monthly200Overpaid)} in all before the mortgage ends, so it saves
+          about {gbp(savedPer1000(monthly200))} for every £1,000
+        </li>
+      </ul>
+      <p>
+        A lump sum has to fit inside one year's limit. With a {percent(typicalOverpaymentLimit)}{' '}
+        limit, the most you could overpay in the first year here is{' '}
+        {gbp(lumpNow.years[0].allowance)}. Spreading money over several years as monthly
+        overpayments keeps each year's share smaller. Either way, an overpayment usually cannot be
+        taken back unless you have a flexible or offset mortgage. You can enter a lump sum and a
+        monthly amount together in the calculator to see what they save between them.
       </p>
 
       <h2>How much extra do you need to pay to clear your mortgage in a set number of years?</h2>
@@ -324,7 +393,7 @@ export default function MortgageOverpaymentGuide() {
       <p>
         Only if you go over the limit in your mortgage deal, or pay the mortgage off early while a
         charge applies. Your mortgage offer or annual statement will say what the limit and the
-        charge are.
+        charge are. See early repayment charges, above.
       </p>
 
       <h3>When is the best time to make an overpayment?</h3>
@@ -360,7 +429,11 @@ export default function MortgageOverpaymentGuide() {
         >
           understanding mortgages and interest rates
         </a>
-        .
+        . The rules on early repayment charges are the FCA's, in{' '}
+        <a href={FCA_EARLY_REPAYMENT_RULES} target="_blank" rel="noreferrer">
+          MCOB 12.3
+        </a>{' '}
+        of its handbook.
       </p>
     </CalculatorGuide>
   )

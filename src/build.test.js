@@ -55,7 +55,10 @@ async function build(cloudflare, edit) {
     await cp(path.join(root, entry), path.join(copy, entry), { recursive: true })
   }
   if (edit) await edit(copy)
-  await symlink(path.join(root, 'node_modules'), path.join(copy, 'node_modules'), 'dir')
+  // A junction on Windows, which needs no special rights (a 'dir' link needs
+  // Developer Mode). Other systems ignore the type. Removing the copy removes
+  // the link only, not the real node_modules.
+  await symlink(path.join(root, 'node_modules'), path.join(copy, 'node_modules'), 'junction')
   const env = Object.fromEntries(
     Object.entries(process.env).filter(([key]) => !key.startsWith('CF_PAGES')),
   )
@@ -68,13 +71,16 @@ async function build(cloudflare, edit) {
   await promisify(execFile)('npm', ['run', 'build:site'], {
     cwd: copy,
     env: { ...env, ...cloudflare },
+    // On Windows npm is npm.cmd, which only runs through a shell.
+    shell: process.platform === 'win32',
   })
 
   const dist = path.join(copy, 'dist')
   const files = new Map()
   for (const name of await readdir(dist, { recursive: true })) {
+    // Keyed with / on every system, as the addresses are ('guides/budget-2026.html').
     if (/\.(html|xml|js)$/.test(name))
-      files.set(name, await readFile(path.join(dist, name), 'utf8'))
+      files.set(name.split(path.sep).join('/'), await readFile(path.join(dist, name), 'utf8'))
   }
   return files
 }
