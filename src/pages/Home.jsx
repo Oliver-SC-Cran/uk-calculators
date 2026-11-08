@@ -74,6 +74,11 @@ const groups = [
         description: 'What savings or investments could grow to, after charges and inflation.',
       },
       {
+        path: '/pension-calculator',
+        description:
+          'What your workplace pension could grow to, and what it costs after tax relief.',
+      },
+      {
         path: '/savings-interest-tax-calculator',
         description: `Tax on your savings interest in ${TAX_YEAR}, and from ${NEXT_TAX_YEAR_START} when the rates go up.`,
       },

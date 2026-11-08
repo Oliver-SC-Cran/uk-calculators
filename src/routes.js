@@ -118,6 +118,13 @@ export const routes = [
       'See what savings or investments could grow to with compound interest and regular payments, after charges and inflation, and what a market fall would do.',
   },
   {
+    path: '/pension-calculator',
+    name: 'Workplace pension calculator',
+    sharedLinks: true,
+    title: `Workplace pension calculator ${TAX_YEAR}: your pot and tax relief`,
+    description: `See what your workplace pension could grow to by retirement, what you, your employer and tax relief pay in, and what it costs you after tax and NI in ${TAX_YEAR}.`,
+  },
+  {
     path: '/mortgage-overpayment-calculator',
     name: 'Mortgage overpayment calculator',
     sharedLinks: true,

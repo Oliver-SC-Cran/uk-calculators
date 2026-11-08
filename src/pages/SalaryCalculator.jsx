@@ -415,6 +415,7 @@ export default function SalaryCalculator() {
       guides={['/guides/how-to-read-your-payslip', '/guides/budget-2026']}
       related={[
         '/pay-rise-calculator',
+        '/pension-calculator',
         '/self-employed-tax-calculator',
         '/student-loan-calculator',
       ]}

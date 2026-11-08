@@ -449,3 +449,139 @@ test('compound interest [own working] added monthly and yearly: with a fall, the
     }
   }
 })
+
+// ---------------------------------------------------------------------------
+// Payments that rise each year (used by the workplace pension calculator)
+// ---------------------------------------------------------------------------
+
+test('compound interest [own working] added monthly and yearly: a rise of 0% gives exactly the same results as no rise', () => {
+  for (const [startAmount, payment, paymentFrequency, compounding, fall] of [
+    [0, 100, 'monthly', 'monthly', null],
+    [5000, 2000, 'yearly', 'yearly', null],
+    [250000, 50, 'monthly', 'yearly', { percent: 20, year: 2 }],
+    [1000, 300, 'yearly', 'monthly', { percent: 100, year: 1 }],
+  ]) {
+    const settings = {
+      startAmount,
+      payment,
+      paymentFrequency,
+      compounding,
+      ratePercent: 6,
+      chargePercent: 0.75,
+      inflationPercent: 2,
+      years: 25,
+      fall,
+    }
+    assert.deepEqual(pot({ ...settings, paymentRisePercent: 0 }), pot(settings))
+  }
+})
+
+test('compound interest [own working] added monthly: £100 a month rising 10% a year at 0% growth for 2 years is £2,520', () => {
+  // 12 × £100 in year 1, then 12 × £110 in year 2.
+  const r = pot({ payment: 100, ratePercent: 0, years: 2, paymentRisePercent: 10 })
+  near(r.finalValue, 2520)
+  near(r.totalPayments, 2520)
+  near(r.rows[0].payment, 100)
+  near(r.rows[1].payment, 110)
+  near(r.rows[1].payments, 1320)
+  near(r.lastPayment, 110)
+  assert.equal(r.paymentRisePercent, 10)
+})
+
+test('compound interest [own working] added yearly: £1,000 a year rising 2% at 5% for 3 years is £3,374.60', () => {
+  // £1,000 × 1.05³ + £1,020 × 1.05² + £1,040.40 × 1.05 = £3,374.595.
+  const r = pot({
+    payment: 1000,
+    paymentFrequency: 'yearly',
+    ratePercent: 5,
+    years: 3,
+    compounding: 'yearly',
+    paymentRisePercent: 2,
+  })
+  near(r.finalValue, 3374.595)
+  near(r.lastPayment, 1040.4)
+})
+
+// The pot from the textbook formulas when payments rise by the same share each
+// year: a year of payments, valued at the end of its year, is a growing series.
+function closedFormRising({
+  start,
+  payment,
+  paymentFrequency,
+  rate,
+  charge,
+  years,
+  compounding,
+  rise,
+}) {
+  const grow = 1 + rise
+  let yearFactor
+  let firstYear
+  if (compounding === 'monthly') {
+    const month = (1 + rate / 12) * (1 - charge / 12)
+    yearFactor = month ** 12
+    firstYear =
+      paymentFrequency === 'monthly'
+        ? month === 1
+          ? 12 * payment
+          : (payment * month * (month ** 12 - 1)) / (month - 1)
+        : payment * yearFactor
+  } else {
+    yearFactor = (1 + rate) * (1 - charge)
+    firstYear =
+      paymentFrequency === 'yearly'
+        ? payment * yearFactor
+        : (12 * payment + (payment * rate * 78) / 12) * (1 - charge)
+  }
+  const series =
+    yearFactor === grow
+      ? firstYear * years * yearFactor ** (years - 1)
+      : (firstYear * (yearFactor ** years - grow ** years)) / (yearFactor - grow)
+  return start * yearFactor ** years + series
+}
+
+test('compound interest [own working] added monthly and yearly: rising payments match the growing series formula', () => {
+  for (const start of [0, 25000]) {
+    for (const payment of [50, 2000]) {
+      for (const ratePercent of [0, 3.5, 8, 20]) {
+        for (const chargePercent of [0, 0.75]) {
+          for (const rise of [0, 2.5, 10]) {
+            for (const years of [1, 7, 40]) {
+              for (const paymentFrequency of ['monthly', 'yearly']) {
+                for (const compounding of ['monthly', 'yearly']) {
+                  const r = pot({
+                    startAmount: start,
+                    payment,
+                    paymentFrequency,
+                    ratePercent,
+                    chargePercent,
+                    years,
+                    compounding,
+                    paymentRisePercent: rise,
+                  })
+                  const expected = closedFormRising({
+                    start,
+                    payment,
+                    paymentFrequency,
+                    rate: ratePercent / 100,
+                    charge: chargePercent / 100,
+                    years,
+                    compounding,
+                    rise: rise / 100,
+                  })
+                  const where = `${start} ${payment} ${paymentFrequency} ${ratePercent}% ${chargePercent}% rise ${rise}% ${years}y ${compounding}`
+                  assert.ok(
+                    Math.abs(r.finalValue - expected) <= Math.max(0.005, expected * 1e-9),
+                    `${where}: got ${r.finalValue}, expected ${expected}`,
+                  )
+                  near(r.paidIn + r.growth - r.charges, r.finalValue, where)
+                  near(r.lastPayment, payment * (1 + rise / 100) ** (years - 1), where)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+})

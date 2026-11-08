@@ -562,7 +562,12 @@ export default function CompoundInterestCalculator() {
       working={problem ? null : result.working}
       guide={<CompoundInterestGuide />}
       guides={['/guides/overpay-mortgage-or-save']}
-      related={['/isa-calculator', '/lifetime-isa-calculator', '/savings-interest-tax-calculator']}
+      related={[
+        '/pension-calculator',
+        '/isa-calculator',
+        '/lifetime-isa-calculator',
+        '/savings-interest-tax-calculator',
+      ]}
     />
   )
 }

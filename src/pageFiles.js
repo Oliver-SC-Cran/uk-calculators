@@ -14,6 +14,7 @@ export const pageFiles = {
   '/lifetime-isa-calculator': 'LifetimeIsaCalculator',
   '/savings-interest-tax-calculator': 'SavingsTaxCalculator',
   '/compound-interest-calculator': 'CompoundInterestCalculator',
+  '/pension-calculator': 'PensionCalculator',
   '/mortgage-overpayment-calculator': 'MortgageOverpaymentCalculator',
   '/stamp-duty-calculator': 'StampDutyCalculator',
   '/maternity-pay-calculator': 'MaternityPayCalculator',

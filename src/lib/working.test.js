@@ -24,6 +24,7 @@ import { calculateSharedOwnershipStampDuty, calculateStampDuty } from './stampDu
 import { calculateStudentLoanRepayment } from './studentLoans.js'
 import { calculateTakeHomePay } from './takeHome.js'
 import { sumOfLines } from './working.js'
+import { calculateWorkplacePension } from './workplacePension.js'
 
 const product = (...lists) =>
   lists.reduce((acc, list) => acc.flatMap((prefix) => list.map((item) => [...prefix, item])), [[]])
@@ -464,6 +465,7 @@ test('working [own working] compound interest adds up to the pot, added monthly 
       { chargePercent: 1, inflationPercent: 2 },
       { fall: { percent: 20, year: 2 } },
       { chargePercent: 5, fall: { percent: 100, year: 1 }, inflationPercent: 3 },
+      { paymentRisePercent: 2, chargePercent: 0.5, inflationPercent: 2 },
     ],
   )) {
     const r = calculateCompoundInterest({
@@ -476,6 +478,34 @@ test('working [own working] compound interest adds up to the pot, added monthly 
       ...extras,
     })
     const where = `compound interest ${startAmount} ${payment} ${paymentFrequency} ${ratePercent}% ${compounding}`
+    checkHeadline(r.working, r.finalValue, where)
+  }
+})
+
+test('working [own working] a workplace pension adds up to the pot at retirement', () => {
+  for (const [salary, basis, reliefType, extras] of product(
+    [0, 9000, 12570, 25000, 30000, 60000, 110000, 300000],
+    ['qualifyingEarnings', 'fullSalary'],
+    ['reliefAtSource', 'netPay', 'salarySacrifice'],
+    [
+      {},
+      { potNow: 20000, payRisePercent: 2, chargePercent: 0.5, inflationPercent: 2 },
+      { scottish: true, plan: 'plan2', payFrequency: 'weekly', compounding: 'yearly' },
+      { weeklyHours: 16, payRisePercent: 0, employerPercent: 0 },
+    ],
+  )) {
+    const r = calculateWorkplacePension({
+      age: 30,
+      retirementAge: 67,
+      salary,
+      basis,
+      reliefType,
+      employeePercent: 5,
+      employerPercent: 3,
+      ratePercent: 5,
+      ...extras,
+    })
+    const where = `workplace pension ${salary} ${basis} ${reliefType} ${JSON.stringify(extras)}`
     checkHeadline(r.working, r.finalValue, where)
   }
 })

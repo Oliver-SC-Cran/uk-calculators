@@ -17,6 +17,10 @@
 //   chosen, before that year's payments. Growth then carries on at the same
 //   rate, so the pot never makes up the difference with the pot that did not
 //   fall, and payments made after the fall are not affected by it.
+// - Payments can rise by a share at the start of each year after the first
+//   (paymentRisePercent), as pension contributions rise with pay. Every
+//   payment in a year is the same. At 0 the payments never change, and every
+//   result is exactly what it was before the option was added (8 November 2026).
 
 import { atLeastZero } from './numbers.js'
 import { add, info, part, subtract, total } from './working.js'
@@ -45,7 +49,7 @@ export function yearlyGrowth({ ratePercent = 0, compounding = 'monthly', chargeP
  * to see what growth alone does.
  */
 function simulate(settings, { fall = null, stopPaymentsFromFall = false } = {}) {
-  const { start, payment, paymentFrequency, rate, compounding, charge, years } = settings
+  const { start, paymentFrequency, rate, compounding, charge, years, rise } = settings
   let value = start
   let paidIn = start
   let payments = 0
@@ -65,7 +69,9 @@ function simulate(settings, { fall = null, stopPaymentsFromFall = false } = {}) 
     }
     const startOfYear = value
     let interestDue = 0
-    const row = { year, payments: 0, growth: 0, charges: 0 }
+    // Each payment this year. With no rise it is the payment itself.
+    const payment = rise > 0 ? settings.payment * (1 + rise) ** (year - 1) : settings.payment
+    const row = { year, payment, payments: 0, growth: 0, charges: 0 }
     for (let month = 0; month < MONTHS; month += 1) {
       const due = paymentFrequency === 'monthly' || month === 0
       const stopped = stopPaymentsFromFall && fall && year >= fall.year
@@ -119,6 +125,8 @@ function monthsToGetBack(run, fallYear) {
  * - years: whole years.
  * - fall: { percent, year } for a market fall at the start of that year, or
  *   null. A year outside the term is left out.
+ * - paymentRisePercent: how much the payment rises at the start of each year
+ *   after the first. 0 keeps it the same every year.
  */
 export function calculateCompoundInterest({
   startAmount = 0,
@@ -130,6 +138,7 @@ export function calculateCompoundInterest({
   inflationPercent = 0,
   years = 0,
   fall = null,
+  paymentRisePercent = 0,
 }) {
   const settings = {
     start: atLeastZero(startAmount),
@@ -139,6 +148,7 @@ export function calculateCompoundInterest({
     compounding: compounding === 'yearly' ? 'yearly' : 'monthly',
     charge: Math.min(atLeastZero(chargePercent) / 100, 1),
     years: Math.floor(atLeastZero(years)),
+    rise: atLeastZero(paymentRisePercent) / 100,
   }
   const inflation = atLeastZero(inflationPercent) / 100
   const fallYear = fall ? Math.floor(atLeastZero(fall.year)) : 0
@@ -189,6 +199,9 @@ export function calculateCompoundInterest({
     compounding: settings.compounding,
     startAmount: settings.start,
     payment: settings.payment,
+    paymentRisePercent: settings.rise * 100,
+    // Each payment in the last year, which is the payment itself with no rise.
+    lastPayment: rows.length > 0 ? rows[rows.length - 1].payment : settings.payment,
     paymentsMade: run.paymentsMade,
     totalPayments: run.payments,
     paidIn: run.paidIn,
@@ -207,32 +220,16 @@ export function calculateCompoundInterest({
   return { ...result, working: workingFor(result) }
 }
 
-function workingFor(result) {
-  const { compounding, fall } = result
+/**
+ * The part of the working that shows the yearly rate the growth rate, how
+ * often it is added and any charge work out to. Shared with the workplace
+ * pension calculator, so the two pages explain it the same way.
+ */
+export function yearlyRatePart(result) {
   const rate = result.ratePercent / 100
   const charge = result.chargePercent / 100
-  const inflation = result.inflationPercent / 100
-  const monthly = compounding === 'monthly'
-  const yearsText = `${result.years} ${result.years === 1 ? 'year' : 'years'}`
-
-  const pot = part(
-    `Your pot after ${yearsText}`,
-    [
-      add('Starting amount', result.startAmount, { unit: 'gbpPence' }),
-      result.paymentsMade > 0 &&
-        add('Your regular payments', result.totalPayments, {
-          unit: 'gbpPence',
-          count: result.paymentsMade,
-          each: result.payment,
-        }),
-      add('Growth', result.growth, { unit: 'gbpPence' }),
-      result.charges > 0 && subtract('Charges', result.charges, { unit: 'gbpPence' }),
-      fall && fall.lost > 0 && subtract('The market fall', fall.lost, { unit: 'gbpPence' }),
-    ],
-    total('Your pot at the end', result.finalValue, { unit: 'gbpPence' }),
-  )
-
-  const yearly = part(
+  const monthly = result.compounding === 'monthly'
+  return part(
     'The yearly rate it works out to',
     [
       info('Growth or interest rate a year', rate, { unit: 'percent' }),
@@ -253,25 +250,61 @@ function workingFor(result) {
       ? "Interest is added each month, so each month's interest earns interest too. That is why a whole year's growth comes to more than the yearly rate."
       : 'Interest is added once a year, at the end of the year. Money paid in during the year earns it for the months it was in.',
   )
+}
 
-  const parts = [pot, yearly]
+/**
+ * The part of the working that turns the pot at the end into today's money,
+ * or null with no inflation. Shared with the workplace pension calculator.
+ */
+export function todaysMoneyPart(result, potLabel = 'Your pot at the end') {
+  if (result.realValue === null) return null
+  return part(
+    "In today's money",
+    [
+      info('Inflation a year', result.inflationPercent / 100, { unit: 'percent' }),
+      add(potLabel, result.finalValue, { unit: 'gbpPence' }),
+      subtract('What rising prices take off', result.finalValue - result.realValue, {
+        unit: 'gbpPence',
+      }),
+    ],
+    total("Your pot in today's money", result.realValue, { unit: 'gbpPence' }),
+    'The pot at the end is divided by how much prices will have risen by then, with inflation compounded once a year.',
+  )
+}
 
-  if (result.realValue !== null) {
-    parts.push(
-      part(
-        "In today's money",
-        [
-          info('Inflation a year', inflation, { unit: 'percent' }),
-          add('Your pot at the end', result.finalValue, { unit: 'gbpPence' }),
-          subtract('What rising prices take off', result.finalValue - result.realValue, {
-            unit: 'gbpPence',
-          }),
-        ],
-        total("Your pot in today's money", result.realValue, { unit: 'gbpPence' }),
-        'The pot at the end is divided by how much prices will have risen by then, with inflation compounded once a year.',
-      ),
-    )
-  }
+function workingFor(result) {
+  const { fall } = result
+  const yearsText = `${result.years} ${result.years === 1 ? 'year' : 'years'}`
+  const rises = result.paymentRisePercent > 0
+
+  const pot = part(
+    `Your pot after ${yearsText}`,
+    [
+      add('Starting amount', result.startAmount, { unit: 'gbpPence' }),
+      result.paymentsMade > 0 &&
+        add(
+          rises ? 'Your regular payments, rising each year' : 'Your regular payments',
+          result.totalPayments,
+          // With a rise the payments are not all the same, so there is no "each".
+          rises
+            ? { unit: 'gbpPence' }
+            : { unit: 'gbpPence', count: result.paymentsMade, each: result.payment },
+        ),
+      result.paymentsMade > 0 &&
+        rises &&
+        info('Payments rise at the start of each year by', result.paymentRisePercent / 100, {
+          unit: 'percent',
+        }),
+      add('Growth', result.growth, { unit: 'gbpPence' }),
+      result.charges > 0 && subtract('Charges', result.charges, { unit: 'gbpPence' }),
+      fall && fall.lost > 0 && subtract('The market fall', fall.lost, { unit: 'gbpPence' }),
+    ],
+    total('Your pot at the end', result.finalValue, { unit: 'gbpPence' }),
+  )
+
+  const parts = [pot, yearlyRatePart(result)]
+  const today = todaysMoneyPart(result)
+  if (today) parts.push(today)
 
   if (fall && fall.lost > 0) {
     parts.push(

@@ -9,7 +9,7 @@ import { CONTACT_EMAIL } from '../routes'
 // tests in src/lib/), so check it again when that changes. "If any of them
 // fails, the build stops" is true because npm run build runs npm test first. On 30 October 2026 there
 // were 359 tests, 85 of them labelled [gov.uk] and 1 [gov.scot].
-const LAST_UPDATED = '2026-10-30'
+const LAST_UPDATED = '2026-11-08'
 
 // The About page links to this heading as /how-we-check#how-we-worked-this-out.
 const WORKING_SECTION_ID = 'how-we-worked-this-out'
@@ -50,13 +50,18 @@ export default function HowWeCheck() {
           tax-free pay on each pay day
         </li>
         <li>the Scottish Government, for Scottish income tax</li>
+        <li>
+          The Pensions Regulator, for the automatic enrolment earnings limits on each pay day and
+          the charge cap on default pension funds
+        </li>
         <li>nidirect, for the redundancy pay limits in Northern Ireland</li>
         <li>
           Budget documents and HM Treasury, for changes that have been announced but have not
           started yet
         </li>
         <li>
-          the FCA and the Bank of England, for the compound interest calculator&apos;s quick picks
+          the FCA and the Bank of England, for the quick picks on the compound interest and pension
+          calculators
         </li>
       </ul>
       <p>
@@ -93,9 +98,10 @@ export default function HowWeCheck() {
       </p>
       <p>
         Each calculation test records where its expected answer came from: an example or a
-        calculator result from gov.uk or HMRC, a figure the Scottish Government publishes, or a sum
-        worked out by hand. The hand-worked tests cover the places where mistakes tend to hide: each
-        threshold, zero, blank or negative entries, and very large amounts.
+        calculator result from gov.uk or HMRC, a figure the Scottish Government or The Pensions
+        Regulator publishes, or a sum worked out by hand. The hand-worked tests cover the places
+        where mistakes tend to hide: each threshold, zero, blank or negative entries, and very large
+        amounts.
       </p>
       <p>
         Some calculators have no official example to compare with. gov.uk has no mortgage
@@ -104,7 +110,10 @@ export default function HowWeCheck() {
         a separate calculation of the whole tax bill, and the pay rise calculator has to match the
         take-home pay calculator for every salary it is tested with. The{' '}
         <Link to="/compound-interest-calculator">compound interest calculator</Link> is checked the
-        same way, against the standard formulas.
+        same way, against the standard formulas. The{' '}
+        <Link to="/pension-calculator">workplace pension calculator</Link> has to match the compound
+        interest calculator for the pot, and the take-home pay calculator for what each contribution
+        costs.
       </p>
 
       <h2>Tested before anything goes live</h2>
