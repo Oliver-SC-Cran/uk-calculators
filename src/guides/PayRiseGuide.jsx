@@ -12,7 +12,7 @@ import { calculatePayRise } from '../lib/payRise'
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-23'
+const LAST_UPDATED = '2026-11-13'
 
 // 0.72 becomes 72p, and 0.305 becomes 30.5p
 const pence = (share) => `${Number((share * 100).toFixed(1))}p`

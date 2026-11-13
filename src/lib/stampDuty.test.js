@@ -209,6 +209,7 @@ test('stamp duty [own working] breakdown, effective rate and odd inputs', () => 
 // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm27065 (staircasing)
 // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm29880 (first-time
 //   buyers, election), sdltm29885 (in stages) and sdltm29890 (buying more shares)
+// https://www.legislation.gov.uk/ukpga/2003/14/schedule/5 (the 1% rate over £125,000 and the 3.5% discount rate)
 // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm13075 (net present value)
 // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm13080 (worked example)
 

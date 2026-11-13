@@ -36,9 +36,10 @@ import {
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { MONEY, PERCENTAGE } from '../lib/validation'
 import { calculateWorkplacePension, RELIEF_METHODS } from '../lib/workplacePension'
+import TableScroll from '../components/TableScroll'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-11-08'
+const LAST_UPDATED = '2026-11-13'
 
 const MAX_AMOUNT = 10_000_000
 const OLDEST_TO_RETIRE = 75
@@ -687,7 +688,7 @@ export default function PensionCalculator() {
 
           <details className="result-card__more">
             <summary>Your pay and pot at the end of each year</summary>
-            <div className="table-scroll">
+            <TableScroll label="Your pay and pot at the end of each year">
               <table className="result-table result-table--columns">
                 <thead>
                   <tr>
@@ -716,7 +717,7 @@ export default function PensionCalculator() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableScroll>
           </details>
         </ResultCard>
       }

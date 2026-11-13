@@ -39,7 +39,12 @@ export const STAMP_DUTY_RATES = {
     // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm27060
     sharedOwnership: {
       // Paying in stages: tax on the rent is this rate on the net present
-      // value of the rent above the nil band.
+      // value of the rent above the nil band. The bands and the rate are in
+      // Finance Act 2003, Schedule 5, paragraph 2 (Table A), the formula in
+      // paragraph 3 and the 3.5% discount rate in paragraph 8 (checked on
+      // 13 November 2026). HMRC's manual page SDLTM13075 no longer states
+      // the figures. It points to HMRC's calculator and to Schedule 5.
+      // https://www.legislation.gov.uk/ukpga/2003/14/schedule/5
       // https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm13075
       rentNilBand: 125000,
       rentRate: 0.01,

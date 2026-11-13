@@ -45,3 +45,17 @@ test('headers: the Content Security Policy only reports and has no inline script
   const scripts = policy.split(';').find((part) => part.trim().startsWith('script-src'))
   assert.doesNotMatch(scripts, /unsafe-inline|unsafe-eval/)
 })
+
+test('security.txt [own working] gives the contact email and a date it runs out', async () => {
+  // RFC 9116: Contact and Expires are needed. The date has to be moved on by
+  // hand before it passes (CLAUDE.md, "Security").
+  const { CONTACT_EMAIL } = await import('./routes.js')
+  const fileLines = read('../public/.well-known/security.txt').trim().split(/\r?\n/)
+  assert.ok(fileLines.includes(`Contact: mailto:${CONTACT_EMAIL}`))
+  assert.ok(
+    fileLines.includes('Canonical: https://ukmoneycalculators.co.uk/.well-known/security.txt'),
+  )
+  const expires = fileLines.find((line) => line.startsWith('Expires: '))
+  assert.ok(expires, 'no Expires line')
+  assert.ok(!Number.isNaN(Date.parse(expires.slice('Expires: '.length))), 'Expires is not a date')
+})

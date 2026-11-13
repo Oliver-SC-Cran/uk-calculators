@@ -5,10 +5,14 @@ The code for [ukmoneycalculators.co.uk](https://ukmoneycalculators.co.uk): calcu
 - Take-home pay
 - Pay rises
 - Self-employed tax
-- Maternity and paternity pay
+- Mileage allowance
 - Statutory redundancy pay
+- Maternity and paternity pay
 - ISA and Lifetime ISA allowance
 - Lifetime ISA projections
+- Savings interest tax
+- Compound interest
+- Workplace pensions
 - Mortgage overpayments
 - Stamp duty (England and Northern Ireland)
 - Minimum wage
@@ -18,7 +22,7 @@ Figures are for the 2026/27 tax year. Stamp duty rates are the ones in force sin
 
 ## Running it
 
-You need Node.js 22 or later.
+You need Node.js 26. `.node-version` has the exact version Cloudflare builds with (26.13.0), and a test fails a Cloudflare build that runs on any other.
 
 ```bash
 npm install

@@ -7,7 +7,7 @@ import { forTaxYear } from './rates/taxYear.js'
 import { add, info, part, subtract, total } from './working.js'
 
 /**
- * ISA & LISA allowance check for one tax year. Cash ISAs can take the whole
+ * ISA and Lifetime ISA allowance check for one tax year. Cash ISAs can take the whole
  * overall allowance: the cut to the cash limit planned for April 2027 was
  * scrapped at Budget 2026 (CASH_ISA_CUT_SCRAPPED in rates/isa.js).
  */

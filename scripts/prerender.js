@@ -81,7 +81,9 @@ async function buildPage(template, route, { indexable }) {
   const body = await render(route.path)
   const isNotFoundPage = body.includes('Page not found')
   if (indexable === isNotFoundPage) {
-    throw new Error(`${route.path} rendered the wrong page. Check the pages map in src/App.jsx.`)
+    throw new Error(
+      `${route.path} rendered the wrong page. Check its component file in src/pageFiles.js.`,
+    )
   }
   return {
     html: replaceTag(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`),

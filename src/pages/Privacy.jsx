@@ -2,9 +2,14 @@ import TextPage from '../components/TextPage'
 import { Link } from 'react-router-dom'
 import { CONTACT_EMAIL, OWNER_NAME, routes } from '../routes'
 import LastUpdated from '../components/LastUpdated'
+import { formatDate } from '../lib/format'
 
 // Change this by hand whenever the policy changes.
-const LAST_UPDATED = '2026-10-30'
+const LAST_UPDATED = '2026-11-13'
+
+// The date of the note about what happens before Google approves the site.
+// Take the note out once adverts are switched on.
+const NOTE_DATE = '2026-11-13'
 
 export default function Privacy() {
   return (
@@ -46,6 +51,19 @@ export default function Privacy() {
       </p>
 
       <h2>Advertising</h2>
+      <p>
+        <strong>Until Google approves this site for adverts</strong> (note added on{' '}
+        {formatDate(NOTE_DATE)}): Google has not yet approved this site to show adverts. Until it
+        does, no adverts show and Google&apos;s consent message does not appear, because Google does
+        not send it to a site it has not approved. So you are not asked for a choice yet, and the
+        &quot;Cookie settings&quot; link takes you to the cookie policy. Google&apos;s script still
+        loads on every page, and it sets one cookie on this site, FCCDCF, without asking first.
+        Google lists it as a functionality cookie for its consent message, lasting 13 months. When
+        it was checked on {formatDate(NOTE_DATE)} it held a random identifier and the time it was
+        set, and it was the only cookie on the site. You can delete or block it in your
+        browser&apos;s settings. The rest of this section, and the part about consent below,
+        describe what happens once adverts are switched on.
+      </p>
       <p>
         This site uses Google AdSense to show ads. Google and its advertising partners use cookies
         and similar identifiers to choose which ads to show, to limit how often you see an ad and to

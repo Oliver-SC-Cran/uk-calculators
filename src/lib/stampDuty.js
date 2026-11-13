@@ -108,7 +108,8 @@ export function calculateStampDuty({
 
 /**
  * The net present value of the rent on a lease, as HMRC works it out for
- * stamp duty (SDLTM13075): each year's rent is discounted at 3.5% a year,
+ * stamp duty (Finance Act 2003, Schedule 5, paragraphs 3 and 8, and
+ * SDLTM13075): each year's rent is discounted at 3.5% a year,
  * compounded, so the rent in year 2 is divided by 1.035 twice.
  *
  * yearlyRent is the rent in the first year. It goes up by yearlyRise (0.03

@@ -17,6 +17,7 @@ import {
   TAX_YEAR_END,
   TAX_YEAR_START,
 } from '../lib/rates/taxYear'
+import TableScroll from '../components/TableScroll'
 
 // Change this by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '2026-10-30'
@@ -66,7 +67,7 @@ export default function MileageAllowanceGuide() {
       </p>
 
       <h3>The approved mileage rates</h3>
-      <div className="table-scroll">
+      <TableScroll label="Approved rates for each business mile">
         <table className="data-table data-table--plain">
           <caption>Approved rates for each business mile</caption>
           <thead>
@@ -104,7 +105,7 @@ export default function MileageAllowanceGuide() {
             </tr>
           </tbody>
         </table>
-      </div>
+      </TableScroll>
       <p>
         The {p(car.firstMilesRate)} rate started on {TAX_YEAR_START}, up from{' '}
         {p(CAR_OR_VAN_RATE_BEFORE_APRIL_2026)}, and Budget 2026 on {BUDGET_2026.date} kept it. It

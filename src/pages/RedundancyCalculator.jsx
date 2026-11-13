@@ -13,11 +13,11 @@ import {
 import RedundancyGuide from '../guides/RedundancyGuide'
 import { TAX_YEAR_START } from '../lib/rates/taxYear'
 import { calculateRedundancyPay } from '../lib/redundancy'
-import { formatGBP, formatNumber } from '../lib/format'
+import { formatGBP, formatGBPPence, formatNumber } from '../lib/format'
 import { MONEY, WHOLE_YEARS } from '../lib/validation'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-23'
+const LAST_UPDATED = '2026-11-13'
 
 export default function RedundancyCalculator() {
   const state = useCalculatorState(
@@ -50,6 +50,9 @@ export default function RedundancyCalculator() {
     (result.reason === 'service-too-long'
       ? 'Check your age and your years with your employer.'
       : 'Based on what you entered, you would not qualify yet.')
+
+  // "1 week's pay", and "1.5 weeks' pay" for anything else.
+  const weeksPay = result.totalWeeks === 1 ? "week's pay" : "weeks' pay"
 
   // Notes on why there is no figure.
   const notices = []
@@ -112,7 +115,8 @@ export default function RedundancyCalculator() {
           <Notice>
             This is the legal minimum. Your employer may pay more under your contract or a company
             scheme. It works in whole years of age and service, so exact dates can shift the result
-            if you are close to an age boundary.
+            if you are close to an age boundary. The result is to the penny, as on gov.uk&apos;s
+            calculator.
           </Notice>
         </>
       }
@@ -120,14 +124,14 @@ export default function RedundancyCalculator() {
         <ResultCard
           label="Statutory redundancy pay"
           figures={[
-            { value: formatGBP(result.pay ?? 0), per: 'the legal minimum' },
-            { value: formatNumber(result.totalWeeks ?? 0), per: "weeks' pay" },
+            { value: formatGBPPence(result.pay ?? 0), per: 'the legal minimum' },
+            { value: formatNumber(result.totalWeeks ?? 0), per: weeksPay },
           ]}
           prompt={problem ?? notQualifying}
           shareLink={state.shareLink}
         >
           <p className="result-card__line">
-            For {result.totalWeeks} weeks' pay at {formatGBP(result.weeklyPayUsed)} a week
+            For {result.totalWeeks} {weeksPay} at {formatGBPPence(result.weeklyPayUsed)} a week
             {result.weeklyPayWasCapped ? ', the most that counts' : ''}.
           </p>
           <table className="result-table">
@@ -139,7 +143,7 @@ export default function RedundancyCalculator() {
               <tr>
                 <th scope="row">Weekly pay used</th>
                 <td>
-                  {formatGBP(result.weeklyPayUsed)}
+                  {formatGBPPence(result.weeklyPayUsed)}
                   {result.weeklyPayWasCapped ? ' (capped)' : ''}
                 </td>
               </tr>

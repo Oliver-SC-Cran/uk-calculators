@@ -26,9 +26,10 @@ import {
   TAX_YEAR_START,
 } from '../../lib/rates/taxYear'
 import { calculateSavingsTax } from '../../lib/savingsTax'
+import TableScroll from '../../components/TableScroll'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-30'
+const LAST_UPDATED = '2026-11-13'
 
 const hourly = (value) => `£${value.toFixed(2)}`
 const rates = ({ basic, higher, additional }) =>
@@ -70,7 +71,7 @@ export default function Budget2026() {
       }
     >
       <h2>What changes and when</h2>
-      <div className="table-scroll">
+      <TableScroll label="What changes and when">
         <table className="data-table data-table--plain">
           <thead>
             <tr>
@@ -170,7 +171,7 @@ export default function Budget2026() {
             </tr>
           </tbody>
         </table>
-      </div>
+      </TableScroll>
 
       <h2>Savings and ISAs</h2>
       <h3>Tax on savings interest</h3>

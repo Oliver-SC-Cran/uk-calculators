@@ -32,7 +32,9 @@ function how(line) {
     return `${formatAmount(line.rate, 'percent')} of ${money(line.on)}`
   }
   if (line.count !== undefined && line.each !== undefined) {
-    return `${formatNumber(line.count)} × ${money(line.each)}`
+    // A count of weeks or years is times a plain number: "19 × 1", not "19 × £1".
+    const each = isMoney(line.unit) ? money(line.each) : formatNumber(line.each)
+    return `${formatNumber(line.count)} × ${each}`
   }
   if (line.from !== undefined && line.to !== undefined) {
     return Number.isFinite(line.to)

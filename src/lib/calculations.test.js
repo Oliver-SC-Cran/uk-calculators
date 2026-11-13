@@ -282,9 +282,11 @@ test('Scottish take-home [own working] blank or negative input, and the default'
 // https://www.gov.uk/calculate-your-redundancy-pay
 // ---------------------------------------------------------------------------
 
-test('redundancy [gov.uk] matches the official calculator', () => {
+test('redundancy [gov.uk] matches the official calculator, to the penny', () => {
   // Results from the gov.uk calculator for a redundancy date of 1 June 2026.
-  // null means the calculator did not show a separate Northern Ireland figure.
+  // Every case with pence in it was run there again on 13 November 2026: the
+  // calculator pays the pence, and rounds a half penny up.
+  // null means the Northern Ireland figure was not noted.
   const cases = [
     // age, years, weekly pay, weeks, £ in GB, £ in Northern Ireland
     [45, 10, 600, 12, 7200, 7200],
@@ -305,19 +307,21 @@ test('redundancy [gov.uk] matches the official calculator', () => {
     [35, 3, 751, 3, 2253, 2253], // exactly on the GB weekly cap
     [35, 3, 752, 3, 2253, 2256], // £1 over the GB cap, still under the NI cap
     [40, 20, 751, 19, 14269, 14269],
-    [41, 20, 751, 19.5, 14644, null], // £14,644.50 rounded down
-    [50, 20, 800, 24.5, 18399, null], // £18,399.50 rounded down
-    [55, 30, 450.5, 27, 12163, null], // only the last 20 years count
+    [41, 20, 751, 19.5, 14644.5, 14644.5],
+    [50, 20, 800, 24.5, 18399.5, 19183.5], // capped pay: £751, or £783 in Northern Ireland
+    [55, 30, 450.5, 27, 12163.5, 12163.5], // only the last 20 years count
     [45, 30, 400, 22, 8800, 8800],
     [30, 5, 500, 5, 2500, 2500], // guide example
-    [58, 25, 900, 28.5, 21403, null], // guide example: capped pay, last 20 years only
+    [58, 25, 900, 28.5, 21403.5, 22315.5], // guide example: capped pay, last 20 years only
     [61, 20, 600, 30, 18000, 18000], // the most weeks you can get
     [64, 25, 1000, 30, 22530, 23490], // the maximum payment
     [70, 45, 900, 30, 22530, 23490],
     [100, 20, 500, 30, 15000, 15000],
-    [42, 2, 450.7, 2.5, 1126, null], // £1,126.75 rounded down
-    [23, 2, 450.3, 1.5, 675, null], // £675.45 rounded down
-    [45, 10, 333.33, 12, 3999, null], // £3,999.96 rounded down
+    [42, 2, 450.7, 2.5, 1126.75, null],
+    [23, 2, 450.3, 1.5, 675.45, 675.45],
+    [45, 10, 333.33, 12, 3999.96, 3999.96],
+    [23, 2, 450.31, 1.5, 675.47, 675.47], // £675.465: the half penny is rounded up
+    [23, 2, 450.33, 1.5, 675.5, 675.5], // £675.495: the half penny is rounded up
   ]
   for (const [age, yearsOfService, weeklyPay, weeks, gb, ni] of cases) {
     const label = `age ${age}, ${yearsOfService} years, £${weeklyPay} a week`

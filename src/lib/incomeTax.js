@@ -208,7 +208,14 @@ export function incomeTaxOnCode(
     return { tax: 0, personalAllowanceUsed: 0, topRate: 0, taxableIncome: 0, bands: [] }
   }
   if (code.kind === 'flat') {
-    const rate = flatRateFor(code.band, { scottish, welsh, taxYear })
+    // The band a flat code names belongs to the code's own country (SD1 is
+    // Scotland's higher rate, D1 the additional rate elsewhere), so the code
+    // picks the rates here, not the options.
+    const rate = flatRateFor(code.band, {
+      scottish: code.country === 'scotland',
+      welsh: code.country === 'wales',
+      taxYear,
+    })
     const bands = gross > 0 ? [{ name: 'All your pay', rate, on: gross, tax: gross * rate }] : []
     return {
       tax: gross * rate,

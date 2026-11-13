@@ -2,11 +2,12 @@ import { flatRateFor } from '../lib/incomeTax'
 import { formatGBP, percent } from '../lib/format'
 import { INCOME_TAX, PAYE_TAX_TABLES } from '../lib/rates/incomeTax'
 import { TAX_YEAR } from '../lib/rates/taxYear'
+import { codeDecidesRates } from '../lib/readTaxCode'
 import { taxCodeFor } from '../lib/taxCode'
 
 // What each part of a tax code means, in plain words. The meanings come from
 // gov.uk's "What your tax code means" and "Emergency tax codes" pages, checked
-// on 21 October 2026. The £9 payroll adds is from HMRC's tax tables
+// on 21 October 2026 and again on 13 November 2026. The £9 payroll adds is from HMRC's tax tables
 // (PAYE_TAX_TABLES), and "How we worked this out" shows it.
 
 const { addedToEachCode } = PAYE_TAX_TABLES
@@ -96,7 +97,14 @@ export default function TaxCodeNote({ code, region }) {
       'This uses the Welsh rates because of the C, whatever you chose for where you live.',
     )
   }
-  if (!code.country && region === 'scotland') {
+  if (!code.country && region === 'scotland' && codeDecidesRates(code)) {
+    // NT takes no tax anywhere, so there is nothing to add for it.
+    if (code.kind !== 'noTax') {
+      sentences.push(
+        `This code has no S at the start, so it is worked out at the rates for England, Wales and Northern Ireland, whatever you chose for where you live. A Scottish taxpayer's code starts with S, such as S${code.text.split(' ')[0]}, which uses Scottish rates.`,
+      )
+    }
+  } else if (!code.country && region === 'scotland') {
     sentences.push(
       `A Scottish taxpayer's code starts with S, such as S${taxCodeFor(INCOME_TAX.personalAllowance)}. This uses Scottish rates because you chose Scotland.`,
     )

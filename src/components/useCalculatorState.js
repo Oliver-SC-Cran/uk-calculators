@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { linkHash, readLinkHash, takeLinkHash } from '../lib/calculatorLink'
 import { amountText, groupDigits } from '../lib/format'
 import { parseDate, parseNumber } from '../lib/validation'
@@ -32,6 +32,14 @@ export const choiceInput = (initial, choices) => ({ kind: 'choice', initial, cho
 export const checkboxInput = (initial = false) => ({ kind: 'checkbox', initial })
 /** A date field. initial is 'YYYY-MM-DD', '' for blank, or null for "not chosen yet". */
 export const dateInput = (initial, rules) => ({ kind: 'date', initial, rules })
+
+/**
+ * The # part of a share link for a page to start with, such as
+ * '#pay=60000&taxCode=D1'. The site never sets it: a page opened from a link
+ * reads it after it has loaded (see below). src/pages.test.js sets it to
+ * render a page with figures already in it, which a build cannot do.
+ */
+export const StartingLink = createContext(null)
 
 const lowerFirst = (text) => text.charAt(0).toLowerCase() + text.slice(1)
 
@@ -68,9 +76,11 @@ const lowerFirst = (text) => text.charAt(0).toLowerCase() + text.slice(1)
  *   result.
  */
 export function useCalculatorState(inputs, { sharedLinks = false } = {}) {
-  const [values, setValues] = useState(() =>
-    Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.initial])),
-  )
+  const startingLink = useContext(StartingLink)
+  const [values, setValues] = useState(() => ({
+    ...Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.initial])),
+    ...(startingLink ? readLinkHash(startingLink, inputs) : null),
+  }))
   const [left, setLeft] = useState({})
   // Exact amounts the page worked out, as { text, value }: while a field still
   // shows that text, its value is the exact amount behind it.

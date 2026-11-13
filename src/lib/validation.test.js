@@ -111,9 +111,18 @@ test('parseDate: an optional date can be left blank [own working]', () => {
 
 test('rule sets: money, percentages and whole years [own working]', () => {
   assert.equal(parseNumber('£35,000', { name: 'x', ...MONEY }).value, 35000)
+  // Money is capped at £1 billion, to catch typing mistakes.
+  const money = 'Enter an amount between £0 and £1 billion.'
+  assert.equal(parseNumber('-1', { name: 'x', ...MONEY }).error, money)
+  assert.equal(parseNumber('1,000,000,000', { name: 'x', ...MONEY }).value, 1e9)
+  assert.equal(parseNumber('1,000,000,000.01', { name: 'x', ...MONEY }).error, money)
+  assert.equal(parseNumber('999,999,999,999', { name: 'x', ...MONEY }).error, money)
+  assert.equal(parseNumber('999999999999', { name: 'x', ...MONEY }).value, 0)
+  assert.equal(parseNumber('abc', { name: 'x', ...MONEY }).error, money)
+  // A field with a lower limit of its own names it.
   assert.equal(
-    parseNumber('-1', { name: 'x', ...MONEY }).error,
-    'Enter a number that is 0 or more.',
+    parseNumber('0', { name: 'x', ...MONEY, min: 1 }).error,
+    'Enter an amount between £1 and £1 billion.',
   )
   assert.equal(parseNumber('5%', { name: 'x', ...PERCENTAGE }).value, 5)
   assert.equal(

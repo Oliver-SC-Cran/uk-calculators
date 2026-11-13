@@ -20,7 +20,7 @@ import { TAX_YEAR } from '../lib/rates/taxYear'
 import { calculateWorkplacePension } from '../lib/workplacePension'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-11-08'
+const LAST_UPDATED = '2026-11-13'
 
 export default function PensionGuide() {
   const ae = AUTO_ENROLMENT

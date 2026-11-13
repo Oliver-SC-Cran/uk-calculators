@@ -9,7 +9,7 @@ import { CONTACT_EMAIL } from '../routes'
 // tests in src/lib/), so check it again when that changes. "If any of them
 // fails, the build stops" is true because npm run build runs npm test first. On 30 October 2026 there
 // were 359 tests, 85 of them labelled [gov.uk] and 1 [gov.scot].
-const LAST_UPDATED = '2026-11-08'
+const LAST_UPDATED = '2026-11-13'
 
 // The About page links to this heading as /how-we-check#how-we-worked-this-out.
 const WORKING_SECTION_ID = 'how-we-worked-this-out'
@@ -83,9 +83,9 @@ export default function HowWeCheck() {
         <Link to="/redundancy-calculator">redundancy pay calculator</Link> is checked against{' '}
         <Source href="https://www.gov.uk/calculate-your-redundancy-pay">
           gov.uk&apos;s redundancy pay calculator
-        </Source>
-        , the <Link to="/maternity-pay-calculator">maternity and paternity pay calculator</Link>{' '}
-        against{' '}
+        </Source>{' '}
+        and gives the same answer to the penny, the{' '}
+        <Link to="/maternity-pay-calculator">maternity and paternity pay calculator</Link> against{' '}
         <Source href="https://www.gov.uk/maternity-paternity-calculator">
           gov.uk&apos;s calculator for employers
         </Source>

@@ -71,10 +71,12 @@ export const PENSION_RATES = {
     // https://www.gov.uk/new-state-pension/what-youll-get
     statePension: { fullWeekly: 241.3, qualifyingYearsForFull: 35 },
 
-    // Announced on 26 November 2025. Not in force for 2026/27.
+    // Announced on 26 November 2025. Not in force for 2026/27. The policy
+    // paper says "From April 2029" and gives no day (checked on 13 November
+    // 2026), so the copy says the same.
     // Source: https://www.gov.uk/government/publications/changes-to-salary-sacrifice-for-pensions-from-april-2029
     salarySacrificeChange: {
-      startDate: '6 April 2029',
+      startDate: 'April 2029',
       niFreeLimit: 2000, // pension salary sacrifice above this a year will have NI charged on it
     },
   },

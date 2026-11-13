@@ -22,6 +22,7 @@ import {
   overpaymentToBeMortgageFree,
 } from '../lib/mortgage'
 import { MONEY, PERCENTAGE } from '../lib/validation'
+import TableScroll from '../components/TableScroll'
 
 // Change this by hand whenever the calculator's figures or rules change.
 const LAST_UPDATED = '2026-11-02'
@@ -588,7 +589,7 @@ export default function MortgageOverpaymentCalculator() {
                 </p>
               )}
               {showColumns && (
-                <div className="table-scroll">
+                <TableScroll label="Your mortgage with and without overpaying">
                   <table className="result-table result-table--columns result-table--wrap">
                     <thead>
                       <tr>
@@ -622,7 +623,7 @@ export default function MortgageOverpaymentCalculator() {
                       </tr>
                     </tbody>
                   </table>
-                </div>
+                </TableScroll>
               )}
 
               {hasOffset && (
@@ -649,7 +650,7 @@ export default function MortgageOverpaymentCalculator() {
               )}
 
               {compared && (
-                <div className="table-scroll">
+                <TableScroll label="What each one saves">
                   <table className="result-table result-table--columns result-table--wrap">
                     <caption>What each one saves</caption>
                     <thead>
@@ -673,7 +674,7 @@ export default function MortgageOverpaymentCalculator() {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </TableScroll>
               )}
 
               <LineChart

@@ -23,11 +23,13 @@ import { CHILD_BENEFIT_CHARGE, INCOME_TAX } from '../lib/rates/incomeTax'
 import { FULL_TIME_HOURS, MINIMUM_WAGE } from '../lib/rates/minimumWage'
 import { TAX_YEAR } from '../lib/rates/taxYear'
 import { readTaxCode, taxRatesFor } from '../lib/readTaxCode'
+import { TAX_CODE_HINT } from '../components/taxCodeHint'
 import { calculateTakeHomePay } from '../lib/takeHome'
 import { MONEY, PERCENTAGE } from '../lib/validation'
+import TableScroll from '../components/TableScroll'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-23'
+const LAST_UPDATED = '2026-11-13'
 
 const PAY_PER_NAMES = { year: 'Year', month: 'Month', week: 'Week', day: 'Day', hour: 'Hour' }
 
@@ -220,7 +222,7 @@ export default function SalaryCalculator() {
                 <TextField
                   id="tax-code"
                   optional
-                  hint={`On your payslip. Leave it blank to use the standard Personal Allowance of ${formatGBP(INCOME_TAX.personalAllowance)}.`}
+                  hint={TAX_CODE_HINT}
                   describe={code ? 'tax-code-note' : undefined}
                   field={taxCode}
                 />
@@ -338,7 +340,7 @@ export default function SalaryCalculator() {
           prompt={problem}
           shareLink={state.shareLink}
         >
-          <div className="table-scroll">
+          <TableScroll label="Your pay and deductions for a year, a month and a week">
             <table className="result-table result-table--total result-table--columns">
               {result.bonus && <caption>Your usual pay, without the bonus</caption>}
               <thead>
@@ -358,7 +360,7 @@ export default function SalaryCalculator() {
                 {row('Take-home pay', (c) => c.takeHome, false)}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
           <p className="result-card__line">
             Income tax and National Insurance take {percent(result.effectiveRate)} of your pay.
           </p>

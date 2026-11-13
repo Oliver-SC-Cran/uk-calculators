@@ -21,6 +21,7 @@ import { calculateStudentLoanRepayment } from '../lib/studentLoans'
 import { formatGBP } from '../lib/format'
 import { PAY_ENTERED_AS, switchPayPer, yearlyPayFrom } from '../lib/payPeriods'
 import { MONEY } from '../lib/validation'
+import TableScroll from '../components/TableScroll'
 
 // Change this by hand whenever the calculator's figures or rules change.
 const LAST_UPDATED = '2026-10-23'
@@ -150,7 +151,7 @@ export default function StudentLoanCalculator() {
           prompt={problem}
           shareLink={state.shareLink}
         >
-          <div className="table-scroll">
+          <TableScroll label="Your repayments for a week, a month and a year">
             <table className="result-table result-table--total result-table--columns">
               <thead>
                 <tr>
@@ -166,7 +167,7 @@ export default function StudentLoanCalculator() {
                 {row('Total', result.totalWeekly, result.totalMonthly)}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
           <p className="result-card__line">
             The week and month columns are what a weekly or monthly payslip takes, each with that
             pay day's threshold, and the year is 12 monthly payslips. Paid weekly, 52 payslips come

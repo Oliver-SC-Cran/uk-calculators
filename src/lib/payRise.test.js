@@ -669,3 +669,52 @@ test('pay rise [own working] a pension in pounds', () => {
   near(result.nationalInsurance, 2401.92)
   near(result.takeHomeAnnual, 34192.08)
 })
+
+// ---------------------------------------------------------------------------
+// Codes that tax all pay at one rate, in every region
+// ---------------------------------------------------------------------------
+
+test('pay rise [gov.uk] BR, D0, D1, NT and 0T use the same rates wherever you live', () => {
+  // The income tax on £60,000, and the extra on a rise to £70,000. The rates
+  // are gov.uk's: 20%, 40% and 45% for BR, D0 and D1 (and the Welsh ones),
+  // and Scotland's 20%, 21%, 42%, 45% and 48% for SBR and SD0 to SD3. gov.uk
+  // gives Scotland and Wales their own forms of these codes ("What your tax
+  // code means", checked on 13 November 2026), so the code decides the rates
+  // and "Where you live" does not. D1 with Scotland chosen used to give NaN.
+  const codes = {
+    BR: [12000, 2000],
+    D0: [24000, 4000],
+    D1: [27000, 4500],
+    NT: [0, 0],
+    // No tax-free pay: £37,700 at 20% and £22,300 at 40%, then 40% of the rise.
+    '0T': [16460, 4000],
+    SBR: [12000, 2000],
+    SD0: [12600, 2100],
+    SD1: [25200, 4200],
+    SD2: [27000, 4500],
+    SD3: [28800, 4800],
+    // £3,967 at 19%, £12,989 at 20%, £14,136 at 21% and £28,908 at 42%. The
+    // rise is £2,430 at 42% and £7,570 at 45%.
+    S0T: [18461.45, 4427.1],
+    CBR: [12000, 2000],
+    CD0: [24000, 4000],
+    CD1: [27000, 4500],
+    C0T: [16460, 4000],
+  }
+  for (const region of ['restOfUk', 'scotland']) {
+    for (const [text, [tax, extraTax]] of Object.entries(codes)) {
+      const taxCode = readTaxCode(text).value
+      const where = taxRatesFor(taxCode, region)
+      const label = `${text} in ${region}:`
+      const result = rise(60000, 70000, { taxCode, ...where })
+      near(result.before.incomeTax, tax, label)
+      near(result.goesTo.incomeTax, extraTax, label)
+      // NI on the rise is 2% of £10,000 a year, whatever the code.
+      near(result.goesTo.nationalInsurance, 200, label)
+      near(result.kept, 10000 - extraTax - 200, label)
+      // The same figures as the take-home calculator gives.
+      const page = calculateTakeHomePay({ pay: 60000, taxCode, ...where })
+      assert.equal(result.before.takeHomeAnnual, page.takeHomeAnnual, label)
+    }
+  }
+})

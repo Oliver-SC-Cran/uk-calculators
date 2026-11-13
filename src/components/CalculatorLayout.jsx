@@ -1,5 +1,6 @@
 import { formatDate } from '../lib/format'
 import Breadcrumb from './Breadcrumb'
+import Notice from './Notice'
 import RelatedCalculators from './RelatedCalculators'
 import RelatedGuides from './RelatedGuides'
 import Working from './Working'
@@ -56,6 +57,13 @@ export default function CalculatorLayout({
           <time dateTime={updated}>{formatDate(updated)}</time>
         </p>
       </header>
+
+      {/* Without JavaScript the page still shows its example, but cannot work anything out. */}
+      <noscript>
+        <Notice>
+          This calculator needs JavaScript to work. The figures shown are an example, not your own.
+        </Notice>
+      </noscript>
 
       <div className="calc calc--cards">
         <section className="calc__inputs" aria-labelledby="details-heading">

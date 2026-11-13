@@ -1,14 +1,26 @@
 import TextPage from '../components/TextPage'
 import { Link } from 'react-router-dom'
 import LastUpdated from '../components/LastUpdated'
+import { formatDate } from '../lib/format'
+import TableScroll from '../components/TableScroll'
 
 // Change this by hand whenever the policy or the cookie list changes.
-const LAST_UPDATED = '2026-10-11'
+const LAST_UPDATED = '2026-11-13'
+
+// The date of the note about what happens before Google approves the site.
+// Take the note out, and re-check the FCCDCF row, once adverts are switched on.
+const NOTE_DATE = '2026-11-13'
 
 // Names, purposes and durations as Google publishes them at
 // https://business.safety.google/adscookies/ and
-// https://policies.google.com/technologies/cookies (checked 11 October 2026).
+// https://policies.google.com/technologies/cookies (checked 11 October 2026,
+// and the two consent cookies again on 13 November 2026).
 // Re-check both pages whenever this list is edited.
+//
+// Google lists FCCDCF only as "Functionality", for Funding Choices (its
+// consent tool), lasting 13 months. What it holds was read from the live site
+// on 13 November 2026, from the UK: a random identifier and the time it was
+// set, with no choice in it, and it was the only cookie there.
 const advertisingCookies = [
   {
     name: '__gads',
@@ -84,7 +96,8 @@ const consentCookies = [
   {
     name: 'FCCDCF',
     setOn: 'This site',
-    purpose: 'Functionality. Stores the choice you made in the consent message.',
+    purpose:
+      "Functionality, for Google's consent message. Google's script sets it on your first visit, before you are asked anything. It holds a random identifier and the time it was set.",
     duration: '13 months',
   },
   {
@@ -97,7 +110,7 @@ const consentCookies = [
 
 function CookieTable({ caption, cookies }) {
   return (
-    <div className="table-scroll">
+    <TableScroll label={caption}>
       <table className="data-table">
         <caption>{caption}</caption>
         <thead>
@@ -119,7 +132,7 @@ function CookieTable({ caption, cookies }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </TableScroll>
   )
 }
 
@@ -133,6 +146,22 @@ export default function Cookies() {
         be set when you use this site. The <Link to="/privacy">privacy policy</Link> explains how
         your data is handled more widely.
       </p>
+
+      <h2>Until Google approves this site for adverts</h2>
+      <p>
+        Note added on {formatDate(NOTE_DATE)}. Google has not yet approved this site to show
+        adverts. Until it does, no adverts show and Google&apos;s consent message does not appear,
+        because Google does not send it to a site it has not approved. Google&apos;s script still
+        loads on every page, and it sets one cookie on this site, FCCDCF, without asking first.
+      </p>
+      <p>
+        Google lists FCCDCF as a functionality cookie for its consent message, lasting 13 months.
+        When it was checked on the live site on {formatDate(NOTE_DATE)}, it held a random identifier
+        and the time it was set. It did not hold a choice, because none had been offered, and it was
+        the only cookie on the site. You can delete or block it in your browser&apos;s settings, and
+        the site works the same without it.
+      </p>
+      <p>The rest of this page describes what happens once adverts are switched on.</p>
 
       <h2>Cookies this site sets itself</h2>
       <p>

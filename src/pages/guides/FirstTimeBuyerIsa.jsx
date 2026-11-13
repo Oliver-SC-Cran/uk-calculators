@@ -6,6 +6,7 @@ import { balanceForMostBonus, projectFirstTimeBuyerIsa } from '../../lib/firstTi
 import { homeOverCapWithdrawal, projectLifetimeIsa } from '../../lib/lifetimeIsa'
 import { ISA, LIFETIME_ISA_REFORM } from '../../lib/rates/isa'
 import { TAX_YEAR } from '../../lib/rates/taxYear'
+import TableScroll from '../../components/TableScroll'
 
 // Change this by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '2026-10-30'
@@ -143,7 +144,7 @@ export default function FirstTimeBuyerIsa() {
       </ul>
 
       <h2>The two side by side</h2>
-      <div className="table-scroll">
+      <TableScroll label="The Lifetime ISA and the First Time Buyer ISA side by side">
         <table className="data-table data-table--plain">
           <thead>
             <tr>
@@ -210,7 +211,7 @@ export default function FirstTimeBuyerIsa() {
             </tr>
           </tbody>
         </table>
-      </div>
+      </TableScroll>
 
       <h2>Should I open a Lifetime ISA before April 2029?</h2>
       <p>This guide cannot say which is right for you, but these facts decide it.</p>

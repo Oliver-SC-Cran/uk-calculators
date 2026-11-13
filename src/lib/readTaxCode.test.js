@@ -12,7 +12,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { readTaxCode, taxRatesFor } from './readTaxCode.js'
+import { codeDecidesRates, readTaxCode, taxRatesFor } from './readTaxCode.js'
 
 const read = (text) => readTaxCode(text).value
 
@@ -185,4 +185,30 @@ test('tax code [own working] which rates apply: the code first, then where you l
   assert.deepEqual(taxRatesFor(read('S1257L'), 'restOfUk'), { scottish: true, welsh: false })
   assert.deepEqual(taxRatesFor(read('C1257L'), 'restOfUk'), { scottish: false, welsh: true })
   assert.deepEqual(taxRatesFor(read('C1257L'), 'scotland'), { scottish: false, welsh: true })
+  // A K code and an emergency code go by where you live, like 1257L.
+  assert.deepEqual(taxRatesFor(read('K475'), 'scotland'), { scottish: true, welsh: false })
+  assert.deepEqual(taxRatesFor(read('1257L W1'), 'scotland'), { scottish: true, welsh: false })
+})
+
+test('tax code [gov.uk] BR, D0, D1, NT and 0T decide the rates themselves', () => {
+  // gov.uk lists SBR, SD0 to SD3 and S0T for Scotland and CBR, CD0, CD1 and
+  // C0T for Wales, so the plain codes are the ones for England and Northern
+  // Ireland, whatever is chosen for where you live (checked on 13 November 2026).
+  const none = { scottish: false, welsh: false }
+  for (const region of ['restOfUk', 'scotland']) {
+    for (const text of ['BR', 'D0', 'D1', 'NT', '0T', '0T M1', 'BR W1']) {
+      assert.deepEqual(taxRatesFor(read(text), region), none, `${text} in ${region}`)
+      assert.equal(codeDecidesRates(read(text)), true, text)
+    }
+    for (const text of ['SBR', 'SD0', 'SD1', 'SD2', 'SD3', 'S0T']) {
+      assert.deepEqual(taxRatesFor(read(text), region), { scottish: true, welsh: false }, text)
+    }
+    for (const text of ['CBR', 'CD0', 'CD1', 'C0T']) {
+      assert.deepEqual(taxRatesFor(read(text), region), { scottish: false, welsh: true }, text)
+    }
+  }
+  for (const text of ['1257L', 'K475', '0L', '1T']) {
+    assert.equal(codeDecidesRates(read(text)), false, text)
+  }
+  assert.equal(codeDecidesRates(null), false)
 })

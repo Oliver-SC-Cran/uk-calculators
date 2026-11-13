@@ -33,9 +33,11 @@ import { calculatePayRise, newSalaryFrom, riseEnteredAs } from '../lib/payRise'
 import { PENSION_TYPES, switchPension } from '../lib/pensions'
 import { incomeTaxLabel } from '../lib/incomeTax'
 import { readTaxCode, taxRatesFor } from '../lib/readTaxCode'
+import { TAX_CODE_HINT } from '../components/taxCodeHint'
+import TableScroll from '../components/TableScroll'
 
 // Change this by hand whenever the calculator's figures or rules change.
-const LAST_UPDATED = '2026-10-23'
+const LAST_UPDATED = '2026-11-13'
 
 const PAY_PER_NAMES = { year: 'Year', month: 'Month', week: 'Week', day: 'Day', hour: 'Hour' }
 const PER_WORDS = {
@@ -190,9 +192,11 @@ export default function PayRiseCalculator() {
       }),
       payPer: choiceInput('year', Object.keys(PAY_ENTERED_AS)),
       days: numberInput('5', { label: 'Days you work a week', min: 0.5, max: 7 }),
-      // The label says how the rise is entered. Amounts in pounds are grouped.
+      // The label says how the rise is entered. Amounts in pounds are grouped
+      // and capped like any other amount, and a percentage at 1,000%.
       rise: numberInput('55,000', (fields) => ({
         label: riseFields[fields.riseType.value].label,
+        ...(fields.riseType.value === 'percent' ? { min: 0, max: 1000 } : MONEY),
         grouped: fields.riseType.value !== 'percent',
       })),
       taxCode: textInput('', { label: 'Your tax code', read: readTaxCode }),
@@ -486,7 +490,7 @@ export default function PayRiseCalculator() {
                 <TextField
                   id="tax-code"
                   optional
-                  hint={`On your payslip. Leave it blank to use the standard Personal Allowance of ${formatGBP(INCOME_TAX.personalAllowance)}.`}
+                  hint={TAX_CODE_HINT}
                   describe={code ? 'tax-code-note' : undefined}
                   field={taxCode}
                 />
@@ -601,7 +605,7 @@ export default function PayRiseCalculator() {
           <p className="result-card__line">
             You keep {percent(result.keptShare)} of your {formatGBP(result.rise)} rise.
           </p>
-          <div className="table-scroll">
+          <TableScroll label="Where the rise goes">
             <table className="result-table result-table--total result-table--columns">
               <caption>Where the {formatGBP(result.rise)} goes</caption>
               <thead>
@@ -619,7 +623,7 @@ export default function PayRiseCalculator() {
                 {goesRow('You keep', result.kept)}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
 
           {takeHomeTable}
 

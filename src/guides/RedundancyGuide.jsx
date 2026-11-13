@@ -1,11 +1,11 @@
 import { REDUNDANCY } from '../lib/rates/redundancy'
 import { TAX_YEAR, TAX_YEAR_START } from '../lib/rates/taxYear'
 import { calculateRedundancyPay } from '../lib/redundancy'
-import { formatGBP as gbp } from '../lib/format'
+import { formatGBP as gbp, formatGBPPence as gbpPence } from '../lib/format'
 import CalculatorGuide from '../components/CalculatorGuide'
 
 // Change this by hand whenever the wording or the figures in this guide change.
-const LAST_UPDATED = '2026-10-08'
+const LAST_UPDATED = '2026-11-13'
 
 export default function RedundancyGuide() {
   const { weeklyPayCapGB, weeklyPayCapNI, maxYearsCounted, minYearsToQualify } = REDUNDANCY
@@ -76,28 +76,28 @@ export default function RedundancyGuide() {
 
       <h2>Worked examples</h2>
       <p>
-        These use the cap for England, Scotland and Wales. Results are rounded down to the whole
-        pound, as on the official calculator.
+        These use the cap for England, Scotland and Wales. Results are worked out to the penny, as
+        on the official calculator.
       </p>
 
       <h3>Age 30, 5 years' service, {gbp(500)} a week</h3>
       <p>
         All five years fall in the 22 to 40 band, so you get {example1.totalWeeks} weeks' pay. That
-        is {gbp(example1.pay)}.
+        is {gbpPence(example1.pay)}.
       </p>
 
       <h3>Age 45, 10 years' service, {gbp(600)} a week</h3>
       <p>
         The four years that started at 41 or older count as one and a half weeks each, which is 6
         weeks. The other six years count as one week each. That makes {example2.totalWeeks} weeks'
-        pay, or {gbp(example2.pay)}.
+        pay, or {gbpPence(example2.pay)}.
       </p>
 
       <h3>Age 58, 25 years' service, {gbp(900)} a week</h3>
       <p>
         Only the last {maxYearsCounted} years count. Seventeen of them started at 41 or older and
         three did not, which gives {example3.totalWeeks} weeks. Pay is capped at{' '}
-        {gbp(example3.weeklyPayUsed)} a week, so the payment is {gbp(example3.pay)}.
+        {gbp(example3.weeklyPayUsed)} a week, so the payment is {gbpPence(example3.pay)}.
       </p>
 
       <h2>Common questions</h2>

@@ -102,7 +102,7 @@ export default function ISACalculator() {
 
   return (
     <CalculatorLayout
-      title="ISA & LISA allowance calculator"
+      title="ISA and Lifetime ISA allowance calculator"
       lede={`How much of your ${formatGBP(ISA.overallAllowance)} ISA allowance is left for ${TAX_YEAR}, and the government bonus on a Lifetime ISA.`}
       updated={LAST_UPDATED}
       inputs={

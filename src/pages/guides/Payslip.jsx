@@ -9,6 +9,7 @@ import { calculateTakeHomePay } from '../../lib/takeHome'
 import { formatGBP as gbp, formatGBPPence as pence, percent } from '../../lib/format'
 import Source from '../../components/Source'
 import { taxCodeFor } from '../../lib/taxCode'
+import TableScroll from '../../components/TableScroll'
 
 // Change this by hand whenever the wording or the figures in this guide change.
 const LAST_UPDATED = '2026-11-02'
@@ -139,7 +140,7 @@ export default function Payslip() {
         tax-free and a code of {reducedCode}.
       </p>
       <p>The common letters are:</p>
-      <div className="table-scroll">
+      <TableScroll label="Common tax code letters">
         <table className="data-table">
           <thead>
             <tr>
@@ -192,7 +193,7 @@ export default function Payslip() {
             </tr>
           </tbody>
         </table>
-      </div>
+      </TableScroll>
       <p>
         With an emergency code, tax is worked out on that payday's pay alone, not on your pay for
         the year so far, so you can pay the wrong amount. It usually happens in a new job, and HMRC
@@ -200,7 +201,7 @@ export default function Payslip() {
       </p>
 
       <h2>Other codes and abbreviations on a payslip</h2>
-      <div className="table-scroll">
+      <TableScroll label="Other codes and abbreviations on a payslip">
         <table className="data-table">
           <thead>
             <tr>
@@ -252,7 +253,7 @@ export default function Payslip() {
             </tr>
           </tbody>
         </table>
-      </div>
+      </TableScroll>
 
       <h2>Income tax and National Insurance</h2>
       <p>

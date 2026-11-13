@@ -19,6 +19,7 @@ import { calculateCompoundInterest } from '../lib/compoundInterest'
 import { formatAmount, formatDeduction, formatGBP, percent, yearsAndMonths } from '../lib/format'
 import { GROWTH } from '../lib/rates/growth'
 import { MONEY } from '../lib/validation'
+import TableScroll from '../components/TableScroll'
 
 // Change this by hand whenever the calculator's figures or rules change.
 const LAST_UPDATED = '2026-10-30'
@@ -527,7 +528,7 @@ export default function CompoundInterestCalculator() {
 
           <details className="result-card__more">
             <summary>Your pot at the end of each year</summary>
-            <div className="table-scroll">
+            <TableScroll label="Your pot at the end of each year">
               <table className="result-table result-table--columns">
                 <thead>
                   <tr>
@@ -554,7 +555,7 @@ export default function CompoundInterestCalculator() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableScroll>
           </details>
         </ResultCard>
       }

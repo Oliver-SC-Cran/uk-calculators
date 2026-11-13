@@ -14,8 +14,10 @@ import { add, info, part, total } from './working.js'
  *
  * A year only counts at the higher rate if the employee was 22 (or 41) or
  * older for the whole of it, so each year is banded by the age they were
- * when it started. Like the gov.uk calculator, the result is rounded down
- * to the whole pound, and service that started before age 15 is rejected.
+ * when it started. Like the gov.uk calculator, the result is worked out to
+ * the penny, with a half penny rounded up (1.5 weeks at £450.33 is £675.50
+ * there, checked on 13 November 2026), and service that started before age
+ * 15 is rejected.
  *
  * It works in whole years of age. For a real, live dismissal, especially
  * right on an age-band boundary, verify against the official gov.uk
@@ -77,8 +79,11 @@ export function calculateRedundancyPay({ age, yearsOfService, weeklyPay, region 
       yearsIn.younger++
     }
   }
-  // Half-weeks times whole pence keeps the sum exact before rounding down.
-  const exactPay = (Math.round(totalWeeks * 2) * Math.round(cappedWeeklyPay * 100)) / 200
+  // Half-weeks times whole pence is a whole number of half pence, so the sum
+  // is exact. A half penny is rounded up, as gov.uk's calculator does.
+  const halfPence = Math.round(totalWeeks * 2) * Math.round(cappedWeeklyPay * 100)
+  const pay = Math.floor((halfPence + 1) / 2) / 100
+  const pence = { unit: 'gbpPence' }
   const weeks = { unit: 'weeks' }
   const band = (label, count, each) =>
     count > 0 && add(label, count * each, { ...weeks, count, each })
@@ -88,21 +93,20 @@ export function calculateRedundancyPay({ age, yearsOfService, weeklyPay, region 
     totalWeeks,
     weeklyPayUsed: cappedWeeklyPay,
     weeklyPayWasCapped: weeklyPay > cap,
-    pay: Math.floor(exactPay),
+    pay,
     taxFreeThreshold,
     cap,
     working: [
       part(
         'Statutory redundancy pay',
         [
-          add("Weeks' pay at your weekly pay", exactPay, {
+          add("Weeks' pay at your weekly pay", pay, {
+            ...pence,
             count: totalWeeks,
             each: cappedWeeklyPay,
           }),
         ],
-        total('Statutory redundancy pay, rounded down to the pound', Math.floor(exactPay), {
-          rounding: 'down',
-        }),
+        total('Statutory redundancy pay, to the penny', pay, pence),
       ),
       part(
         "Weeks' pay for your years of service",
@@ -115,9 +119,9 @@ export function calculateRedundancyPay({ age, yearsOfService, weeklyPay, region 
         total("Weeks' pay", totalWeeks, weeks),
       ),
       part('Weekly pay used', [
-        info('Your weekly pay', atLeastZero(weeklyPay), { unit: 'gbpPence' }),
+        info('Your weekly pay', atLeastZero(weeklyPay), pence),
         info('The most that counts', cap),
-        info('Weekly pay used', cappedWeeklyPay, { unit: 'gbpPence' }),
+        info('Weekly pay used', cappedWeeklyPay, pence),
       ]),
     ],
   }

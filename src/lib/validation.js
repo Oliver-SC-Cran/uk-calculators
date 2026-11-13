@@ -6,8 +6,19 @@ import { parseIsoDate } from './dates.js'
 
 const plain = (value) => value.toLocaleString('en-GB', { maximumFractionDigits: 2 })
 
-/** "Enter a number between 0 and 100." or "Enter a whole number that is 0 or more." */
+/**
+ * The most any amount of money can be: £1 billion. It is only there to catch
+ * typing mistakes and to keep results a length the page can show. It is not a
+ * rule from gov.uk.
+ */
+export const MAX_MONEY = 1_000_000_000
+
+/**
+ * "Enter a number between 0 and 100." or "Enter a whole number that is 0 or
+ * more." An amount of money gets "Enter an amount between £0 and £1 billion."
+ */
 function rangeMessage({ min, max, whole }) {
+  if (max === MAX_MONEY) return `Enter an amount between £${plain(min)} and £1 billion.`
   const kind = whole ? 'a whole number' : 'a number'
   if (Number.isFinite(max)) return `Enter ${kind} between ${plain(min)} and ${plain(max)}.`
   return `Enter ${kind} that is ${plain(min)} or more.`
@@ -49,8 +60,8 @@ export const MAX_AGE = 120
 
 // Rules for the kinds of number the calculators ask for, to spread into a
 // field's rules beside its label: { label: 'Your age', ...WHOLE_YEARS }.
-/** An amount in pounds and pence, £0 or more. */
-export const MONEY = { min: 0 }
+/** An amount in pounds and pence, from £0 to £1 billion (MAX_MONEY). */
+export const MONEY = { min: 0, max: MAX_MONEY }
 /** A percentage from 0 to 100. A trailing % is allowed. */
 export const PERCENTAGE = { min: 0, max: 100 }
 /** An age, or full years of service, in whole years. */

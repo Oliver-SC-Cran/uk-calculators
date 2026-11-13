@@ -557,3 +557,65 @@ test('take-home pay [own working] the personal allowance taper without a code', 
   assert.equal(r.personalAllowanceUsed, 7570)
   assert.ok(r.personalAllowanceUsed < INCOME_TAX.personalAllowance)
 })
+
+// Every code that taxes all pay at one rate or with no tax-free pay, and the
+// income tax it gives on £60,000, whichever answer is given for where you
+// live. The rates are gov.uk's: 20%, 40% and 45% for BR, D0 and D1 (and the
+// Welsh ones), and Scotland's 20%, 21%, 42%, 45% and 48% for SBR and SD0 to
+// SD3. 0T uses the usual bands with no tax-free pay.
+const ONE_RATE_CODES = {
+  BR: 12000,
+  D0: 24000,
+  D1: 27000,
+  NT: 0,
+  // £37,700 at 20% and £22,300 at 40%.
+  '0T': 7540 + 8920,
+  SBR: 12000,
+  SD0: 12600,
+  SD1: 25200,
+  SD2: 27000,
+  SD3: 28800,
+  // £3,967 at 19%, £12,989 at 20%, £14,136 at 21% and £28,908 at 42%.
+  S0T: 753.73 + 2597.8 + 2968.56 + 12141.36,
+  CBR: 12000,
+  CD0: 24000,
+  CD1: 27000,
+  C0T: 7540 + 8920,
+}
+
+test('tax codes [gov.uk] BR, D0, D1, NT and 0T use the same rates wherever you live', () => {
+  // gov.uk's "What your tax code means" (checked on 13 November 2026) gives
+  // Scotland and Wales their own forms of these codes, so the code decides
+  // the rates and "Where you live" does not. D1 with Scotland chosen used to
+  // give NaN, and D0 42%.
+  for (const region of ['restOfUk', 'scotland']) {
+    for (const [text, tax] of Object.entries(ONE_RATE_CODES)) {
+      const taxCode = code(text)
+      const where = taxRatesFor(taxCode, region)
+      const r = calculateTakeHomePay({ pay: 60000, taxCode, ...where })
+      near(r.incomeTax, tax, `${text} in ${region}:`)
+      // NI is £3,210 whatever the code: 8% of £3,141 and 2% of £811 a month.
+      near(r.takeHomeAnnual, 60000 - tax - 3210, `${text} in ${region} take-home:`)
+      assert.equal(where.scottish, text.startsWith('S'), `${text} in ${region}`)
+      assert.equal(where.welsh, text.startsWith('C'), `${text} in ${region}`)
+      const expectedName = text.startsWith('S')
+        ? incomeTaxLabel(true)
+        : incomeTaxLabel(false, text.startsWith('C'))
+      assert.equal(r.incomeTaxName, expectedName, `${text} in ${region}`)
+    }
+  }
+})
+
+test('tax codes [own working] a one-rate code never gives a figure that is not a number', () => {
+  // Even when the options disagree with the code, as no page lets them.
+  for (const text of Object.keys(ONE_RATE_CODES)) {
+    for (const where of [{}, { scottish: true }, { welsh: true }]) {
+      for (const pay of [0, 1, 12570, 60000, 250000]) {
+        const r = calculateTakeHomePay({ pay, taxCode: code(text), ...where })
+        for (const key of ['incomeTax', 'nationalInsurance', 'takeHomeAnnual', 'effectiveRate']) {
+          assert.ok(Number.isFinite(r[key]), `${key} for ${text} on ${pay}`)
+        }
+      }
+    }
+  }
+})

@@ -117,10 +117,31 @@ export function readTaxCode(text) {
 }
 
 /**
- * Which income tax rates apply. An S or C at the start of a code decides it.
- * A code without one, or no code, goes by where someone lives.
+ * Whether the code alone decides which income tax rates apply, whatever the
+ * answer to "Where you live". True for a code that starts with S or C, and
+ * for BR, D0, D1, NT and 0T without one. gov.uk gives those a Scottish form
+ * of their own (SBR, SD0 to SD3, S0T) and a Welsh one (CBR, CD0, CD1, C0T),
+ * and describes BR, D0 and D1 as the basic, higher and additional rates,
+ * which Scotland's D0 and D1 are not. So without the S they are the codes for
+ * England and Northern Ireland, and are worked out at those rates. Checked on
+ * gov.uk's "What your tax code means" page on 13 November 2026.
+ */
+export function codeDecidesRates(code) {
+  if (!code) return false
+  if (code.country) return true
+  if (code.kind === 'flat' || code.kind === 'noTax') return true
+  return code.kind === 'allowance' && code.number === 0 && code.letter === 'T'
+}
+
+/**
+ * Which income tax rates apply. An S or C at the start of a code decides it,
+ * and BR, D0, D1, NT and 0T without one use the rates for England and
+ * Northern Ireland (codeDecidesRates). Any other code, or no code, goes by
+ * where someone lives.
  */
 export function taxRatesFor(code, region) {
-  const country = code?.country ?? (region === 'scotland' ? 'scotland' : null)
-  return { scottish: country === 'scotland', welsh: country === 'wales' }
+  if (codeDecidesRates(code)) {
+    return { scottish: code.country === 'scotland', welsh: code.country === 'wales' }
+  }
+  return { scottish: region === 'scotland', welsh: false }
 }

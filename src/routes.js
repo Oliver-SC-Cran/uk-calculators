@@ -1,6 +1,6 @@
 // The single source for every page on the site. The router, the prerender
 // script (scripts/prerender.js) and the sitemap are all built from this list.
-// To add a page: add it here, then map its path to a component in App.jsx.
+// To add a page: add it here, then give its path a component file in src/pageFiles.js.
 //
 // sharedLinks: true marks the calculators whose page passes sharedLinks to
 // useCalculatorState (see "Share links" in CLAUDE.md). The privacy policy
