@@ -26,3 +26,6 @@ dist-ssr
 # Secrets. The site uses none, but never commit them if that changes.
 .env
 .env.*
+
+# The audit report. The repository is public, so it stays on this computer.
+AUDIT-2026-11-11.md
